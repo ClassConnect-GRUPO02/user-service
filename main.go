@@ -2,22 +2,24 @@ package main
 
 import (
 	"log"
+	"user_service/router"
+	"user_service/utils"
 )
 
 func main() {
-	host, err := GetEnvVar("HOST")
+	host, err := utils.GetEnvVar("HOST")
 	if err != nil {
 		log.Fatal("Error: ", err)
 	}
-	port, err := GetEnvVar("PORT")
+	port, err := utils.GetEnvVar("PORT")
 	if err != nil {
 		log.Fatal("Error: ", err)
 	}
-	environment, err := GetEnvVar("ENVIRONMENT")
+	environment, err := utils.GetEnvVar("ENVIRONMENT")
 	if err != nil {
 		log.Fatal("Error: ", err)
 	}
-
 	log.Println("Enviroment: ", environment)
-	StartService(host, port)
+	router := router.CreateRouter(host, port)
+	router.Run()
 }
