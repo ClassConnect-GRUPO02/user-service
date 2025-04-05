@@ -1,0 +1,12 @@
+services:
+  server:
+    image: server
+    env_file: .env
+
+  test:
+    image: test
+    environment: 
+      - HOST=server
+      - PORT=${PORT}
+    depends_on:
+      - server
