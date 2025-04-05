@@ -1,18 +1,18 @@
 include .env
 
-server_image: 
-	docker build . -f Dockerfile -t server
+service_image: 
+	docker build . -f Dockerfile -t user_service
 
 test_image:
 	docker build . -f Dockerfile.test -t test
 
-start_server:
+start_service:
 	docker run --rm -it \
-		--name server \
+		--name user_service \
 		-e HOST=$(HOST) \
 		-e PORT=$(PORT) \
 		-e ENVIRONMENT=$(ENVIRONMENT) \
-		-p $(PORT):$(PORT) server
+		-p $(PORT):$(PORT) user_service
 
 tests:
 	docker compose up --abort-on-container-exit
