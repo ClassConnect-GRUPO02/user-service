@@ -7,11 +7,8 @@ import (
 	"user_service/repository"
 )
 
-type Email = string
-
 type Service struct {
 	userRepository *repository.UserRepository
-	idCounter      int
 }
 
 func NewService() (*Service, error) {
@@ -20,7 +17,6 @@ func NewService() (*Service, error) {
 		return nil, fmt.Errorf("failed to create user repository. Error: %s", err)
 	}
 	service := Service{
-		idCounter:      0,
 		userRepository: userRepository,
 	}
 	return &service, nil
