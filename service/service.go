@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"log"
 	"user_service/models"
 	"user_service/repository"
@@ -11,13 +10,9 @@ type Service struct {
 	userRepository repository.Repository
 }
 
-func NewService() (*Service, error) {
-	userRepository, err := repository.NewUserRepository()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user repository. Error: %s", err)
-	}
+func NewService(repository repository.Repository) (*Service, error) {
 	service := Service{
-		userRepository: userRepository,
+		userRepository: repository,
 	}
 	return &service, nil
 }

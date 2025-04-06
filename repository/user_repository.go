@@ -17,7 +17,6 @@ type UserRepository struct {
 var _ Repository = (*UserRepository)(nil)
 
 func NewUserRepository() (*UserRepository, error) {
-	// TODO: add error handling
 	db, err := database.ConnectToDatabase()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database. Error: %s", err)
