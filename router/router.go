@@ -1,13 +1,19 @@
 package router
 
 import (
+	"user_service/handlers"
+	"user_service/service"
+
 	"github.com/gin-gonic/gin"
 )
 
-// CreateRouter creates the router exposing the endpoints
-func CreateRouter(host, port string) *gin.Engine {
-	router := gin.Default()
+// CreateUserRouter creates the router exposing the endpoints
+func CreateUserRouter() *gin.Engine {
+	service := service.NewService()
+	handler := handlers.NewUserHandler(service)
 
-	// TODO: add state (or db) and set endpoints
+	router := gin.Default()
+	router.POST("/users", handler.CreateUser)
+
 	return router
 }

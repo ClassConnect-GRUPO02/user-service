@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"user_service/router"
 	"user_service/utils"
@@ -20,6 +21,9 @@ func main() {
 		log.Fatal("Error: ", err)
 	}
 	log.Println("Enviroment: ", environment)
-	router := router.CreateRouter(host, port)
-	router.Run()
+
+	router := router.CreateUserRouter()
+	address := fmt.Sprintf("%s:%s", host, port)
+
+	router.Run(address)
 }
