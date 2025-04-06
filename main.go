@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"user_service/database"
 	"user_service/router"
 	"user_service/utils"
 )
@@ -24,6 +25,6 @@ func main() {
 
 	router := router.CreateUserRouter()
 	address := fmt.Sprintf("%s:%s", host, port)
-
+	database.ConnectToDatabase()
 	router.Run(address)
 }

@@ -27,3 +27,13 @@ func EmailAlreadyRegisteredError(email string) error {
 		Instance: "/users",
 	}
 }
+
+func InternalServerError() error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Internal server error",
+		Status:   http.StatusInternalServerError,
+		Detail:   "Internal server error",
+		Instance: "/users",
+	}
+}

@@ -1,12 +1,15 @@
 services:
   server:
-    image: server
+    image: user_service
     env_file: .env
-
-  test:
-    image: test
-    environment: 
-      - HOST=server
-      - PORT=${PORT}
+    ports:
+    - 8080:8080
     depends_on:
-      - server
+     - database
+
+  database:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
