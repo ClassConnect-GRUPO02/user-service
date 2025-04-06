@@ -31,7 +31,7 @@ func TestUserService(t *testing.T) {
 		userRepositoryMock.AssertExpectations(t)
 	})
 
-	t.Run("email already registered", func(t *testing.T) {
+	t.Run("user creation fails due to email being already registered", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 
@@ -45,7 +45,7 @@ func TestUserService(t *testing.T) {
 		userRepositoryMock.AssertExpectations(t)
 	})
 
-	t.Run("internal server error", func(t *testing.T) {
+	t.Run("user creation fails due to internal server error", func(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
