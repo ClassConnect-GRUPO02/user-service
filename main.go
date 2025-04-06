@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"user_service/database"
 	"user_service/router"
 	"user_service/utils"
 )
@@ -23,8 +22,10 @@ func main() {
 	}
 	log.Println("Enviroment: ", environment)
 
-	router := router.CreateUserRouter()
+	router, err := router.CreateUserRouter()
+	if err != nil {
+		log.Fatalf("Failed to create router. Error: %s", err)
+	}
 	address := fmt.Sprintf("%s:%s", host, port)
-	database.ConnectToDatabase()
 	router.Run(address)
 }

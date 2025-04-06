@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"user_service/handlers"
 	"user_service/service"
 
@@ -8,12 +9,15 @@ import (
 )
 
 // CreateUserRouter creates the router exposing the endpoints
-func CreateUserRouter() *gin.Engine {
-	service := service.NewService()
+func CreateUserRouter() (*gin.Engine, error) {
+	service, err := service.NewService()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service. Error: %s", err)
+	}
 	handler := handlers.NewUserHandler(service)
 
 	router := gin.Default()
 	router.POST("/users", handler.CreateUser)
 
-	return router
+	return router, nil
 }

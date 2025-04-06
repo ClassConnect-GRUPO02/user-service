@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"log"
 	"user_service/models"
 	"user_service/repository"
@@ -13,12 +14,16 @@ type Service struct {
 	idCounter      int
 }
 
-func NewService() *Service {
+func NewService() (*Service, error) {
+	userRepository, err := repository.NewUserRepository()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user repository. Error: %s", err)
+	}
 	service := Service{
 		idCounter:      0,
-		userRepository: repository.NewUserRepository(),
+		userRepository: userRepository,
 	}
-	return &service
+	return &service, nil
 }
 
 func (s *Service) CreateUser(user models.User) error {
@@ -33,6 +38,7 @@ func (s *Service) CreateUser(user models.User) error {
 	err = s.userRepository.AddUser(user)
 	if err != nil {
 		log.Printf("Failed to add user %v to the database. Error: %s", user, err)
+		return models.InternalServerError()
 	}
 	return nil
 }

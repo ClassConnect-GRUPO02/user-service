@@ -14,12 +14,15 @@ type UserRepository struct {
 	db *sql.DB
 }
 
-func NewUserRepository() *UserRepository {
+func NewUserRepository() (*UserRepository, error) {
 	// TODO: add error handling
-	db := database.ConnectToDatabase()
+	db, err := database.ConnectToDatabase()
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database. Error: %s", err)
+	}
 	return &UserRepository{
 		db: db,
-	}
+	}, nil
 }
 
 func (r *UserRepository) IsEmailRegistered(email string) (bool, error) {
