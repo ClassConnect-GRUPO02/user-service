@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"crypto/sha1"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"user_service/database"
@@ -33,7 +35,12 @@ func (r *UserRepository) IsEmailRegistered(email string) (bool, error) {
 }
 
 func (r *UserRepository) AddUser(user models.User) error {
-	query := fmt.Sprintf("INSERT INTO users VALUES ('%s', '%s', '%s', '%s');", user.Email, user.Name, user.UserType, user.Password)
+	// Hash the password before storing it
+	hasher := sha1.New()
+	hasher.Write([]byte(user.Password))
+	passwordHash := hex.EncodeToString(hasher.Sum(nil))
+
+	query := fmt.Sprintf("INSERT INTO users VALUES ('%s', '%s', '%s', '%s');", user.Email, user.Name, user.UserType, passwordHash)
 	_, err := r.db.Exec(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
