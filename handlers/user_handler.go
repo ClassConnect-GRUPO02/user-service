@@ -24,14 +24,20 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	log.Print("Received a POST /users request!")
 	user := models.User{}
 	if err := c.ShouldBind(&user); err != nil {
-		log.Print("Error: Bad request")
 		c.JSON(http.StatusBadRequest, gin.H{
-			// TODO: handle error
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not register the user",
+			"instance": "/users",
 		})
 		return
 	}
-	// TODO: check errors
-	h.service.CreateUser(user)
+	err := h.service.CreateUser(user)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
 
 	c.JSON(http.StatusCreated, nil)
 }
