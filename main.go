@@ -27,5 +27,8 @@ func main() {
 		log.Fatalf("Failed to create router. Error: %s", err)
 	}
 	address := fmt.Sprintf("%s:%s", host, port)
-	router.Run(address)
+	err = router.Run(address)
+	if err != nil {
+		log.Fatalf("Failed to start router. Error: %s", err)
+	}
 }
