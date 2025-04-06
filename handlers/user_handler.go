@@ -39,5 +39,9 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, nil)
+	c.JSON(http.StatusCreated, gin.H{
+		"description": "User registered successfully",
+		"email":       user.Email,
+		"name":        user.Name,
+	})
 }
