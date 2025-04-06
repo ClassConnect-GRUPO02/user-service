@@ -1,13 +1,29 @@
 package router
 
 import (
+	"fmt"
+	"user_service/handlers"
+	"user_service/repository"
+	"user_service/service"
+
 	"github.com/gin-gonic/gin"
 )
 
-// CreateRouter creates the router exposing the endpoints
-func CreateRouter(host, port string) *gin.Engine {
-	router := gin.Default()
+// CreateUserRouter creates the router exposing the endpoints
+func CreateUserRouter() (*gin.Engine, error) {
+	repository, err := repository.NewUserRepository()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user repository. Error: %s", err)
+	}
 
-	// TODO: add state (or db) and set endpoints
-	return router
+	service, err := service.NewService(repository)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service. Error: %s", err)
+	}
+	handler := handlers.NewUserHandler(service)
+
+	router := gin.Default()
+	router.POST("/users", handler.CreateUser)
+
+	return router, nil
 }
