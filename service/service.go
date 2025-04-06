@@ -8,7 +8,7 @@ import (
 )
 
 type Service struct {
-	userRepository *repository.UserRepository
+	userRepository repository.Repository
 }
 
 func NewService() (*Service, error) {
