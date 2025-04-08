@@ -53,7 +53,7 @@ func (r *UserRepository) AddUser(user models.User) error {
 	return nil
 }
 
-func (r *UserRepository) PasswordMatches(email, password string) error {
+func (r *UserRepository) PasswordMatches(email, password string) (bool, error) {
 	// Hash the password
 	hasher := sha1.New()
 	hasher.Write([]byte(password))
@@ -64,12 +64,8 @@ func (r *UserRepository) PasswordMatches(email, password string) error {
 	err := r.db.QueryRow(query).Scan(&registeredPasswordHash)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
-		return err
+		return false, err
 	}
-
-	if passwordHash != registeredPasswordHash {
-		// TODO: change this to return invalid credentials
-		return models.InternalServerError()
-	}
-	return nil
+	passwordMatches := passwordHash == registeredPasswordHash
+	return passwordMatches, nil
 }

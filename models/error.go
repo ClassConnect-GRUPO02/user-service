@@ -37,3 +37,13 @@ func InternalServerError() error {
 		Instance: "/users",
 	}
 }
+
+func InvalidCredentialsError() error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Invalid credentials error",
+		Status:   http.StatusUnauthorized,
+		Detail:   "Could not authenticate the user (invalid email or password)",
+		Instance: "/login",
+	}
+}

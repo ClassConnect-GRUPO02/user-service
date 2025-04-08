@@ -41,12 +41,14 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		return models.InternalServerError()
 	}
 	if !emailRegistered {
-		// TODO: change this to return an InvalidEmailError
-		return models.EmailAlreadyRegisteredError(loginRequest.Email)
+		return models.InvalidCredentialsError()
 	}
-	err = s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
+	passwordMatches, err := s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
 	if err != nil {
 		return models.InternalServerError()
+	}
+	if !passwordMatches {
+		return models.InvalidCredentialsError()
 	}
 	return nil
 }
