@@ -33,3 +33,20 @@ func (s *Service) CreateUser(user models.User) error {
 	}
 	return nil
 }
+
+func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
+	log.Printf("Authenticating user %s", loginRequest.Email)
+	emailRegistered, err := s.userRepository.IsEmailRegistered(loginRequest.Email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	if !emailRegistered {
+		// TODO: change this to return an InvalidEmailError
+		return models.EmailAlreadyRegisteredError(loginRequest.Email)
+	}
+	err = s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}

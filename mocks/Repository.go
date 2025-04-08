@@ -59,6 +59,24 @@ func (_m *Repository) IsEmailRegistered(email string) (bool, error) {
 	return r0, r1
 }
 
+// PasswordMatches provides a mock function with given fields: email, password
+func (_m *Repository) PasswordMatches(email string, password string) error {
+	ret := _m.Called(email, password)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PasswordMatches")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(email, password)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewRepository creates a new instance of Repository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewRepository(t interface {
