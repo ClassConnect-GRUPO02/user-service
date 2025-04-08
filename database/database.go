@@ -11,7 +11,7 @@ import (
 
 func ConnectToDatabase() (*sql.DB, error) {
 	// Wait database startup
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	// Get the required env vars
 	host, err := utils.GetEnvVar("DATABASE_HOST")
