@@ -59,7 +59,7 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	err := h.service.LoginUser(loginRequest)
+	token, err := h.service.LoginUser(loginRequest)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
@@ -67,5 +67,6 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"description": "User logged in successfully",
+		"token":       token,
 	})
 }

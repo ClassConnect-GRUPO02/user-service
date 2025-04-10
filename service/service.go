@@ -2,6 +2,7 @@ package service
 
 import (
 	"log"
+	"user_service/auth"
 	"user_service/models"
 	"user_service/repository"
 )
@@ -34,21 +35,27 @@ func (s *Service) CreateUser(user models.User) error {
 	return nil
 }
 
-func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
+// Authenticates the user credentials, and returns a JWT session token on success
+func (s *Service) LoginUser(loginRequest models.LoginRequest) (string, error) {
 	log.Printf("Authenticating user %s", loginRequest.Email)
 	emailRegistered, err := s.userRepository.IsEmailRegistered(loginRequest.Email)
 	if err != nil {
-		return models.InternalServerError()
+		return "", models.InternalServerError()
 	}
 	if !emailRegistered {
-		return models.InvalidCredentialsError()
+		return "", models.InvalidCredentialsError()
 	}
 	passwordMatches, err := s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
 	if err != nil {
-		return models.InternalServerError()
+		return "", models.InternalServerError()
 	}
 	if !passwordMatches {
-		return models.InvalidCredentialsError()
+		return "", models.InvalidCredentialsError()
 	}
-	return nil
+	token, err := auth.IssueToken()
+	if err != nil {
+		log.Printf("Failed to generate JWT token. Error: %s", err)
+		return "", models.InternalServerError()
+	}
+	return token, nil
 }
