@@ -70,3 +70,34 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 		"token":       token,
 	})
 }
+
+type TokenRequest struct {
+	Token string
+}
+
+// TODO: remove this
+func (h *UserHandler) ValidateToken(c *gin.Context) {
+	tokenRequest := TokenRequest{}
+	if err := c.ShouldBind(&tokenRequest); err != nil {
+		log.Print("POST /token Error: Bad request")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not validate the token",
+			"instance": "/token",
+		})
+		return
+	}
+
+	err := h.service.ValidateToken(tokenRequest.Token)
+
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"description": "The token is valid bro",
+	})
+}

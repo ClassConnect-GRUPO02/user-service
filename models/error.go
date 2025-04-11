@@ -47,3 +47,21 @@ func InvalidCredentialsError() error {
 		Instance: "/login",
 	}
 }
+
+func InvalidToken() error {
+	return &Error{
+		Type:   "about:blank", // TODO: consider setting the right type here
+		Title:  "Invalid token",
+		Status: http.StatusUnauthorized,
+		Detail: "The given JWT token is invalid",
+	}
+}
+
+func SessionExpired() error {
+	return &Error{
+		Type:   "about:blank", // TODO: consider setting the right type here
+		Title:  "Session expired",
+		Status: http.StatusUnauthorized,
+		Detail: "The current session has expired.",
+	}
+}
