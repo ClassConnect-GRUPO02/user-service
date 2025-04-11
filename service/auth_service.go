@@ -10,7 +10,7 @@ import (
 const TOKEN_DURATION_IN_SECONDS = 10
 
 func (s *Service) ValidateToken(token string) error {
-	tokenClaims, err := auth.ValidateToken(token)
+	tokenClaims, err := auth.ValidateToken(token, s.secretKey)
 	if err != nil {
 		return models.InvalidToken()
 	}

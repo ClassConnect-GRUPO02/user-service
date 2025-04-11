@@ -3,30 +3,21 @@ package main
 import (
 	"fmt"
 	"log"
+	"user_service/config"
 	"user_service/router"
-	"user_service/utils"
 )
 
 func main() {
-	host, err := utils.GetEnvVar("HOST")
+	config, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("Error: ", err)
+		log.Fatalf("Failed to load config. Error: %s", err)
 	}
-	port, err := utils.GetEnvVar("PORT")
-	if err != nil {
-		log.Fatal("Error: ", err)
-	}
-	environment, err := utils.GetEnvVar("ENVIRONMENT")
-	if err != nil {
-		log.Fatal("Error: ", err)
-	}
-	log.Println("Enviroment: ", environment)
 
-	router, err := router.CreateUserRouter()
+	router, err := router.CreateUserRouter(config)
 	if err != nil {
 		log.Fatalf("Failed to create router. Error: %s", err)
 	}
-	address := fmt.Sprintf("%s:%s", host, port)
+	address := fmt.Sprintf("%s:%s", config.Host, config.Port)
 	err = router.Run(address)
 	if err != nil {
 		log.Fatalf("Failed to start router. Error: %s", err)
