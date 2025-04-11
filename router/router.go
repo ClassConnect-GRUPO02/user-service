@@ -24,6 +24,10 @@ func CreateUserRouter() (*gin.Engine, error) {
 
 	router := gin.Default()
 	router.POST("/users", handler.CreateUser)
+	router.POST("/login", handler.HandleLogin)
+
+	// TODO: remove this, for testing purposes only
+	router.POST("/token", handler.ValidateToken)
 
 	return router, nil
 }
