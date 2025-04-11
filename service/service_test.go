@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestUserService(t *testing.T) {
+func TestUserCreation(t *testing.T) {
 	user := models.User{
 		Email:    "john@example.com",
 		Name:     "John Doe",
@@ -55,6 +55,73 @@ func TestUserService(t *testing.T) {
 
 		err = userService.CreateUser(user)
 		expectedError := models.InternalServerError()
+		assert.Equal(t, expectedError, err)
+
+		userRepositoryMock.AssertExpectations(t)
+	})
+}
+
+func TestUserLogin(t *testing.T) {
+	loginRequest := models.LoginRequest{
+		Email:    "john@example.com",
+		Password: "password123",
+	}
+
+	t.Run("user logged in successfully", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsBlocked", mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock)
+		assert.NoError(t, err)
+
+		_, err = userService.LoginUser(loginRequest)
+		assert.NoError(t, err)
+
+		userRepositoryMock.AssertExpectations(t)
+	})
+
+	t.Run("user login fails due to invalid password", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock)
+		assert.NoError(t, err)
+
+		_, err = userService.LoginUser(loginRequest)
+		expectedError := models.InvalidCredentialsError()
+		assert.Equal(t, expectedError, err)
+
+		userRepositoryMock.AssertExpectations(t)
+	})
+
+	t.Run("user login fails due to invalid email", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock)
+		assert.NoError(t, err)
+
+		_, err = userService.LoginUser(loginRequest)
+		expectedError := models.InvalidCredentialsError()
+		assert.Equal(t, expectedError, err)
+
+		userRepositoryMock.AssertExpectations(t)
+	})
+
+	t.Run("blocked user cannot login", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsBlocked", mock.Anything).Return(true, nil)
+
+		userService, err := service.NewService(userRepositoryMock)
+		assert.NoError(t, err)
+
+		_, err = userService.LoginUser(loginRequest)
+		expectedError := models.UserBlockedError()
 		assert.Equal(t, expectedError, err)
 
 		userRepositoryMock.AssertExpectations(t)
