@@ -11,12 +11,14 @@ import (
 type Service struct {
 	userRepository repository.Repository
 	secretKey      []byte
+	tokenDuration  uint64
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
 		userRepository: repository,
 		secretKey:      config.SecretKey,
+		tokenDuration:  config.TokenDuration,
 	}
 	return &service, nil
 }
