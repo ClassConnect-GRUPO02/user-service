@@ -48,6 +48,16 @@ func InvalidCredentialsError() error {
 	}
 }
 
+func UserBlockedError() error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "The account is blocked",
+		Status:   http.StatusForbidden,
+		Detail:   "The given account is currently blocked and is not authorized to log in.",
+		Instance: "/login",
+	}
+}
+
 func InvalidToken() error {
 	return &Error{
 		Type:   "about:blank", // TODO: consider setting the right type here
