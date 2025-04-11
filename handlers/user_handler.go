@@ -54,7 +54,7 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 			"type":     "about:blank",
 			"status":   http.StatusBadRequest,
 			"detail":   "Could not authenticate the user",
-			"instance": "/users",
+			"instance": "/login",
 		})
 		return
 	}
