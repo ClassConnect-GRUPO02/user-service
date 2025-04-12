@@ -12,7 +12,7 @@ cp .env.example .env
 Para levantar el docker compose (servicio de usuarios y base de datos), ejecutar
 
 ```bash
-make start
+docker compose up
 ```
 
 ## Tests unitarios
