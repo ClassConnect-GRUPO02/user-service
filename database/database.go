@@ -3,16 +3,12 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"time"
 	"user_service/utils"
 
 	_ "github.com/lib/pq"
 )
 
 func ConnectToDatabase() (*sql.DB, error) {
-	// Wait database startup
-	time.Sleep(3 * time.Second)
-
 	// Get the required env vars
 	host, err := utils.GetEnvVar("DATABASE_HOST")
 	if err != nil {
