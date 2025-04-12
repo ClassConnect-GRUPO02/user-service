@@ -2,12 +2,11 @@ package service
 
 import (
 	"time"
-	"user_service/auth"
 	"user_service/models"
 )
 
 func (s *Service) ValidateToken(token string) error {
-	tokenClaims, err := auth.ValidateToken(token, s.secretKey)
+	tokenClaims, err := s.authService.ValidateToken(token)
 	if err != nil {
 		return models.InvalidToken()
 	}

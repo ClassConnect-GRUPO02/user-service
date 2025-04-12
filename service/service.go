@@ -10,15 +10,15 @@ import (
 
 type Service struct {
 	userRepository repository.Repository
-	secretKey      []byte
 	tokenDuration  uint64
+	authService    *auth.Auth
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
 		userRepository: repository,
-		secretKey:      config.SecretKey,
 		tokenDuration:  config.TokenDuration,
+		authService:    &auth.Auth{SecretKey: config.SecretKey},
 	}
 	return &service, nil
 }
@@ -70,7 +70,7 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) (string, error) {
 		return "", models.UserBlockedError()
 	}
 
-	token, err := auth.IssueToken(s.secretKey)
+	token, err := s.authService.IssueToken()
 	if err != nil {
 		log.Printf("Failed to generate JWT token. Error: %s", err)
 		return "", models.InternalServerError()

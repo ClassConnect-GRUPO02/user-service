@@ -13,13 +13,17 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func IssueToken(secretKey []byte) (string, error) {
+type Auth struct {
+	SecretKey []byte
+}
+
+func (auth *Auth) IssueToken() (string, error) {
 	claims := jwt.MapClaims{
 		// Issued at (the unix timestamp at which the token was issued)
 		"iat": time.Now().Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString(auth.SecretKey)
 	if err != nil {
 		return "", err
 	}
@@ -28,10 +32,10 @@ func IssueToken(secretKey []byte) (string, error) {
 
 // ValidateToken validates the given token, returning an error when the token is invalid.
 // If the token is valid, it returns the token claims.
-func ValidateToken(tokenString string, secretKey []byte) (*CustomClaims, error) {
+func (auth *Auth) ValidateToken(tokenString string) (*CustomClaims, error) {
 	customClaims := CustomClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, &customClaims, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return auth.SecretKey, nil
 	})
 	if err != nil {
 		log.Printf("Failed to parse token. Error: %s", err)
