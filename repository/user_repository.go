@@ -43,12 +43,40 @@ func (r *UserRepository) AddUser(user models.User) error {
 	hasher := sha1.New()
 	hasher.Write([]byte(user.Password))
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
-
-	query := fmt.Sprintf("INSERT INTO users VALUES ('%s', '%s', '%s', '%s');", user.Email, user.Name, user.UserType, passwordHash)
+	isBlocked := false
+	query := fmt.Sprintf("INSERT INTO users VALUES ('%s', '%s', '%s', '%s', '%v');", user.Email, user.Name, user.UserType, passwordHash, isBlocked)
 	_, err := r.db.Exec(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
 		return err
 	}
 	return nil
+}
+
+func (r *UserRepository) PasswordMatches(email, password string) (bool, error) {
+	// Hash the password
+	hasher := sha1.New()
+	hasher.Write([]byte(password))
+	passwordHash := hex.EncodeToString(hasher.Sum(nil))
+
+	var registeredPasswordHash string
+	query := fmt.Sprintf("SELECT password_hash FROM users WHERE email='%s';", email)
+	err := r.db.QueryRow(query).Scan(&registeredPasswordHash)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return false, err
+	}
+	passwordMatches := passwordHash == registeredPasswordHash
+	return passwordMatches, nil
+}
+
+func (r *UserRepository) UserIsBlocked(email string) (bool, error) {
+	var isBlocked bool
+	query := fmt.Sprintf("SELECT is_blocked FROM users WHERE email='%s';", email)
+	err := r.db.QueryRow(query).Scan(&isBlocked)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return false, err
+	}
+	return isBlocked, nil
 }
