@@ -65,39 +65,50 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	c.JSON(http.StatusAccepted, gin.H{
 		"description": "User logged in successfully",
 		"token":       token,
 	})
 }
 
-type TokenRequest struct {
-	Token string
-}
-
-// TODO: remove this
-func (h *UserHandler) ValidateToken(c *gin.Context) {
-	tokenRequest := TokenRequest{}
-	if err := c.ShouldBind(&tokenRequest); err != nil {
-		log.Print("POST /token Error: Bad request")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not validate the token",
-			"instance": "/token",
-		})
+func (h *UserHandler) GetUsers(c *gin.Context) {
+	err := h.ValidateToken(c)
+	if err != nil {
 		return
 	}
-
-	err := h.service.ValidateToken(tokenRequest.Token)
-
+	users, err := h.service.GetUsers()
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"description": "The token is valid bro",
+	c.JSON(http.StatusOK, gin.H{
+		"users": users,
+	})
+}
+
+func (h *UserHandler) GetUser(c *gin.Context) {
+	err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	id, isPresent := c.Params.Get("id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Missing id",
+			"instance": "/user",
+		})
+		return
+	}
+	user, err := h.service.GetUser(id)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"user": user,
 	})
 }

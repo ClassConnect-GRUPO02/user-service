@@ -6,3 +6,9 @@ type User struct {
 	Password string `json:"password" binding:"required"`
 	UserType string `json:"userType" binding:"required"`
 }
+
+type UserInfo struct {
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	UserType string `json:"userType"`
+}
