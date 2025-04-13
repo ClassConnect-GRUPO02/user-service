@@ -40,45 +40,36 @@ func (s *Service) CreateUser(user models.User) error {
 	return nil
 }
 
-// Authenticates the user credentials, and returns a JWT session token on success
-func (s *Service) LoginUser(loginRequest models.LoginRequest) (string, error) {
+// Authenticates the user credentials, and returns an error in case of failure
+func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	log.Printf("Authenticating user %s", loginRequest.Email)
 	// Check if the email is registered
 	emailRegistered, err := s.userRepository.IsEmailRegistered(loginRequest.Email)
 	if err != nil {
-		return "", models.InternalServerError()
+		return models.InternalServerError()
 	}
 	if !emailRegistered {
-		return "", models.InvalidCredentialsError()
+		return models.InvalidCredentialsError()
 	}
 
 	// Check if the password is correct
 	passwordMatches, err := s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
 	if err != nil {
-		return "", models.InternalServerError()
+		return models.InternalServerError()
 	}
 	if !passwordMatches {
-		return "", models.InvalidCredentialsError()
+		return models.InvalidCredentialsError()
 	}
 
 	// Check if the user is blocked
 	userIsBlocked, err := s.userRepository.UserIsBlocked(loginRequest.Email)
 	if err != nil {
-		return "", models.InternalServerError()
+		return models.InternalServerError()
 	}
 	if userIsBlocked {
-		return "", models.UserBlockedError()
+		return models.UserBlockedError()
 	}
-	userId, err := s.userRepository.GetUserIdByEmail(loginRequest.Email)
-	if err != nil {
-		return "", models.InternalServerError()
-	}
-	token, err := s.authService.IssueToken(userId)
-	if err != nil {
-		log.Printf("Failed to generate JWT token. Error: %s", err)
-		return "", models.InternalServerError()
-	}
-	return token, nil
+	return nil
 }
 
 func (s *Service) GetUsers() ([]models.UserPublicInfo, error) {
@@ -98,4 +89,21 @@ func (s *Service) GetUser(id string) (*models.UserInfo, error) {
 		return nil, models.UserNotFoundError(id)
 	}
 	return user, nil
+}
+
+func (s *Service) IssueToken(id string) (string, error) {
+	token, err := s.authService.IssueToken(id)
+	if err != nil {
+		log.Printf("Failed to generate JWT token. Error: %s", err)
+		return "", models.InternalServerError()
+	}
+	return token, nil
+}
+
+func (s *Service) GetUserIdByEmail(email string) (string, error) {
+	userId, err := s.userRepository.GetUserIdByEmail(email)
+	if err != nil {
+		return "", models.InternalServerError()
+	}
+	return userId, nil
 }
