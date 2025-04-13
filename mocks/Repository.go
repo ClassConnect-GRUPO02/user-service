@@ -90,23 +90,23 @@ func (_m *Repository) GetUserIdByEmail(email string) (string, error) {
 }
 
 // GetUsers provides a mock function with no fields
-func (_m *Repository) GetUsers() ([]models.UserInfo, error) {
+func (_m *Repository) GetUsers() ([]models.UserPublicInfo, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsers")
 	}
 
-	var r0 []models.UserInfo
+	var r0 []models.UserPublicInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]models.UserInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func() ([]models.UserPublicInfo, error)); ok {
 		return rf()
 	}
-	if rf, ok := ret.Get(0).(func() []models.UserInfo); ok {
+	if rf, ok := ret.Get(0).(func() []models.UserPublicInfo); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.UserInfo)
+			r0 = ret.Get(0).([]models.UserPublicInfo)
 		}
 	}
 

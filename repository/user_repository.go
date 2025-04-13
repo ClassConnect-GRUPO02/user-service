@@ -81,26 +81,24 @@ func (r *UserRepository) UserIsBlocked(email string) (bool, error) {
 	return isBlocked, nil
 }
 
-func (r *UserRepository) GetUsers() ([]models.UserInfo, error) {
-	query := "SELECT id, name, type FROM users;"
+func (r *UserRepository) GetUsers() ([]models.UserPublicInfo, error) {
+	query := "SELECT id, name, email, type FROM users;"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
 		return nil, err
 	}
 	defer rows.Close()
-	users := make([]models.UserInfo, 0)
+	users := make([]models.UserPublicInfo, 0)
 	for rows.Next() {
-		var id string
-		var name string
-		var userType string
-		err = rows.Scan(&id, &name, &userType)
+		var id, name, email, userType string
+		err = rows.Scan(&id, &name, &email, &userType)
 		if err != nil {
 			log.Printf("failed to scan row. Error: %s", err)
 			return nil, err
 		}
 		log.Printf("User id = %s", id)
-		user := models.UserInfo{Name: name, UserType: userType, Id: id}
+		user := models.UserPublicInfo{Name: name, UserType: userType, Id: id, Email: email}
 		users = append(users, user)
 		fmt.Printf("user: %v", user)
 	}
