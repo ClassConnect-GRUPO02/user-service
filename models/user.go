@@ -8,7 +8,7 @@ type User struct {
 }
 
 type UserInfo struct {
-	Id       int
-	Name     string
-	UserType string
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	UserType string `json:"userType"`
 }
