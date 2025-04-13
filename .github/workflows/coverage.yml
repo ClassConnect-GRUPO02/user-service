@@ -20,6 +20,7 @@ jobs:
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
           compose-file: "docker-compose-test.yaml"
+          up-flags: "--abort-on-container-exit"
 
       - name: Copy the coverage output to the host
         run: docker cp user-service-service-1:/usr/src/app/coverage.out ./coverage.out
