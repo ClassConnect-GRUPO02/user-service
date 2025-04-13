@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"user_service/models"
 	"user_service/service"
 
@@ -113,18 +111,4 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user": user,
 	})
-}
-
-func extractBearerToken(authHeader string) (string, error) {
-	if authHeader == "" {
-		return "", fmt.Errorf("missing JWT token")
-	}
-
-	const bearerPrefix = "Bearer "
-	if !strings.HasPrefix(authHeader, bearerPrefix) {
-		return "", fmt.Errorf("expected Bearer authorization header")
-	}
-
-	token := strings.TrimPrefix(authHeader, bearerPrefix)
-	return token, nil
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"user_service/models"
 
 	"github.com/gin-gonic/gin"
@@ -38,4 +39,18 @@ func (h *UserHandler) ValidateToken(c *gin.Context) error {
 		return err
 	}
 	return nil
+}
+
+func extractBearerToken(authHeader string) (string, error) {
+	if authHeader == "" {
+		return "", fmt.Errorf("missing JWT token")
+	}
+
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		return "", fmt.Errorf("expected Bearer authorization header")
+	}
+
+	token := strings.TrimPrefix(authHeader, bearerPrefix)
+	return token, nil
 }
