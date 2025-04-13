@@ -1,19 +1,25 @@
 name: Test and coverage
 
-on: [push, pull_request]
+on:
+  push:
+    branches: 
+      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4.2.2
 
-      - uses: actions/setup-go@v2
+      - name: Run tests with postgres
+        uses: hoverkraft-tech/compose-action@v2.0.1
         with:
-          go-version: '1.23'
+          compose-file: "docker-compose-test.yaml"
 
-      - name: Run coverage
-        run: ./integration_test.sh
-
+      - name: Copy the coverage output to the host
+        run: docker cp user-service-service-1:/usr/src/app/coverage.out ./coverage.out
+      
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
