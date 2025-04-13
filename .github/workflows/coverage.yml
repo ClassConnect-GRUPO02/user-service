@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
 
+      - name: Set up .env file
+        run: cp .env.example .env
+
       - name: Run tests with postgres
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
