@@ -10,6 +10,7 @@ import (
 
 type CustomClaims struct {
 	IssuedAt uint64 `json:"iat"`
+	Id       string `json:"id"`
 	jwt.StandardClaims
 }
 
@@ -17,10 +18,11 @@ type Auth struct {
 	SecretKey []byte
 }
 
-func (auth *Auth) IssueToken() (string, error) {
+func (auth *Auth) IssueToken(id string) (string, error) {
 	claims := jwt.MapClaims{
 		// Issued at (the unix timestamp at which the token was issued)
 		"iat": time.Now().Unix(),
+		"id":  id,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(auth.SecretKey)

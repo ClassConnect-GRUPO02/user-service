@@ -69,8 +69,11 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) (string, error) {
 	if userIsBlocked {
 		return "", models.UserBlockedError()
 	}
-
-	token, err := s.authService.IssueToken()
+	userId, err := s.userRepository.GetUserIdByEmail(loginRequest.Email)
+	if err != nil {
+		return "", models.InternalServerError()
+	}
+	token, err := s.authService.IssueToken(userId)
 	if err != nil {
 		log.Printf("Failed to generate JWT token. Error: %s", err)
 		return "", models.InternalServerError()

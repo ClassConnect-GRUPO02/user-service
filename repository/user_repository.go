@@ -134,3 +134,26 @@ func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
 	}
 	return nil, nil
 }
+
+func (r *UserRepository) GetUserIdByEmail(email string) (string, error) {
+	query := fmt.Sprintf("SELECT id FROM users WHERE email='%s';", email)
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return "", err
+	}
+	defer rows.Close()
+
+	// If the query returned at least one row
+	if rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Printf("failed to scan row. Error: %s", err)
+			return "", err
+		}
+		log.Printf("User id = %s", id)
+		return id, nil
+	}
+	return "", nil
+}

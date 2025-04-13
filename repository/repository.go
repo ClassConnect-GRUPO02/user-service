@@ -11,4 +11,5 @@ type Repository interface {
 	UserIsBlocked(email string) (bool, error)
 	GetUsers() ([]models.UserInfo, error)
 	GetUser(id string) (*models.UserInfo, error)
+	GetUserIdByEmail(email string) (string, error)
 }
