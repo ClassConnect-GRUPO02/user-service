@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"user_service/models"
 	"user_service/service"
 
@@ -71,33 +73,55 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 	})
 }
 
-type TokenRequest struct {
-	Token string
-}
-
-// TODO: remove this
-func (h *UserHandler) ValidateToken(c *gin.Context) {
-	tokenRequest := TokenRequest{}
-	if err := c.ShouldBind(&tokenRequest); err != nil {
-		log.Print("POST /token Error: Bad request")
+func (h *UserHandler) GetUsers(c *gin.Context) {
+	request := models.AuthRequest{}
+	if err := c.ShouldBindHeader(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"title":    "Bad request",
 			"type":     "about:blank",
 			"status":   http.StatusBadRequest,
-			"detail":   "Could not validate the token",
-			"instance": "/token",
+			"detail":   "Missing header: Authorization: Bearer",
+			"instance": "/users",
 		})
 		return
 	}
-
-	err := h.service.ValidateToken(tokenRequest.Token)
-
+	token, err := extractBearerToken(request.Token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   err.Error(),
+			"instance": "/users",
+		})
+		return
+	}
+	err = h.service.ValidateToken(token)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	users, err := h.service.GetUsers()
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"description": "The token is valid bro",
+		"users": users,
 	})
+}
+
+func extractBearerToken(authHeader string) (string, error) {
+	if authHeader == "" {
+		return "", fmt.Errorf("missing JWT token")
+	}
+
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		return "", fmt.Errorf("expected Bearer authorization header")
+	}
+
+	token := strings.TrimPrefix(authHeader, bearerPrefix)
+	return token, nil
 }

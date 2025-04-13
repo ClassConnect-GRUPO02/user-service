@@ -77,3 +77,11 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) (string, error) {
 	}
 	return token, nil
 }
+
+func (s *Service) GetUsers() ([]models.UserInfo, error) {
+	users, err := s.userRepository.GetUsers()
+	if err != nil {
+		return nil, models.InternalServerError()
+	}
+	return users, nil
+}

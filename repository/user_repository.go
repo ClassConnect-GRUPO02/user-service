@@ -44,7 +44,7 @@ func (r *UserRepository) AddUser(user models.User) error {
 	hasher.Write([]byte(user.Password))
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	isBlocked := false
-	query := fmt.Sprintf("INSERT INTO users VALUES ('%s', '%s', '%s', '%s', '%v');", user.Email, user.Name, user.UserType, passwordHash, isBlocked)
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%v');", user.Email, user.Name, user.UserType, passwordHash, isBlocked)
 	_, err := r.db.Exec(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
@@ -79,4 +79,30 @@ func (r *UserRepository) UserIsBlocked(email string) (bool, error) {
 		return false, err
 	}
 	return isBlocked, nil
+}
+
+func (r *UserRepository) GetUsers() ([]models.UserInfo, error) {
+	query := "SELECT id, name, type FROM users;"
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return nil, err
+	}
+	defer rows.Close()
+	users := make([]models.UserInfo, 0)
+	for rows.Next() {
+		var id int
+		var name string
+		var userType string
+		err = rows.Scan(&id, &name, &userType)
+		if err != nil {
+			log.Printf("failed to scan row. Error: %s", err)
+			return nil, err
+		}
+		log.Printf("User id = %d", id)
+		user := models.UserInfo{Name: name, UserType: userType, Id: id}
+		users = append(users, user)
+		fmt.Printf("user: %v", user)
+	}
+	return users, err
 }
