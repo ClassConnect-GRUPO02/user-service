@@ -85,3 +85,11 @@ func (s *Service) GetUsers() ([]models.UserInfo, error) {
 	}
 	return users, nil
 }
+
+func (s *Service) GetUser(id string) (*models.UserInfo, error) {
+	user, err := s.userRepository.GetUser(id)
+	if err != nil {
+		return nil, models.InternalServerError()
+	}
+	return user, nil
+}

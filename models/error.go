@@ -75,3 +75,13 @@ func SessionExpired() error {
 		Detail: "The current session has expired.",
 	}
 }
+
+func UserNotFoundError(id string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "User not found",
+		Status:   http.StatusNotFound,
+		Detail:   fmt.Sprintf("The user with id %s was not found", id),
+		Instance: fmt.Sprintf("/user/%s", id),
+	}
+}

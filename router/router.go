@@ -27,6 +27,7 @@ func CreateUserRouter(config *config.Config) (*gin.Engine, error) {
 	router.POST("/users", handler.CreateUser)
 	router.POST("/login", handler.HandleLogin)
 	router.GET("/users", handler.GetUsers)
+	router.GET("/user/:id", handler.GetUser)
 
 	return router, nil
 }

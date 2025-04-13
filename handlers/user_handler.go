@@ -67,7 +67,7 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	c.JSON(http.StatusAccepted, gin.H{
 		"description": "User logged in successfully",
 		"token":       token,
 	})
@@ -107,8 +107,61 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"users": users,
+	})
+}
+func (h *UserHandler) GetUser(c *gin.Context) {
+	request := models.AuthRequest{}
+	if err := c.ShouldBindHeader(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Missing header: Authorization: Bearer",
+			"instance": "/user",
+		})
+		return
+	}
+	id, isPresent := c.Params.Get("id")
+	if !isPresent {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Missing id",
+			"instance": "/user",
+		})
+		return
+	}
+	token, err := extractBearerToken(request.Token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   err.Error(),
+			"instance": "/user",
+		})
+		return
+	}
+	err = h.service.ValidateToken(token)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	user, err := h.service.GetUser(id)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	if user == nil {
+		err, _ := models.UserNotFoundError(id).(*models.Error)
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"user": user,
 	})
 }
 

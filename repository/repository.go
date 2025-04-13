@@ -10,4 +10,5 @@ type Repository interface {
 	PasswordMatches(email, password string) (bool, error)
 	UserIsBlocked(email string) (bool, error)
 	GetUsers() ([]models.UserInfo, error)
+	GetUser(id string) (*models.UserInfo, error)
 }
