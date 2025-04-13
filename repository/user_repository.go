@@ -108,7 +108,7 @@ func (r *UserRepository) GetUsers() ([]models.UserInfo, error) {
 }
 
 func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
-	query := fmt.Sprintf("SELECT name, email, type FROM users WHERE id=%s;", id)
+	query := fmt.Sprintf("SELECT id, name, email, type FROM users WHERE id=%s;", id)
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
