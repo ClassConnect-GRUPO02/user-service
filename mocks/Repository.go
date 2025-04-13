@@ -61,24 +61,52 @@ func (_m *Repository) GetUser(id string) (*models.UserInfo, error) {
 	return r0, r1
 }
 
+// GetUserIdByEmail provides a mock function with given fields: email
+func (_m *Repository) GetUserIdByEmail(email string) (string, error) {
+	ret := _m.Called(email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserIdByEmail")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(email)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUsers provides a mock function with no fields
-func (_m *Repository) GetUsers() ([]models.UserInfo, error) {
+func (_m *Repository) GetUsers() ([]models.UserPublicInfo, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsers")
 	}
 
-	var r0 []models.UserInfo
+	var r0 []models.UserPublicInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]models.UserInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func() ([]models.UserPublicInfo, error)); ok {
 		return rf()
 	}
-	if rf, ok := ret.Get(0).(func() []models.UserInfo); ok {
+	if rf, ok := ret.Get(0).(func() []models.UserPublicInfo); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.UserInfo)
+			r0 = ret.Get(0).([]models.UserPublicInfo)
 		}
 	}
 

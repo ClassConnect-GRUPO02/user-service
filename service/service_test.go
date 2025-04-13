@@ -79,6 +79,7 @@ func TestUserLogin(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
 		userRepositoryMock.On("UserIsBlocked", mock.Anything).Return(false, nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -136,8 +137,9 @@ func TestUserLogin(t *testing.T) {
 }
 
 func TestGetUsers(t *testing.T) {
-	userInfo := models.UserInfo{Id: "1", Name: "John Doe", UserType: "alumno"}
-	expectedUsers := []models.UserInfo{userInfo}
+	userInfo := models.UserInfo{Id: "1", Name: "John Doe", UserType: "alumno", Email: "john@example.com"}
+	userPublicInfo := models.UserPublicInfo{Id: "1", Name: "John Doe", UserType: "alumno", Email: "john@example.com"}
+	expectedUsers := []models.UserPublicInfo{userPublicInfo}
 	config := config.Config{}
 
 	t.Run("get users succeeds", func(t *testing.T) {

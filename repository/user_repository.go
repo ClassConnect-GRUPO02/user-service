@@ -81,26 +81,24 @@ func (r *UserRepository) UserIsBlocked(email string) (bool, error) {
 	return isBlocked, nil
 }
 
-func (r *UserRepository) GetUsers() ([]models.UserInfo, error) {
-	query := "SELECT id, name, type FROM users;"
+func (r *UserRepository) GetUsers() ([]models.UserPublicInfo, error) {
+	query := "SELECT id, name, email, type FROM users;"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
 		return nil, err
 	}
 	defer rows.Close()
-	users := make([]models.UserInfo, 0)
+	users := make([]models.UserPublicInfo, 0)
 	for rows.Next() {
-		var id string
-		var name string
-		var userType string
-		err = rows.Scan(&id, &name, &userType)
+		var id, name, email, userType string
+		err = rows.Scan(&id, &name, &email, &userType)
 		if err != nil {
 			log.Printf("failed to scan row. Error: %s", err)
 			return nil, err
 		}
 		log.Printf("User id = %s", id)
-		user := models.UserInfo{Name: name, UserType: userType, Id: id}
+		user := models.UserPublicInfo{Name: name, UserType: userType, Id: id, Email: email}
 		users = append(users, user)
 		fmt.Printf("user: %v", user)
 	}
@@ -108,7 +106,7 @@ func (r *UserRepository) GetUsers() ([]models.UserInfo, error) {
 }
 
 func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
-	query := fmt.Sprintf("SELECT id, name, email, type FROM users WHERE id=%s;", id)
+	query := fmt.Sprintf("SELECT id, name, email, type, latitude, longitude FROM users WHERE id=%s;", id)
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
@@ -118,19 +116,40 @@ func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
 
 	// If the query returned at least one row
 	if rows.Next() {
-		var id string
-		var name string
-		var email string
-		var userType string
-		err = rows.Scan(&id, &name, &email, &userType)
+		var id, name, email, userType string
+		var latitude, longitude float64
+		err = rows.Scan(&id, &name, &email, &userType, &latitude, &longitude)
 		if err != nil {
 			log.Printf("failed to scan row. Error: %s", err)
 			return nil, err
 		}
 		log.Printf("User id = %s", id)
-		user := models.UserInfo{Name: name, UserType: userType, Id: id}
+		user := models.UserInfo{Name: name, UserType: userType, Id: id, Latitude: latitude, Longitude: longitude}
 		fmt.Printf("user: %v", user)
 		return &user, nil
 	}
 	return nil, nil
+}
+
+func (r *UserRepository) GetUserIdByEmail(email string) (string, error) {
+	query := fmt.Sprintf("SELECT id FROM users WHERE email='%s';", email)
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return "", err
+	}
+	defer rows.Close()
+
+	// If the query returned at least one row
+	if rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Printf("failed to scan row. Error: %s", err)
+			return "", err
+		}
+		log.Printf("User id = %s", id)
+		return id, nil
+	}
+	return "", nil
 }

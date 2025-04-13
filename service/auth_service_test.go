@@ -18,7 +18,8 @@ func TestTokenValidation(t *testing.T) {
 	userRepositoryMock := new(mocks.Repository)
 	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
 	auth := auth.Auth{SecretKey: secretKey}
-	token, _ := auth.IssueToken()
+	id := "1"
+	token, _ := auth.IssueToken(id)
 
 	t.Run("validate valid token", func(t *testing.T) {
 		config := config.Config{SecretKey: secretKey, TokenDuration: 300}

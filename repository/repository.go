@@ -9,6 +9,7 @@ type Repository interface {
 	AddUser(user models.User) error
 	PasswordMatches(email, password string) (bool, error)
 	UserIsBlocked(email string) (bool, error)
-	GetUsers() ([]models.UserInfo, error)
+	GetUsers() ([]models.UserPublicInfo, error)
 	GetUser(id string) (*models.UserInfo, error)
+	GetUserIdByEmail(email string) (string, error)
 }
