@@ -108,7 +108,7 @@ func (r *UserRepository) GetUsers() ([]models.UserInfo, error) {
 }
 
 func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
-	query := fmt.Sprintf("SELECT id, name, email, type FROM users WHERE id=%s;", id)
+	query := fmt.Sprintf("SELECT id, name, email, type, latitude, longitude FROM users WHERE id=%s;", id)
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
@@ -118,17 +118,15 @@ func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
 
 	// If the query returned at least one row
 	if rows.Next() {
-		var id string
-		var name string
-		var email string
-		var userType string
-		err = rows.Scan(&id, &name, &email, &userType)
+		var id, name, email, userType string
+		var latitude, longitude float64
+		err = rows.Scan(&id, &name, &email, &userType, &latitude, &longitude)
 		if err != nil {
 			log.Printf("failed to scan row. Error: %s", err)
 			return nil, err
 		}
 		log.Printf("User id = %s", id)
-		user := models.UserInfo{Name: name, UserType: userType, Id: id}
+		user := models.UserInfo{Name: name, UserType: userType, Id: id, Latitude: latitude, Longitude: longitude}
 		fmt.Printf("user: %v", user)
 		return &user, nil
 	}

@@ -72,7 +72,7 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {
-	err := h.ValidateToken(c)
+	_, err := h.ValidateToken(c)
 	if err != nil {
 		return
 	}
@@ -88,7 +88,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
-	err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
 		return
 	}
@@ -103,12 +103,37 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		})
 		return
 	}
+	// Retrieve the user by its id
 	user, err := h.service.GetUser(id)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
 	}
+	// Get the ID of the sender from the JWT token
+	idSender, err := h.service.GetUserIdFromToken(token)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	log.Printf("idSender = %s, id = %s", idSender, id)
+	// If the id of the sender is the same as the target, then
+	// the user is retrieving its own info, so we respond with
+	// the full information (public and private fields)
+	if idSender == id {
+		log.Printf("ID sender is the same as the ID target!")
+		c.JSON(http.StatusOK, gin.H{
+			"user": user,
+		})
+		return
+	}
+	// Otherwise, respond only with the public fields
+	// (omit the private ones like the location)
 	c.JSON(http.StatusOK, gin.H{
-		"user": user,
+		"user": models.UserPublicInfo{
+			Id:       user.Id,
+			Name:     user.Name,
+			Email:    user.Email,
+			UserType: user.UserType,
+		},
 	})
 }

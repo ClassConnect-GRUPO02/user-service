@@ -9,8 +9,8 @@ import (
 )
 
 type CustomClaims struct {
-	IssuedAt uint64 `json:"iat"`
-	Id       string `json:"id"`
+	IssuedAt uint64 `json:"iat" binding:"required"`
+	Id       string `json:"id" binding:"required"`
 	jwt.StandardClaims
 }
 

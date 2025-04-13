@@ -136,8 +136,8 @@ func TestUserLogin(t *testing.T) {
 }
 
 func TestGetUsers(t *testing.T) {
-	userInfo := models.UserInfo{Id: "1", Name: "John Doe", UserType: "alumno"}
-	expectedUsers := []models.UserInfo{userInfo}
+	userInfo := models.UserPublicInfo{Id: "1", Name: "John Doe", UserType: "alumno", Email: "john@example.com"}
+	expectedUsers := []models.UserPublicInfo{userInfo}
 	config := config.Config{}
 
 	t.Run("get users succeeds", func(t *testing.T) {

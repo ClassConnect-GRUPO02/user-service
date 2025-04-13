@@ -9,8 +9,19 @@ type User struct {
 	Longitude float64 `json:"longitude" binding:"required"`
 }
 
-type UserInfo struct {
+// The public information of a user does not contain its location (latitude and longitude)
+type UserPublicInfo struct {
 	Id       string `json:"id"`
 	Name     string `json:"name"`
+	Email    string `json:"email"`
 	UserType string `json:"userType"`
+}
+
+type UserInfo struct {
+	Id        string  `json:"id"`
+	Name      string  `json:"name"`
+	Email     string  `json:"email"`
+	UserType  string  `json:"userType"`
+	Latitude  float64 `json:"latitude" binding:"required"`
+	Longitude float64 `json:"longitude" binding:"required"`
 }

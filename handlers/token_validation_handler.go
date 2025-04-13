@@ -9,7 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *UserHandler) ValidateToken(c *gin.Context) error {
+// Validates and returns the token
+func (h *UserHandler) ValidateToken(c *gin.Context) (string, error) {
 	url := c.Request.URL.String()
 	request := models.AuthRequest{}
 	if err := c.ShouldBindHeader(&request); err != nil {
@@ -20,7 +21,7 @@ func (h *UserHandler) ValidateToken(c *gin.Context) error {
 			"detail":   "Missing 'Authorization' header",
 			"instance": url,
 		})
-		return err
+		return "", err
 	}
 	token, err := extractBearerToken(request.Token)
 	if err != nil {
@@ -31,14 +32,14 @@ func (h *UserHandler) ValidateToken(c *gin.Context) error {
 			"detail":   fmt.Sprint("Error: ", err.Error()),
 			"instance": url,
 		})
-		return err
+		return "", err
 	}
 	err = h.service.ValidateToken(token)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
-		return err
+		return "", err
 	}
-	return nil
+	return token, nil
 }
 
 func extractBearerToken(authHeader string) (string, error) {
