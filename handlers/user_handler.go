@@ -155,11 +155,6 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	if user == nil {
-		err, _ := models.UserNotFoundError(id).(*models.Error)
-		c.JSON(err.Status, err)
-		return
-	}
 	c.JSON(http.StatusOK, gin.H{
 		"user": user,
 	})

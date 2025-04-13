@@ -91,5 +91,8 @@ func (s *Service) GetUser(id string) (*models.UserInfo, error) {
 	if err != nil {
 		return nil, models.InternalServerError()
 	}
+	if user == nil {
+		return nil, models.UserNotFoundError(id)
+	}
 	return user, nil
 }
