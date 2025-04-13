@@ -48,8 +48,9 @@ func TestIntegration(t *testing.T) {
 			Email:    user.Email,
 			Password: user.Password,
 		}
-		_, err = userService.LoginUser(loginRequest)
+		token, err := userService.LoginUser(loginRequest)
 		assert.NoError(t, err)
+		assert.NotEqual(t, "", token)
 	})
 
 	t.Run("user login fails due to invalid password", func(t *testing.T) {
@@ -57,9 +58,10 @@ func TestIntegration(t *testing.T) {
 			Email:    user.Email,
 			Password: "wrong_password",
 		}
-		_, err = userService.LoginUser(loginRequest)
+		token, err := userService.LoginUser(loginRequest)
 		expectedError := models.InvalidCredentialsError()
 		assert.Equal(t, expectedError, err)
+		assert.NotEqual(t, "", token)
 	})
 }
 
