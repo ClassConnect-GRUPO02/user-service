@@ -11,15 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Set up .env file
         run: cp .env.example .env
 
-      - name: Run tests with postgres
-        uses: hoverkraft-tech/compose-action@v2.0.1
-        with:
-          compose-file: "docker-compose-test.yaml"
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+
+      - name: Run tests
+        run: docker compose -f docker-compose-test.yaml up --abort-on-container-exit
 
       - name: Copy the coverage output to the host
         run: docker cp user-service-service-1:/usr/src/app/coverage.out ./coverage.out
