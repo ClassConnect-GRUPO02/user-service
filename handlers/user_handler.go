@@ -59,14 +59,24 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.LoginUser(loginRequest)
+	err := h.service.LoginUser(loginRequest)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
 	}
-
+	userId, err := h.service.GetUserIdByEmail(loginRequest.Email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	token, err := h.service.IssueToken(userId)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
 	c.JSON(http.StatusAccepted, gin.H{
 		"description": "User logged in successfully",
+		"id":          userId,
 		"token":       token,
 	})
 }

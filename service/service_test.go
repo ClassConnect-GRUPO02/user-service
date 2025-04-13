@@ -84,7 +84,7 @@ func TestUserLogin(t *testing.T) {
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
 
-		_, err = userService.LoginUser(loginRequest)
+		err = userService.LoginUser(loginRequest)
 		assert.NoError(t, err)
 
 		userRepositoryMock.AssertExpectations(t)
@@ -98,7 +98,7 @@ func TestUserLogin(t *testing.T) {
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
 
-		_, err = userService.LoginUser(loginRequest)
+		err = userService.LoginUser(loginRequest)
 		expectedError := models.InvalidCredentialsError()
 		assert.Equal(t, expectedError, err)
 
@@ -112,7 +112,7 @@ func TestUserLogin(t *testing.T) {
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
 
-		_, err = userService.LoginUser(loginRequest)
+		err = userService.LoginUser(loginRequest)
 		expectedError := models.InvalidCredentialsError()
 		assert.Equal(t, expectedError, err)
 
@@ -128,7 +128,7 @@ func TestUserLogin(t *testing.T) {
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
 
-		_, err = userService.LoginUser(loginRequest)
+		err = userService.LoginUser(loginRequest)
 		expectedError := models.UserBlockedError()
 		assert.Equal(t, expectedError, err)
 
