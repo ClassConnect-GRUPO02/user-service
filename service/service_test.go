@@ -14,10 +14,12 @@ import (
 
 func TestUserCreation(t *testing.T) {
 	user := models.User{
-		Email:    "john@example.com",
-		Name:     "John Doe",
-		Password: "password",
-		UserType: "alumno",
+		Email:     "john@example.com",
+		Name:      "John Doe",
+		Password:  "password",
+		UserType:  "alumno",
+		Latitude:  10.000,
+		Longitude: -10.000,
 	}
 
 	config := config.Config{}

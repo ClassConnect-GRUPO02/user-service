@@ -1,10 +1,12 @@
 package models
 
 type User struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	UserType string `json:"userType" binding:"required"`
+	Name      string  `json:"name" binding:"required"`
+	Email     string  `json:"email" binding:"required"`
+	Password  string  `json:"password" binding:"required"`
+	UserType  string  `json:"userType" binding:"required"`
+	Latitude  float64 `json:"latitude" binding:"required"`
+	Longitude float64 `json:"longitude" binding:"required"`
 }
 
 type UserInfo struct {

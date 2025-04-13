@@ -7,5 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255),
     type VARCHAR(255),
     password_hash VARCHAR(255),
-    is_blocked BOOLEAN NOT NULL
+    is_blocked BOOLEAN NOT NULL,
+    latitude FLOAT,
+    longitude FLOAT
 );
