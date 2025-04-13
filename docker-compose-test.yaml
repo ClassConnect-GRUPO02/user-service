@@ -1,0 +1,24 @@
+services:
+  service:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    env_file: .env
+    ports:
+    - ${PORT}:${PORT}
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+
+  database:
+    image: postgres:latest
+    env_file: .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
