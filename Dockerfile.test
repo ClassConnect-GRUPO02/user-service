@@ -5,9 +5,5 @@ WORKDIR /usr/src/app
 COPY . .
 RUN go mod download
 
-RUN go test -c -o /usr/local/bin/test service/service_test.go
+CMD ["go", "test", "-v", "./...", "-race", "-coverprofile=coverage.out", "-covermode=atomic"]
 
-FROM ubuntu:22.04
-COPY --from=golang /usr/local/bin/test /usr/local/bin/test
-
-CMD ["test"]

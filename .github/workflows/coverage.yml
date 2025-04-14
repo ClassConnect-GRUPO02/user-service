@@ -1,0 +1,30 @@
+name: Test and coverage
+
+on:
+  push:
+    branches: 
+      - main
+  pull_request:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .env file
+        run: cp .env.example .env
+
+      - name: Run tests
+        run: docker compose -f docker-compose-test.yaml up --abort-on-container-exit
+
+      - name: Copy the coverage output to the host
+        run: docker cp user-service-service-1:/usr/src/app/coverage.out ./coverage.out
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: true
+          files: ./coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
