@@ -91,13 +91,14 @@ func (r *UserRepository) GetUsers() ([]models.UserPublicInfo, error) {
 	defer rows.Close()
 	users := make([]models.UserPublicInfo, 0)
 	for rows.Next() {
-		var id, name, email, userType string
+		var id int
+		var name, email, userType string
 		err = rows.Scan(&id, &name, &email, &userType)
 		if err != nil {
 			log.Printf("failed to scan row. Error: %s", err)
 			return nil, err
 		}
-		log.Printf("User id = %s", id)
+		log.Printf("User id = %d", id)
 		user := models.UserPublicInfo{Name: name, UserType: userType, Id: id, Email: email}
 		users = append(users, user)
 		fmt.Printf("user: %v", user)
@@ -116,14 +117,15 @@ func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
 
 	// If the query returned at least one row
 	if rows.Next() {
-		var id, name, email, userType string
+		var id int
+		var name, email, userType string
 		var latitude, longitude float64
 		err = rows.Scan(&id, &name, &email, &userType, &latitude, &longitude)
 		if err != nil {
 			log.Printf("failed to scan row. Error: %s", err)
 			return nil, err
 		}
-		log.Printf("User id = %s", id)
+		log.Printf("User id = %d", id)
 		user := models.UserInfo{Name: name, UserType: userType, Id: id, Latitude: latitude, Longitude: longitude}
 		fmt.Printf("user: %v", user)
 		return &user, nil
