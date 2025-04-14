@@ -76,34 +76,149 @@ func TestUserCreation(t *testing.T) {
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
+
+	t.Run("Request with missing parameters returns bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.POST("/users", handler.CreateUser)
+
+		w := httptest.NewRecorder()
+		body := `{"email": "john@example.com"}`
+		req, _ := http.NewRequest("POST", "/users", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
 }
 
-// func TestLoginHandler(t *testing.T) {
-// 	router := gin.Default()
-// 	mockRepos
-// 	userService := service.NewService()
-// 	handler := handlers.NewUserHandler()
-// 	router.POST("/login", h.LoginHandler)
+func TestUserLogin(t *testing.T) {
+	config := config.Config{}
+	body := `{"email":"john@example.com", "password":"1234"}`
 
-// 	// Test valid login
-// 	t.Run("Success", func(t *testing.T) {
-// 		body := `{"username":"admin","password":"1234"}`
-// 		w := httptest.NewRecorder()
-// 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
-// 		req.Header.Set("Content-Type", "application/json")
+	// Test valid login
+	t.Run("User logged in successfully ", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsBlocked", mock.Anything).Return(false, nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
 
-// 		router.ServeHTTP(w, req)
-// 		assert.Equal(t, http.StatusOK, w.Code)
-// 		assert.Contains(t, w.Body.String(), "token")
-// 	})
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
 
-// 	// Test invalid login
-// 	t.Run("Invalid Password", func(t *testing.T) {
-// 		body := `{"username":"admin","password":"wrong"}`
-// 		w := httptest.NewRecorder()
-// 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		router := gin.Default()
+		router.POST("/login", handler.HandleLogin)
 
-// 		router.ServeHTTP(w, req)
-// 		assert.Equal(t, http.StatusUnauthorized, w.Code)
-// 	})
-// }
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusAccepted, w.Code)
+	})
+
+	t.Run("Login with invalid email fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.POST("/login", handler.HandleLogin)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("Login with invalid password fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.POST("/login", handler.HandleLogin)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("Blocked users cannot login", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsBlocked", mock.Anything).Return(true, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.POST("/login", handler.HandleLogin)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusForbidden, w.Code)
+	})
+
+	t.Run("Login fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.POST("/login", handler.HandleLogin)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("Request with missing parameters returns bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.POST("/login", handler.HandleLogin)
+
+		w := httptest.NewRecorder()
+		body := `{"email": "john@example.com"}`
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
