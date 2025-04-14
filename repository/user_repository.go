@@ -126,7 +126,7 @@ func (r *UserRepository) GetUser(id string) (*models.UserInfo, error) {
 			return nil, err
 		}
 		log.Printf("User id = %d", id)
-		user := models.UserInfo{Name: name, UserType: userType, Id: id, Latitude: latitude, Longitude: longitude}
+		user := models.UserInfo{Name: name, Email: email, UserType: userType, Id: id, Latitude: latitude, Longitude: longitude}
 		fmt.Printf("user: %v", user)
 		return &user, nil
 	}
