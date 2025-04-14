@@ -79,7 +79,7 @@ func TestIntegration(t *testing.T) {
 		assert.NoError(t, err)
 		expectedUsers := []models.UserPublicInfo{
 			{
-				Id:       "1",
+				Id:       1,
 				Name:     user.Name,
 				Email:    user.Email,
 				UserType: user.UserType,
@@ -93,7 +93,7 @@ func TestIntegration(t *testing.T) {
 		user, err := userService.GetUser(id)
 		assert.NoError(t, err)
 		expectedUser := models.UserInfo{
-			Id:        "1",
+			Id:        1,
 			Name:      user.Name,
 			Email:     user.Email,
 			UserType:  user.UserType,
