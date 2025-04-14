@@ -230,7 +230,6 @@ func TestUserLogin(t *testing.T) {
 func TestGetUsers(t *testing.T) {
 	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
 	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
-	// userInfo := models.UserInfo{Id: "1", Name: "John Doe", UserType: "alumno", Email: "john@example.com"}
 	userPublicInfo := models.UserPublicInfo{Id: 1, Name: "John Doe", UserType: "alumno", Email: "john@example.com"}
 	expectedUsers := []models.UserPublicInfo{userPublicInfo}
 
@@ -293,6 +292,100 @@ func TestGetUsers(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
+
+func TestGetUser(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+	userInfo := models.UserInfo{Id: 1, Name: "John Doe", UserType: "alumno", Email: "john@example.com", Latitude: 10000, Longitude: -10000}
+
+	t.Run("Get user with ID 1 succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUser", mock.Anything).Return(&userInfo, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.GET("/user/:id", handler.GetUser)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/user/1", nil)
+		token, _ := userService.IssueToken("2")
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+		expectedBody := `{"user":{"id":1,"name":"John Doe","email":"john@example.com","userType":"alumno"}}`
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, expectedBody, w.Body.String())
+	})
+
+	t.Run("Get user with same ID as the sender includes private information in the response", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUser", mock.Anything).Return(&userInfo, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.GET("/user/:id", handler.GetUser)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/user/1", nil)
+		token, _ := userService.IssueToken("1")
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+		expectedBody := `{"user":{"id":1,"name":"John Doe","email":"john@example.com","userType":"alumno","latitude":10000,"longitude":-10000}}`
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, expectedBody, w.Body.String())
+	})
+
+	t.Run("Get user fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.GET("/user/:id", handler.GetUser)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/user/1", nil)
+		token, _ := userService.IssueToken("1")
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("Get user fails if the request does not include the JWT token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router := gin.Default()
+		router.GET("/user/:id", handler.GetUser)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/user/1", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		router.ServeHTTP(w, req)
