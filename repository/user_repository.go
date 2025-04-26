@@ -206,3 +206,13 @@ func (r *UserRepository) GetFailedLoginAttempts(email string, blockingTimeWindow
 	}
 	return failedAttempts, nil
 }
+
+func (r *UserRepository) BlockUser(email string) error {
+	query := fmt.Sprintf("UPDATE users SET is_blocked = true WHERE email='%s';", email)
+	_, err := r.db.Exec(query)
+	if err != nil {
+		log.Printf("Failed to block user. Error: %s", err)
+		return err
+	}
+	return nil
+}

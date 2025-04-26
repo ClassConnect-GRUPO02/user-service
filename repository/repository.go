@@ -14,4 +14,5 @@ type Repository interface {
 	GetUserIdByEmail(email string) (string, error)
 	IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) error
 	GetFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error)
+	BlockUser(email string) error
 }

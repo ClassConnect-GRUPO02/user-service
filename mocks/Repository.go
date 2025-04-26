@@ -31,6 +31,24 @@ func (_m *Repository) AddUser(user models.User) error {
 	return r0
 }
 
+// BlockUser provides a mock function with given fields: email
+func (_m *Repository) BlockUser(email string) error {
+	ret := _m.Called(email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BlockUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetFailedLoginAttempts provides a mock function with given fields: email, blockingTimeWindow
 func (_m *Repository) GetFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error) {
 	ret := _m.Called(email, blockingTimeWindow)

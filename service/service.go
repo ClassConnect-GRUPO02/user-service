@@ -81,8 +81,11 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		}
 		log.Printf("failed login attempts = %d", failedLoginAttempts)
 		if failedLoginAttempts >= failedLoginAttemptsLimit {
-			log.Printf("USER %s MUST BE BLOCKED!!!!!", loginRequest.Email)
-			// TODO: add r.userRepository.BlockUser(email)
+			err := s.userRepository.BlockUser(loginRequest.Email)
+			if err != nil {
+				return models.InternalServerError()
+			}
+			return models.UserBlockedError()
 		}
 		return models.InvalidCredentialsError()
 	}
