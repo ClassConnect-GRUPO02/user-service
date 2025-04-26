@@ -2,6 +2,7 @@ package service
 
 import (
 	"log"
+	"time"
 	"user_service/auth"
 	"user_service/config"
 	"user_service/models"
@@ -55,11 +56,12 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	}
 
 	// Check if the user is blocked
-	userIsBlocked, err := s.userRepository.UserIsBlocked(loginRequest.Email)
+	blockedUntil, err := s.userRepository.UserBlockedUntil(loginRequest.Email)
 	if err != nil {
 		return models.InternalServerError()
 	}
-	if userIsBlocked {
+	timestampNow := time.Now().Unix()
+	if blockedUntil > timestampNow {
 		return models.UserBlockedError()
 	}
 
@@ -71,17 +73,15 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	if !passwordMatches {
 		// TODO: extract this variable to the config
 		failedLoginAttemptsLimit := int64(5)
-		err = s.userRepository.IncrementFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
+		// TODO: extract this to the config
+		blockDurationInSeconds := int64(60) // 30 minutes
+		failedLoginAttempts, err := s.userRepository.IncrementFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
 		if err != nil {
 			return models.InternalServerError()
 		}
-		failedLoginAttempts, err := s.userRepository.GetFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
-		if err != nil {
-			return models.InternalServerError()
-		}
-		log.Printf("failed login attempts = %d", failedLoginAttempts)
 		if failedLoginAttempts >= failedLoginAttemptsLimit {
-			err := s.userRepository.BlockUser(loginRequest.Email)
+			blockedUntil := time.Now().Unix() + blockDurationInSeconds
+			err := s.userRepository.SetUserBlockedUntil(loginRequest.Email, blockedUntil)
 			if err != nil {
 				return models.InternalServerError()
 			}
