@@ -2,7 +2,9 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"strconv"
 )
 
 // GetEnvVar reads the value of the given variable from the enviroment and returns it.
@@ -13,4 +15,16 @@ func GetEnvVar(variable string) (string, error) {
 		return "", errors.New("Missing required environment variable " + variable)
 	}
 	return value, nil
+}
+
+func GetIntEnvVar(envVar string) (int64, error) {
+	variableString, err := GetEnvVar(envVar)
+	if err != nil {
+		return 0, fmt.Errorf("missing environment variable %s", envVar)
+	}
+	variableInt, err := strconv.ParseInt(variableString, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to convert %s to uint64. Error: %s", variableString, err)
+	}
+	return variableInt, nil
 }

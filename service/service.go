@@ -14,6 +14,8 @@ type Service struct {
 	tokenDuration      uint64
 	blockingTimeWindow int64
 	authService        *auth.Auth
+	blockingDuration   int64
+	loginAttemptsLimit int64
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
@@ -22,6 +24,8 @@ func NewService(repository repository.Repository, config *config.Config) (*Servi
 		tokenDuration:      config.TokenDuration,
 		authService:        &auth.Auth{SecretKey: config.SecretKey},
 		blockingTimeWindow: config.BlockingTimeWindow,
+		blockingDuration:   config.BlockingDuration,
+		loginAttemptsLimit: config.LoginAttemptsLimit,
 	}
 	return &service, nil
 }
@@ -71,16 +75,14 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		return models.InternalServerError()
 	}
 	if !passwordMatches {
-		// TODO: extract this variable to the config
-		failedLoginAttemptsLimit := int64(5)
-		// TODO: extract this to the config
-		blockDurationInSeconds := int64(60) // 30 minutes
+		// Increment and retrieve the amount of failed login attempts
 		failedLoginAttempts, err := s.userRepository.IncrementFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
 		if err != nil {
 			return models.InternalServerError()
 		}
-		if failedLoginAttempts >= failedLoginAttemptsLimit {
-			blockedUntil := time.Now().Unix() + blockDurationInSeconds
+		// If the user reaches the attempts limit, block it
+		if failedLoginAttempts >= s.loginAttemptsLimit {
+			blockedUntil := time.Now().Unix() + s.blockingDuration
 			err := s.userRepository.SetUserBlockedUntil(loginRequest.Email, blockedUntil)
 			if err != nil {
 				return models.InternalServerError()
