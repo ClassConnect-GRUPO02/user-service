@@ -136,5 +136,9 @@ func TestIntegration(t *testing.T) {
 		// At the 3rd attempt, the user should get blocked
 		err = userService.LoginUser(wrongLoginRequest)
 		assert.Equal(t, expectedError, err)
+
+		// The user should be still blocked
+		err = userService.LoginUser(wrongLoginRequest)
+		assert.Equal(t, expectedError, err)
 	})
 }
