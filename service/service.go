@@ -9,16 +9,18 @@ import (
 )
 
 type Service struct {
-	userRepository repository.Repository
-	tokenDuration  uint64
-	authService    *auth.Auth
+	userRepository     repository.Repository
+	tokenDuration      uint64
+	blockingTimeWindow int64
+	authService        *auth.Auth
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
-		userRepository: repository,
-		tokenDuration:  config.TokenDuration,
-		authService:    &auth.Auth{SecretKey: config.SecretKey},
+		userRepository:     repository,
+		tokenDuration:      config.TokenDuration,
+		authService:        &auth.Auth{SecretKey: config.SecretKey},
+		blockingTimeWindow: config.BlockingTimeWindow,
 	}
 	return &service, nil
 }
@@ -58,6 +60,7 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		return models.InternalServerError()
 	}
 	if !passwordMatches {
+		s.userRepository.IncrementFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
 		return models.InvalidCredentialsError()
 	}
 

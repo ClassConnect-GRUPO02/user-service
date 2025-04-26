@@ -12,4 +12,5 @@ type Repository interface {
 	GetUsers() ([]models.UserPublicInfo, error)
 	GetUser(id string) (*models.UserInfo, error)
 	GetUserIdByEmail(email string) (string, error)
+	IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) error
 }

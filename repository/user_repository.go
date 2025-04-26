@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 	"user_service/database"
 	"user_service/models"
 )
@@ -154,4 +155,38 @@ func (r *UserRepository) GetUserIdByEmail(email string) (string, error) {
 		return id, nil
 	}
 	return "", nil
+}
+
+func (r *UserRepository) IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) error {
+	timestampNow := time.Now().Unix()
+	timestampLimit := timestampNow - blockingTimeWindow
+	var firstTimestamp int64
+	var failedAttempts int64
+	err := r.db.QueryRow(`SELECT timestamp, failed_attempts FROM login_attempts WHERE email=$1 AND timestamp > $2`, email, timestampLimit).Scan(&firstTimestamp, &failedAttempts)
+	if err != nil && err != sql.ErrNoRows {
+		log.Printf("failed to scan row. Error: %s", err)
+		return err
+	}
+	if err == sql.ErrNoRows {
+		failedAttempts = 1
+		query := fmt.Sprintf("INSERT INTO login_attempts VALUES ('%s', %d, %d);", email, timestampNow, failedAttempts)
+		_, err := r.db.Exec(query)
+		if err != nil {
+			log.Printf("Failed to query %s. Error: %s", query, err)
+			return err
+		}
+		return nil
+	}
+	failedAttempts += 1
+	log.Print("========================================================")
+	log.Printf("timestampNow = %d", timestampNow)
+	log.Printf("First timestamp = %d", firstTimestamp)
+	fmt.Printf("Failed attempts for %s: %d", email, failedAttempts)
+	log.Print("========================================================")
+	_, err = r.db.Exec(`UPDATE login_attempts SET failed_attempts = failed_attempts + 1 WHERE email = $1 AND timestamp = $2`, email, firstTimestamp)
+	if err != nil {
+		log.Printf("Failed to update login_attempts. Error: %s", err)
+		return err
+	}
+	return nil
 }
