@@ -11,3 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
     latitude FLOAT,
     longitude FLOAT
 );
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+    email VARCHAR(255),
+    timestamp BIGINT,
+    failed_attempts SMALLINT
+);
