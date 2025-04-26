@@ -22,6 +22,10 @@ func TestIntegration(t *testing.T) {
 	}
 
 	config, err := config.LoadConfig()
+	config.BlockingDuration = 3
+	config.BlockingTimeWindow = 1
+	config.LoginAttemptsLimit = 3
+
 	if err != nil {
 		log.Fatalf("Failed to load config. Error: %s", err)
 	}
@@ -109,5 +113,28 @@ func TestIntegration(t *testing.T) {
 		expectedError := models.UserNotFoundError(id)
 		assert.Equal(t, expectedError, err)
 		assert.Nil(t, user)
+	})
+
+	t.Run("failed attempts to login block the account", func(t *testing.T) {
+		user.Email = "mary@example.com"    // change the user email
+		err = userService.CreateUser(user) // register
+		assert.Nil(t, err)
+
+		wrongLoginRequest := models.LoginRequest{
+			Email:    user.Email,
+			Password: "wrong_password",
+		}
+		expectedError := models.InvalidCredentialsError()
+
+		err := userService.LoginUser(wrongLoginRequest)
+		assert.Equal(t, expectedError, err)
+
+		err = userService.LoginUser(wrongLoginRequest)
+		assert.Equal(t, expectedError, err)
+
+		expectedError = models.UserBlockedError()
+		// At the 3rd attempt, the user should get blocked
+		err = userService.LoginUser(wrongLoginRequest)
+		assert.Equal(t, expectedError, err)
 	})
 }
