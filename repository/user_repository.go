@@ -162,7 +162,7 @@ func (r *UserRepository) IncrementFailedLoginAttempts(email string, blockingTime
 	timestampLimit := timestampNow - blockingTimeWindow
 	var firstTimestamp int64
 	var failedAttempts int64
-	err := r.db.QueryRow(`SELECT timestamp, failed_attempts FROM login_attempts WHERE email=$1 AND timestamp > $2`, email, timestampLimit).Scan(&firstTimestamp, &failedAttempts)
+	err := r.db.QueryRow(`SELECT timestamp, failed_attempts FROM login_attempts WHERE email=$1 AND timestamp > $2 ORDER BY timestamp DESC`, email, timestampLimit).Scan(&firstTimestamp, &failedAttempts)
 	if err != nil && err != sql.ErrNoRows {
 		log.Printf("failed to scan row. Error: %s", err)
 		return err
@@ -189,4 +189,20 @@ func (r *UserRepository) IncrementFailedLoginAttempts(email string, blockingTime
 		return err
 	}
 	return nil
+}
+
+func (r *UserRepository) GetFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error) {
+	timestampNow := time.Now().Unix()
+	timestampLimit := timestampNow - blockingTimeWindow
+	var firstTimestamp int64
+	var failedAttempts int64
+	err := r.db.QueryRow(`SELECT timestamp, failed_attempts FROM login_attempts WHERE email=$1 AND timestamp > $2`, email, timestampLimit).Scan(&firstTimestamp, &failedAttempts)
+	if err != nil && err != sql.ErrNoRows {
+		log.Printf("failed to scan row. Error: %s", err)
+		return 0, err
+	}
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
+	return failedAttempts, nil
 }

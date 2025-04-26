@@ -54,16 +54,6 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		return models.InvalidCredentialsError()
 	}
 
-	// Check if the password is correct
-	passwordMatches, err := s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
-	if err != nil {
-		return models.InternalServerError()
-	}
-	if !passwordMatches {
-		s.userRepository.IncrementFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
-		return models.InvalidCredentialsError()
-	}
-
 	// Check if the user is blocked
 	userIsBlocked, err := s.userRepository.UserIsBlocked(loginRequest.Email)
 	if err != nil {
@@ -72,6 +62,31 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	if userIsBlocked {
 		return models.UserBlockedError()
 	}
+
+	// Check if the password is correct
+	passwordMatches, err := s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	if !passwordMatches {
+		// TODO: extract this variable to the config
+		failedLoginAttemptsLimit := int64(5)
+		err = s.userRepository.IncrementFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
+		if err != nil {
+			return models.InternalServerError()
+		}
+		failedLoginAttempts, err := s.userRepository.GetFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
+		if err != nil {
+			return models.InternalServerError()
+		}
+		log.Printf("failed login attempts = %d", failedLoginAttempts)
+		if failedLoginAttempts >= failedLoginAttemptsLimit {
+			log.Printf("USER %s MUST BE BLOCKED!!!!!", loginRequest.Email)
+			// TODO: add r.userRepository.BlockUser(email)
+		}
+		return models.InvalidCredentialsError()
+	}
+
 	return nil
 }
 

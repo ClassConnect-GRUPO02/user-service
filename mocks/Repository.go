@@ -31,6 +31,34 @@ func (_m *Repository) AddUser(user models.User) error {
 	return r0
 }
 
+// GetFailedLoginAttempts provides a mock function with given fields: email, blockingTimeWindow
+func (_m *Repository) GetFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error) {
+	ret := _m.Called(email, blockingTimeWindow)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFailedLoginAttempts")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, int64) (int64, error)); ok {
+		return rf(email, blockingTimeWindow)
+	}
+	if rf, ok := ret.Get(0).(func(string, int64) int64); ok {
+		r0 = rf(email, blockingTimeWindow)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, int64) error); ok {
+		r1 = rf(email, blockingTimeWindow)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUser provides a mock function with given fields: id
 func (_m *Repository) GetUser(id string) (*models.UserInfo, error) {
 	ret := _m.Called(id)
@@ -117,6 +145,24 @@ func (_m *Repository) GetUsers() ([]models.UserPublicInfo, error) {
 	}
 
 	return r0, r1
+}
+
+// IncrementFailedLoginAttempts provides a mock function with given fields: email, blockingTimeWindow
+func (_m *Repository) IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) error {
+	ret := _m.Called(email, blockingTimeWindow)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IncrementFailedLoginAttempts")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, int64) error); ok {
+		r0 = rf(email, blockingTimeWindow)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // IsEmailRegistered provides a mock function with given fields: email
