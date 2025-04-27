@@ -102,17 +102,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	id, isPresent := c.Params.Get("id")
-	if !isPresent {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Missing id",
-			"instance": "/user",
-		})
-		return
-	}
+	id := c.Param("id")
 	// Retrieve the user by its id
 	user, err := h.service.GetUser(id)
 	if err, ok := err.(*models.Error); ok {
