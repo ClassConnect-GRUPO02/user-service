@@ -12,9 +12,9 @@ import (
 	"user_service/handlers"
 	"user_service/mocks"
 	"user_service/models"
+	"user_service/router"
 	"user_service/service"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,8 +34,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/users", strings.NewReader(body))
@@ -52,8 +52,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/users", strings.NewReader(body))
@@ -71,8 +71,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/users", strings.NewReader(body))
@@ -88,8 +88,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		body := `{"email": "john@example.com"}`
@@ -117,8 +117,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -136,8 +136,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -157,8 +157,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -178,8 +178,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -196,8 +196,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		body := `{"email": "john@example.com"}`
@@ -223,8 +223,8 @@ func TestGetUsers(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/users", handler.GetUsers)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
@@ -247,8 +247,8 @@ func TestGetUsers(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/users", handler.GetUsers)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
@@ -269,8 +269,8 @@ func TestGetUsers(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/users", handler.GetUsers)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
@@ -294,8 +294,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -317,8 +317,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -341,8 +341,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -363,8 +363,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
