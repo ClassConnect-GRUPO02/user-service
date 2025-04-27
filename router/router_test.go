@@ -189,6 +189,29 @@ func TestUserLogin(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, w.Code)
 	})
 
+	t.Run("Login returns internal server error when GetUserByEmail fails", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
 	t.Run("Request with missing parameters returns bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
