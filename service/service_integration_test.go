@@ -107,6 +107,13 @@ func TestIntegration(t *testing.T) {
 		assert.Equal(t, &expectedUser, user)
 	})
 
+	t.Run("get user ID by email", func(t *testing.T) {
+		id, err := userService.GetUserIdByEmail(user.Email)
+		assert.NoError(t, err)
+		expectedId := string("1")
+		assert.Equal(t, expectedId, id)
+	})
+
 	t.Run("get user with ID 100 was not found", func(t *testing.T) {
 		id := "100"
 		user, err := userService.GetUser(id)
