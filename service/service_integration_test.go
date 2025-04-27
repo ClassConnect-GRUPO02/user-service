@@ -148,4 +148,11 @@ func TestIntegration(t *testing.T) {
 		err = userService.LoginUser(wrongLoginRequest)
 		assert.Equal(t, expectedError, err)
 	})
+
+	t.Run("edit user succeeds", func(t *testing.T) {
+		id := int64(1)
+		editUserRequest := models.EditUserRequest{Name: "Johnny Doe", Email: "johnny@example.com"}
+		err := userService.EditUser(id, editUserRequest)
+		assert.Nil(t, err)
+	})
 }
