@@ -2,20 +2,21 @@ package service
 
 import (
 	"time"
+	"user_service/auth"
 	"user_service/models"
 )
 
-func (s *Service) ValidateToken(token string) error {
+func (s *Service) ValidateToken(token string) (*auth.CustomClaims, error) {
 	tokenClaims, err := s.authService.ValidateToken(token)
 	if err != nil {
-		return models.InvalidToken()
+		return nil, models.InvalidToken()
 	}
 
 	if s.TokenHasExpired(tokenClaims.IssuedAt) {
-		return models.SessionExpired()
+		return nil, models.SessionExpired()
 	}
 
-	return nil
+	return tokenClaims, nil
 }
 
 func (s *Service) TokenHasExpired(issuedAtTimestamp uint64) bool {

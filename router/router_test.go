@@ -12,9 +12,9 @@ import (
 	"user_service/handlers"
 	"user_service/mocks"
 	"user_service/models"
+	"user_service/router"
 	"user_service/service"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,8 +34,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/users", strings.NewReader(body))
@@ -52,8 +52,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/users", strings.NewReader(body))
@@ -71,8 +71,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/users", strings.NewReader(body))
@@ -88,8 +88,8 @@ func TestUserCreation(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/users", handler.CreateUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		body := `{"email": "john@example.com"}`
@@ -117,8 +117,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -136,8 +136,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -157,8 +157,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -178,8 +178,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
@@ -189,6 +189,29 @@ func TestUserLogin(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, w.Code)
 	})
 
+	t.Run("Login returns internal server error when GetUserByEmail fails", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
+		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
 	t.Run("Request with missing parameters returns bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
@@ -196,8 +219,8 @@ func TestUserLogin(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		body := `{"email": "john@example.com"}`
@@ -223,8 +246,8 @@ func TestGetUsers(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/users", handler.GetUsers)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
@@ -247,8 +270,8 @@ func TestGetUsers(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/users", handler.GetUsers)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
@@ -260,6 +283,26 @@ func TestGetUsers(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 
+	t.Run("Retrieving the users without Authorization header fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUsers").Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
 	t.Run("Retrieving the users without JWT token fails", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		mockError := fmt.Errorf("mock error")
@@ -269,15 +312,58 @@ func TestGetUsers(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/users", handler.GetUsers)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "")
 
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("Retrieving the users without the 'Bearer' auth header fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUsers").Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "trash")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("Retrieving the users with invalid token returns error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUsers").Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer invalidtoken123")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 }
 
@@ -294,8 +380,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -317,8 +403,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -341,8 +427,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -363,8 +449,8 @@ func TestGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
-		router := gin.Default()
-		router.GET("/user/:id", handler.GetUser)
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
