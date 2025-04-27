@@ -14,3 +14,4 @@ ignore:
   - "mocks"
   - "utils"
   - "config"
+  - "main.go"
