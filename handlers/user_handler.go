@@ -85,7 +85,6 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	_, err := h.ValidateToken(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 	users, err := h.service.GetUsers()
@@ -102,7 +101,6 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 func (h *UserHandler) GetUser(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 	id := c.Param("id")
@@ -140,7 +138,6 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 func (h *UserHandler) EditUser(c *gin.Context) {
 	_, err := h.ValidateToken(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 	editUserRequest := models.EditUserRequest{}
@@ -164,6 +161,7 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 			"detail":   "Invalid id: " + idString,
 			"instance": "/user/" + idString,
 		})
+		return
 	}
 	err = h.service.EditUser(id, editUserRequest)
 	if err, ok := err.(*models.Error); ok {
