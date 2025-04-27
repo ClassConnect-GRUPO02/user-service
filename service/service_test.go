@@ -138,3 +138,20 @@ func TestServiceGetUserWithRepositoryErrors(t *testing.T) {
 		assert.Equal(t, err, models.InternalServerError())
 	})
 }
+
+func TestServiceEditUserWithRepositoryErrors(t *testing.T) {
+	mockError := fmt.Errorf("mock error")
+	config := config.Config{}
+
+	t.Run("Edit user fails with internal server error when repository.UpdateUser returns an error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(nil, mockError)
+
+		editUserRequest := models.EditUserRequest{Name: "Johnny", Email: "johnny@example.com"}
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.EditUser(1, editUserRequest)
+		assert.Equal(t, err, models.InternalServerError())
+	})
+}
