@@ -198,3 +198,12 @@ func (r *UserRepository) SetUserBlockedUntil(email string, timestamp int64) erro
 	}
 	return nil
 }
+
+func (r *UserRepository) UpdateUser(id int64, name, email string) error {
+	_, err := r.db.Exec(`UPDATE users SET name = $1, email = $2 WHERE id=$3`, name, email, id)
+	if err != nil {
+		log.Printf("Failed to update user. Error: %s", err)
+		return err
+	}
+	return nil
+}

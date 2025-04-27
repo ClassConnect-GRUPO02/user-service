@@ -14,4 +14,5 @@ type Repository interface {
 	GetUserIdByEmail(email string) (string, error)
 	IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error)
 	SetUserBlockedUntil(email string, timestamp int64) error
+	UpdateUser(id int64, name, email string) error
 }
