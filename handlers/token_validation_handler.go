@@ -44,10 +44,6 @@ func (h *UserHandler) ValidateToken(c *gin.Context) (*auth.CustomClaims, error) 
 }
 
 func extractBearerToken(authHeader string) (string, error) {
-	if authHeader == "" {
-		return "", fmt.Errorf("missing JWT token")
-	}
-
 	const bearerPrefix = "Bearer "
 	if !strings.HasPrefix(authHeader, bearerPrefix) {
 		return "", fmt.Errorf("expected Bearer authorization header")

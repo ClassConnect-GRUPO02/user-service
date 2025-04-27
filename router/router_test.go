@@ -344,6 +344,27 @@ func TestGetUsers(t *testing.T) {
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
+
+	t.Run("Retrieving the users with invalid token returns error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUsers").Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer invalidtoken123")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
 }
 
 func TestGetUser(t *testing.T) {
