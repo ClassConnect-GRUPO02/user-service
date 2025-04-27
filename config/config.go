@@ -3,15 +3,17 @@ package config
 import (
 	"encoding/hex"
 	"fmt"
-	"strconv"
 	"user_service/utils"
 )
 
 type Config struct {
-	Host          string
-	Port          string
-	SecretKey     []byte
-	TokenDuration uint64
+	Host               string
+	Port               string
+	SecretKey          []byte
+	TokenDuration      uint64
+	BlockingTimeWindow int64
+	BlockingDuration   int64
+	LoginAttemptsLimit int64
 }
 
 func LoadConfig() (*Config, error) {
@@ -31,13 +33,30 @@ func LoadConfig() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode secret key")
 	}
-	tokenDurationString, err := utils.GetEnvVar("TOKEN_DURATION_IN_SECONDS")
+	tokenDuration, err := utils.GetIntEnvVar("TOKEN_DURATION_IN_SECONDS")
 	if err != nil {
-		return nil, fmt.Errorf("missing environment variable TOKEN_DURATION_IN_SECONDS")
+		return nil, err
 	}
-	tokenDuration, err := strconv.ParseUint(tokenDurationString, 10, 64)
+	blockingTimeWindow, err := utils.GetIntEnvVar("BLOCKING_TIME_WINDOW_IN_SECONDS")
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert TOKEN_DURATION_IN_SECONDS to uint64. Error: %s", err)
+		return nil, err
 	}
-	return &Config{Host: host, Port: port, SecretKey: secretKey, TokenDuration: tokenDuration}, nil
+	blockingDuration, err := utils.GetIntEnvVar("BLOCKING_DURATION_IN_SECONDS")
+	if err != nil {
+		return nil, err
+	}
+	loginAttemptsLimit, err := utils.GetIntEnvVar("LOGIN_ATTEMPTS_LIMIT")
+	if err != nil {
+		return nil, err
+	}
+
+	return &Config{
+		Host:               host,
+		Port:               port,
+		SecretKey:          secretKey,
+		TokenDuration:      uint64(tokenDuration),
+		BlockingTimeWindow: blockingTimeWindow,
+		BlockingDuration:   blockingDuration,
+		LoginAttemptsLimit: loginAttemptsLimit,
+	}, nil
 }

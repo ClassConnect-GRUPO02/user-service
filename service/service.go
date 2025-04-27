@@ -2,6 +2,7 @@ package service
 
 import (
 	"log"
+	"time"
 	"user_service/auth"
 	"user_service/config"
 	"user_service/models"
@@ -9,16 +10,22 @@ import (
 )
 
 type Service struct {
-	userRepository repository.Repository
-	tokenDuration  uint64
-	authService    *auth.Auth
+	userRepository     repository.Repository
+	tokenDuration      uint64
+	blockingTimeWindow int64
+	authService        *auth.Auth
+	blockingDuration   int64
+	loginAttemptsLimit int64
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
-		userRepository: repository,
-		tokenDuration:  config.TokenDuration,
-		authService:    &auth.Auth{SecretKey: config.SecretKey},
+		userRepository:     repository,
+		tokenDuration:      config.TokenDuration,
+		authService:        &auth.Auth{SecretKey: config.SecretKey},
+		blockingTimeWindow: config.BlockingTimeWindow,
+		blockingDuration:   config.BlockingDuration,
+		loginAttemptsLimit: config.LoginAttemptsLimit,
 	}
 	return &service, nil
 }
@@ -52,23 +59,39 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		return models.InvalidCredentialsError()
 	}
 
+	// Check if the user is blocked
+	blockedUntil, err := s.userRepository.UserBlockedUntil(loginRequest.Email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	timestampNow := time.Now().Unix()
+	if blockedUntil > timestampNow {
+		return models.UserBlockedError()
+	}
+
 	// Check if the password is correct
 	passwordMatches, err := s.userRepository.PasswordMatches(loginRequest.Email, loginRequest.Password)
 	if err != nil {
 		return models.InternalServerError()
 	}
 	if !passwordMatches {
+		// Increment and retrieve the amount of failed login attempts
+		failedLoginAttempts, err := s.userRepository.IncrementFailedLoginAttempts(loginRequest.Email, s.blockingTimeWindow)
+		if err != nil {
+			return models.InternalServerError()
+		}
+		// If the user reaches the attempts limit, block it
+		if failedLoginAttempts >= s.loginAttemptsLimit {
+			blockedUntil := time.Now().Unix() + s.blockingDuration
+			err := s.userRepository.SetUserBlockedUntil(loginRequest.Email, blockedUntil)
+			if err != nil {
+				return models.InternalServerError()
+			}
+			return models.UserBlockedError()
+		}
 		return models.InvalidCredentialsError()
 	}
 
-	// Check if the user is blocked
-	userIsBlocked, err := s.userRepository.UserIsBlocked(loginRequest.Email)
-	if err != nil {
-		return models.InternalServerError()
-	}
-	if userIsBlocked {
-		return models.UserBlockedError()
-	}
 	return nil
 }
 

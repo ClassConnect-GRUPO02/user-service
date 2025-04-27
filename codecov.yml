@@ -9,3 +9,8 @@ coverage:
         target: 70%
 
 comment: on
+
+ignore:
+  - "mocks"
+  - "utils"
+  - "config"

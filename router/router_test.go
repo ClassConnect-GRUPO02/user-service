@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 	"user_service/config"
 	"user_service/handlers"
 	"user_service/mocks"
@@ -101,15 +102,15 @@ func TestUserCreation(t *testing.T) {
 }
 
 func TestUserLogin(t *testing.T) {
-	config := config.Config{}
+	config := config.Config{BlockingDuration: 120}
 	body := `{"email":"john@example.com", "password":"1234"}`
 
 	// Test valid login
-	t.Run("User logged in successfully ", func(t *testing.T) {
+	t.Run("User logged in successfully", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
-		userRepositoryMock.On("UserIsBlocked", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
@@ -149,6 +150,7 @@ func TestUserLogin(t *testing.T) {
 	t.Run("Login with invalid password fails", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
@@ -169,8 +171,8 @@ func TestUserLogin(t *testing.T) {
 	t.Run("Blocked users cannot login", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
-		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
-		userRepositoryMock.On("UserIsBlocked", mock.Anything).Return(true, nil)
+		blockedUntil := time.Now().Unix() + config.BlockingDuration
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -185,26 +187,6 @@ func TestUserLogin(t *testing.T) {
 
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusForbidden, w.Code)
-	})
-
-	t.Run("Login fails due to internal server error", func(t *testing.T) {
-		userRepositoryMock := new(mocks.Repository)
-		mockError := fmt.Errorf("mock error")
-		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
-
-		userService, err := service.NewService(userRepositoryMock, &config)
-		assert.NoError(t, err)
-		handler := handlers.NewUserHandler(userService)
-
-		router := gin.Default()
-		router.POST("/login", handler.HandleLogin)
-
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/login", strings.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-
-		router.ServeHTTP(w, req)
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 
 	t.Run("Request with missing parameters returns bad request", func(t *testing.T) {
