@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"user_service/auth"
 	"user_service/models"
 
 	"github.com/gin-gonic/gin"
 )
 
 // Validates and returns the token
-func (h *UserHandler) ValidateToken(c *gin.Context) (string, error) {
+func (h *UserHandler) ValidateToken(c *gin.Context) (*auth.CustomClaims, error) {
 	url := c.Request.URL.String()
 	request := models.AuthRequest{}
 	if err := c.ShouldBindHeader(&request); err != nil {
@@ -21,7 +22,7 @@ func (h *UserHandler) ValidateToken(c *gin.Context) (string, error) {
 			"detail":   "Missing 'Authorization' header",
 			"instance": url,
 		})
-		return "", err
+		return nil, err
 	}
 	token, err := extractBearerToken(request.Token)
 	if err != nil {
@@ -32,14 +33,14 @@ func (h *UserHandler) ValidateToken(c *gin.Context) (string, error) {
 			"detail":   fmt.Sprint("Error: ", err.Error()),
 			"instance": url,
 		})
-		return "", err
+		return nil, err
 	}
-	err = h.service.ValidateToken(token)
+	tokenClaims, err := h.service.ValidateToken(token)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
-		return "", err
+		return nil, err
 	}
-	return token, nil
+	return tokenClaims, nil
 }
 
 func extractBearerToken(authHeader string) (string, error) {

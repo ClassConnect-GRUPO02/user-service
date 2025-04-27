@@ -110,11 +110,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 	// Get the ID of the sender from the JWT token
-	idSender, err := h.service.GetUserIdFromToken(token)
-	if err, ok := err.(*models.Error); ok {
-		c.JSON(err.Status, err)
-		return
-	}
+	idSender := token.Id
 	log.Printf("idSender = %s, id = %s", idSender, id)
 	// If the id of the sender is the same as the target, then
 	// the user is retrieving its own info, so we respond with
