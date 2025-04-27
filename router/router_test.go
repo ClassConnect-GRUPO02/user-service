@@ -283,6 +283,26 @@ func TestGetUsers(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 
+	t.Run("Retrieving the users without Authorization header fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUsers").Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
 	t.Run("Retrieving the users without JWT token fails", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		mockError := fmt.Errorf("mock error")
@@ -298,6 +318,28 @@ func TestGetUsers(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("Retrieving the users without the 'Bearer' auth header fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUsers").Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "trash")
 
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
