@@ -555,4 +555,30 @@ func TestEditUser(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		assert.Equal(t, expectedBody, w.Body.String())
 	})
+
+	t.Run("Edit user with missing parameters returns error", func(t *testing.T) {
+		bodyWithMissingParameters := `{"name": "John"}` // missing email
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("Mock error")
+		userRepositoryMock.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		token, _ := userService.IssueToken("1")
+		req, _ := http.NewRequest("PUT", "/user/1", strings.NewReader(bodyWithMissingParameters))
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+		expectedBody := `{"detail":"Could not update the user info","instance":"/user/1","status":400,"title":"Bad request","type":"about:blank"}`
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, expectedBody, w.Body.String())
+	})
 }
