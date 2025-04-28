@@ -138,3 +138,11 @@ func (s *Service) EditUser(id int64, newUserData models.EditUserRequest) error {
 	}
 	return nil
 }
+
+func (s *Service) IsEmailRegistered(email string) (bool, error) {
+	isEmailRegistered, err := s.userRepository.IsEmailRegistered(email)
+	if err != nil {
+		return false, models.InternalServerError()
+	}
+	return isEmailRegistered, nil
+}

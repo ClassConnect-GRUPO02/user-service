@@ -156,3 +156,19 @@ func TestServiceEditUserWithRepositoryErrors(t *testing.T) {
 		assert.Equal(t, expectedError, err)
 	})
 }
+
+func TestServiceIsEmailRegisteredWithRepositoryErrors(t *testing.T) {
+	mockError := fmt.Errorf("mock error")
+	config := config.Config{}
+
+	t.Run("IsEmailRegistered returns internal server error when repository.IsEmailRegistered returns an error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		_, err = userService.IsEmailRegistered("john@example.com")
+		expectedError := models.InternalServerError()
+		assert.Equal(t, expectedError, err)
+	})
+}

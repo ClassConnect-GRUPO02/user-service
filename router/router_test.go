@@ -582,3 +582,103 @@ func TestEditUser(t *testing.T) {
 		assert.Equal(t, expectedBody, w.Body.String())
 	})
 }
+
+func TestCheckEmailExists(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+	email := "john@example.com"
+	id := "1"
+
+	t.Run("Check email exists", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/check-email-exists/"+email, nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		response := w.Body.String()
+		emailExists := strings.Contains(response, `"exists":true`)
+		responseContainsToken := strings.Contains(response, `"token":`)
+
+		assert.True(t, emailExists)
+		assert.True(t, responseContainsToken)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Check email exists returns false when the email does not exist", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/check-email-exists/"+email, nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		response := w.Body.String()
+		emailExists := strings.Contains(response, `"exists":false`)
+		responseContainsToken := strings.Contains(response, `"token":`)
+
+		assert.True(t, emailExists)
+		// The endpoint should not return the token on unregistered emails
+		assert.False(t, responseContainsToken)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	mockError := fmt.Errorf("mock error")
+
+	t.Run("Check email exists returns InternalServerError when repository.IsEmailRegistered returns error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/check-email-exists/"+email, nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("Check email exists returns InternalServerError when repository.GetUserIdByEmail returns error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/check-email-exists/"+email, nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
