@@ -172,3 +172,32 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 		"description": "User updated successfully",
 	})
 }
+
+func (h *UserHandler) EmailExists(c *gin.Context) {
+	email := c.Param("email")
+	emailExists, err := h.service.IsEmailRegistered(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	if !emailExists {
+		c.JSON(http.StatusOK, gin.H{
+			"exists": false,
+		})
+		return
+	}
+	id, err := h.service.GetUserIdByEmail(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	token, err := h.service.IssueToken(id)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"exists": true,
+		"token":  token,
+	})
+}

@@ -169,4 +169,17 @@ func TestIntegration(t *testing.T) {
 		}
 		assert.Equal(t, &expectedUser, user)
 	})
+
+	t.Run("check if email exists", func(t *testing.T) {
+		isEmailRegistered, err := userService.IsEmailRegistered(user.Email)
+		assert.Nil(t, err)
+		assert.True(t, isEmailRegistered)
+	})
+
+	t.Run("isEmailRegistered on unregistered email returns false", func(t *testing.T) {
+		unregisteredEmail := "unregistered@email.com"
+		isEmailRegistered, err := userService.IsEmailRegistered(unregisteredEmail)
+		assert.Nil(t, err)
+		assert.False(t, isEmailRegistered)
+	})
 }
