@@ -8,3 +8,8 @@ type LoginRequest struct {
 type AuthRequest struct {
 	Token string `header:"Authorization" binding:"required"`
 }
+
+type EditUserRequest struct {
+	Name  string `json:"name" binding:"required"`
+	Email string `json:"email" binding:"required"`
+}

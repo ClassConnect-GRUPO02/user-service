@@ -13,6 +13,7 @@ func CreateUserRouter(handler *handlers.UserHandler) (*gin.Engine, error) {
 	router.POST("/login", handler.HandleLogin)
 	router.GET("/users", handler.GetUsers)
 	router.GET("/user/:id", handler.GetUser)
+	router.PUT("/user/:id", handler.EditUser)
 
 	return router, nil
 }

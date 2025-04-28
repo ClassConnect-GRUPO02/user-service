@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"user_service/models"
 	"user_service/service"
 
@@ -131,5 +132,43 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 			Email:    user.Email,
 			UserType: user.UserType,
 		},
+	})
+}
+
+func (h *UserHandler) EditUser(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	editUserRequest := models.EditUserRequest{}
+	idString := c.Param("id")
+	if err := c.ShouldBind(&editUserRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not update the user info",
+			"instance": "/user/" + idString,
+		})
+		return
+	}
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": "/user/" + idString,
+		})
+		return
+	}
+	err = h.service.EditUser(id, editUserRequest)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User updated successfully",
 	})
 }

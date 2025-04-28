@@ -221,6 +221,24 @@ func (_m *Repository) SetUserBlockedUntil(email string, timestamp int64) error {
 	return r0
 }
 
+// UpdateUser provides a mock function with given fields: id, name, email
+func (_m *Repository) UpdateUser(id int64, name string, email string) error {
+	ret := _m.Called(id, name, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string, string) error); ok {
+		r0 = rf(id, name, email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UserBlockedUntil provides a mock function with given fields: email
 func (_m *Repository) UserBlockedUntil(email string) (int64, error) {
 	ret := _m.Called(email)

@@ -130,3 +130,11 @@ func (s *Service) GetUserIdByEmail(email string) (string, error) {
 	}
 	return userId, nil
 }
+
+func (s *Service) EditUser(id int64, newUserData models.EditUserRequest) error {
+	err := s.userRepository.UpdateUser(id, newUserData.Name, newUserData.Email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
