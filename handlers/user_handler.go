@@ -241,6 +241,14 @@ func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 func (h *UserHandler) CreateAdmin(c *gin.Context) {
 	// TODO: token validation
 	admin := models.CreateAdminRequest{}
+	token, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	if token.Id != "admin" {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
+		return
+	}
 	if err := c.ShouldBind(&admin); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"title":    "Bad request",
@@ -251,7 +259,7 @@ func (h *UserHandler) CreateAdmin(c *gin.Context) {
 		})
 		return
 	}
-	err := h.service.CreateAdmin(admin)
+	err = h.service.CreateAdmin(admin)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
