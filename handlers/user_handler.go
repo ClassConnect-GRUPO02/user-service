@@ -201,3 +201,65 @@ func (h *UserHandler) EmailExists(c *gin.Context) {
 		"token":  token,
 	})
 }
+
+func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
+	loginRequest := models.LoginRequest{}
+	if err := c.ShouldBind(&loginRequest); err != nil {
+		log.Print("POST /login Error: Bad request")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not authenticate the user",
+			"instance": "/admin-login",
+		})
+		return
+	}
+
+	err := h.service.LoginAdmin(loginRequest)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	adminId, err := h.service.GetAdminIdByEmail(loginRequest.Email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	token, err := h.service.IssueToken("admin") // TODO: check if this is right
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{
+		"description": "Admin logged in successfully",
+		"id":          adminId,
+		"token":       token,
+	})
+}
+
+func (h *UserHandler) CreateAdmin(c *gin.Context) {
+	// TODO: token validation
+	admin := models.CreateAdminRequest{}
+	if err := c.ShouldBind(&admin); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not register the admin",
+			"instance": "/admins",
+		})
+		return
+	}
+	err := h.service.CreateAdmin(admin)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"description": "Admin registered successfully",
+		"email":       admin.Email,
+		"name":        admin.Name,
+	})
+}

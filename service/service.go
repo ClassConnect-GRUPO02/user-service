@@ -146,3 +146,51 @@ func (s *Service) IsEmailRegistered(email string) (bool, error) {
 	}
 	return isEmailRegistered, nil
 }
+
+func (s *Service) LoginAdmin(loginRequest models.LoginRequest) error {
+	log.Printf("Authenticating user %s", loginRequest.Email)
+	// Check if the email is registered
+	emailRegistered, err := s.userRepository.IsAdminEmailRegistered(loginRequest.Email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	if !emailRegistered {
+		return models.InvalidCredentialsError()
+	}
+
+	// Check if the password is correct
+	passwordMatches, err := s.userRepository.AdminPasswordMatches(loginRequest.Email, loginRequest.Password)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	if !passwordMatches {
+		return models.InvalidCredentialsError()
+	}
+
+	return nil
+}
+
+func (s *Service) GetAdminIdByEmail(email string) (string, error) {
+	userId, err := s.userRepository.GetAdminIdByEmail(email)
+	if err != nil {
+		return "", models.InternalServerError()
+	}
+	return userId, nil
+}
+
+func (s *Service) CreateAdmin(admin models.CreateAdminRequest) error {
+	log.Printf("Creating admin %s", admin.Email)
+	emailAlreadyRegistered, err := s.userRepository.IsAdminEmailRegistered(admin.Email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	if emailAlreadyRegistered {
+		return models.EmailAlreadyRegisteredError(admin.Email)
+	}
+	err = s.userRepository.AddAdmin(admin.Email, admin.Name, admin.Password)
+	if err != nil {
+		log.Printf("Failed to add admin %v to the database. Error: %s", admin.Email, err)
+		return models.InternalServerError()
+	}
+	return nil
+}

@@ -16,5 +16,8 @@ func CreateUserRouter(handler *handlers.UserHandler) (*gin.Engine, error) {
 	router.PUT("/user/:id", handler.EditUser)
 	router.GET("/check-email-exists/:email", handler.EmailExists)
 
+	router.POST("/admin-login", handler.HandleAdminLogin)
+	router.POST("/admins", handler.CreateAdmin)
+
 	return router, nil
 }
