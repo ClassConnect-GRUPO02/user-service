@@ -682,3 +682,137 @@ func TestCheckEmailExists(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }
+
+func TestAdminLogin(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+
+	t.Run("Admin login succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("GetAdminIdByEmail", mock.Anything).Return("1", nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"email":"admin","password":"admin"}`
+		req, _ := http.NewRequest("POST", "/admin-login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusAccepted, w.Code)
+	})
+
+	t.Run("Admin login fails due to invalid email", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"email":"admin","password":"admin"}`
+		req, _ := http.NewRequest("POST", "/admin-login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("Admin login fails due to invalid password", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"email":"admin","password":"admin"}`
+		req, _ := http.NewRequest("POST", "/admin-login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("Admin login fails due to internal server error in repository.IsAdminEmailRegistered", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"email":"admin","password":"admin"}`
+		req, _ := http.NewRequest("POST", "/admin-login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("Admin login fails due to internal server error in repository.AdminPasswordMatches", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(false, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"email":"admin","password":"admin"}`
+		req, _ := http.NewRequest("POST", "/admin-login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("Admin login fails due to internal server error in repository.GetAdminIdByEmailgs", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
+		userRepositoryMock.On("GetAdminIdByEmail", mock.Anything).Return("", mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"email":"admin","password":"admin"}`
+		req, _ := http.NewRequest("POST", "/admin-login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
