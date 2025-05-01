@@ -6,10 +6,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 	"user_service/database"
 	"user_service/models"
+	"user_service/utils"
 )
 
 type UserRepository struct {
@@ -46,8 +46,7 @@ func (r *UserRepository) AddUser(user models.User) error {
 	hasher.Write([]byte(user.Password))
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	blockedUntil := 0
-	year, month, day := time.Now().Date()
-	date := strconv.Itoa(year) + "-" + strconv.Itoa(int(month)) + "-" + strconv.Itoa(day)
+	date := utils.GetDate()
 	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', %d, '%f', '%f', '%s');", user.Email, user.Name, user.UserType, passwordHash, blockedUntil, user.Latitude, user.Longitude, date)
 	_, err := r.db.Exec(query)
 	if err != nil {
@@ -103,7 +102,37 @@ func (r *UserRepository) GetUsers() ([]models.UserPublicInfo, error) {
 			return nil, err
 		}
 		log.Printf("User id = %d", id)
+
 		user := models.UserPublicInfo{Name: name, UserType: userType, Id: id, Email: email}
+		users = append(users, user)
+		fmt.Printf("user: %v", user)
+	}
+	return users, err
+}
+
+func (r *UserRepository) GetUsersFullInfo(blockingDuration int64) ([]models.UserFullInfo, error) {
+	query := "SELECT id, name, email, type, latitude, longitude, blocked_until, registration_date FROM users;"
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return nil, err
+	}
+	defer rows.Close()
+	users := make([]models.UserFullInfo, 0)
+	for rows.Next() {
+		var id, blockedUntil int
+		var latitude, longitude float64
+		var name, email, userType, registrationDate string
+		err = rows.Scan(&id, &name, &email, &userType, &latitude, &longitude, &blockedUntil, &registrationDate)
+		if err != nil {
+			log.Printf("failed to scan row. Error: %s", err)
+			return nil, err
+		}
+		log.Printf("User id = %d", id)
+
+		blocked := int64(blockedUntil) > time.Now().Unix()+blockingDuration
+
+		user := models.UserFullInfo{Name: name, UserType: userType, Id: id, Email: email, RegistrationDate: registrationDate[0:10], Blocked: blocked}
 		users = append(users, user)
 		fmt.Printf("user: %v", user)
 	}

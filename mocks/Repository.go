@@ -193,6 +193,36 @@ func (_m *Repository) GetUsers() ([]models.UserPublicInfo, error) {
 	return r0, r1
 }
 
+// GetUsersFullInfo provides a mock function with given fields: blockingDuration
+func (_m *Repository) GetUsersFullInfo(blockingDuration int64) ([]models.UserFullInfo, error) {
+	ret := _m.Called(blockingDuration)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUsersFullInfo")
+	}
+
+	var r0 []models.UserFullInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int64) ([]models.UserFullInfo, error)); ok {
+		return rf(blockingDuration)
+	}
+	if rf, ok := ret.Get(0).(func(int64) []models.UserFullInfo); ok {
+		r0 = rf(blockingDuration)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.UserFullInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int64) error); ok {
+		r1 = rf(blockingDuration)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // IncrementFailedLoginAttempts provides a mock function with given fields: email, blockingTimeWindow
 func (_m *Repository) IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error) {
 	ret := _m.Called(email, blockingTimeWindow)

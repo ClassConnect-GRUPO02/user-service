@@ -95,11 +95,21 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	return nil
 }
 
+func (s *Service) GetUsersFullInfo() ([]models.UserFullInfo, error) {
+	users, err := s.userRepository.GetUsersFullInfo(s.blockingDuration)
+	if err != nil {
+		return nil, models.InternalServerError()
+	}
+
+	return users, nil
+}
+
 func (s *Service) GetUsers() ([]models.UserPublicInfo, error) {
 	users, err := s.userRepository.GetUsers()
 	if err != nil {
 		return nil, models.InternalServerError()
 	}
+
 	return users, nil
 }
 

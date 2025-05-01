@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 // GetEnvVar reads the value of the given variable from the enviroment and returns it.
@@ -27,4 +28,8 @@ func GetIntEnvVar(envVar string) (int64, error) {
 		return 0, fmt.Errorf("failed to convert %s to uint64. Error: %s", variableString, err)
 	}
 	return variableInt, nil
+}
+
+func GetDate() string {
+	return time.Now().Format("2006-01-02")
 }

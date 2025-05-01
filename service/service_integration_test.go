@@ -222,4 +222,33 @@ func TestIntegration(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, "1", adminId)
 	})
+
+	t.Run("get users full info succeeds", func(t *testing.T) {
+		users, err := userService.GetUsersFullInfo()
+		assert.Nil(t, err)
+
+		expectedUsers := []models.UserFullInfo{
+			{
+				Id:               2,
+				Name:             "John Doe",
+				Email:            "mary@example.com",
+				UserType:         "alumno",
+				RegistrationDate: "2025-05-01",
+				Latitude:         0,
+				Longitude:        0,
+				Blocked:          false,
+			},
+			{
+				Id:               1,
+				Name:             "Johnny Doe",
+				Email:            "johnny@example.com",
+				UserType:         "alumno",
+				RegistrationDate: "2025-05-01",
+				Latitude:         0,
+				Longitude:        0,
+				Blocked:          false,
+			},
+		}
+		assert.Equal(t, expectedUsers, users)
+	})
 }
