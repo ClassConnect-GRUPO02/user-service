@@ -225,3 +225,13 @@ func (s *Service) BlockUser(id int64) error {
 	}
 	return nil
 }
+
+func (s *Service) UnblockUser(id int64) error {
+	log.Printf("Unblocking user %d", id)
+	blockedUntil := int64(0)
+	err := s.userRepository.SetUserBlockedUntil(id, blockedUntil)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
