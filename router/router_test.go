@@ -1098,7 +1098,7 @@ func TestBlockUser(t *testing.T) {
 
 		router.ServeHTTP(w, req)
 		response := w.Body.String()
-		expectedResponse := `{"description":"User blocked successfully"}`
+		expectedResponse := `{"blocked":true,"description":"User blocked successfully","id":"1"}`
 
 		assert.Equal(t, expectedResponse, response)
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -1174,7 +1174,7 @@ func TestUnblockUser(t *testing.T) {
 
 		router.ServeHTTP(w, req)
 		response := w.Body.String()
-		expectedResponse := `{"description":"User unblocked successfully"}`
+		expectedResponse := `{"blocked":false,"description":"User unblocked successfully","id":"1"}`
 
 		assert.Equal(t, expectedResponse, response)
 		assert.Equal(t, http.StatusOK, w.Code)

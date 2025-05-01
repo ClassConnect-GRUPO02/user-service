@@ -313,6 +313,8 @@ func (h *UserHandler) BlockUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"description": "User blocked successfully",
+		"id":          idString,
+		"blocked":     true,
 	})
 }
 
@@ -344,5 +346,7 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"description": "User unblocked successfully",
+		"id":          idString,
+		"blocked":     false,
 	})
 }
