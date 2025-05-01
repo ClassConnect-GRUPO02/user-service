@@ -992,4 +992,27 @@ func TestAdminRegister(t *testing.T) {
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
+
+	t.Run("Admin register when the token is not from an admin", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, nil)
+		userRepositoryMock.On("AddAdmin", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"email":"admin","name":"admin","password":"admin"}`
+		token, _ := userService.IssueToken("1")
+		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
 }
