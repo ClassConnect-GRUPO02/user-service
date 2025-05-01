@@ -62,3 +62,10 @@ CREATE TABLE IF NOT EXISTS verification_pins (
 CREATE TABLE IF NOT EXISTS google_linked_emails (
     email VARCHAR(255) PRIMARY KEY
 );
+
+CREATE TABLE IF NOT EXISTS user_modifications (
+    id SERIAL PRIMARY KEY,
+    affected_user INTEGER REFERENCES users (id),
+    modification VARCHAR(255),
+    timestamp DATE
+);
