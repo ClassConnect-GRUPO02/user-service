@@ -75,6 +75,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
 		userRepositoryMock.On("IncrementFailedLoginAttempts", mock.Anything, mock.Anything).Return(int64(1), nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(mockError)
 
 		userService, err := service.NewService(userRepositoryMock, &config)

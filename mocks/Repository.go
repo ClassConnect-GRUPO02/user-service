@@ -193,6 +193,36 @@ func (_m *Repository) GetUsers() ([]models.UserPublicInfo, error) {
 	return r0, r1
 }
 
+// GetUsersFullInfo provides a mock function with given fields: blockingDuration
+func (_m *Repository) GetUsersFullInfo(blockingDuration int64) ([]models.UserFullInfo, error) {
+	ret := _m.Called(blockingDuration)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUsersFullInfo")
+	}
+
+	var r0 []models.UserFullInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int64) ([]models.UserFullInfo, error)); ok {
+		return rf(blockingDuration)
+	}
+	if rf, ok := ret.Get(0).(func(int64) []models.UserFullInfo); ok {
+		r0 = rf(blockingDuration)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.UserFullInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int64) error); ok {
+		r1 = rf(blockingDuration)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // IncrementFailedLoginAttempts provides a mock function with given fields: email, blockingTimeWindow
 func (_m *Repository) IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error) {
 	ret := _m.Called(email, blockingTimeWindow)
@@ -305,17 +335,35 @@ func (_m *Repository) PasswordMatches(email string, password string) (bool, erro
 	return r0, r1
 }
 
-// SetUserBlockedUntil provides a mock function with given fields: email, timestamp
-func (_m *Repository) SetUserBlockedUntil(email string, timestamp int64) error {
-	ret := _m.Called(email, timestamp)
+// SetUserBlockedUntil provides a mock function with given fields: id, timestamp
+func (_m *Repository) SetUserBlockedUntil(id int64, timestamp int64) error {
+	ret := _m.Called(id, timestamp)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetUserBlockedUntil")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, int64) error); ok {
-		r0 = rf(email, timestamp)
+	if rf, ok := ret.Get(0).(func(int64, int64) error); ok {
+		r0 = rf(id, timestamp)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SetUserType provides a mock function with given fields: id, userType
+func (_m *Repository) SetUserType(id int64, userType string) error {
+	ret := _m.Called(id, userType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetUserType")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string) error); ok {
+		r0 = rf(id, userType)
 	} else {
 		r0 = ret.Error(0)
 	}

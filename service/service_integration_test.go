@@ -222,4 +222,77 @@ func TestIntegration(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, "1", adminId)
 	})
+
+	t.Run("get users full info succeeds", func(t *testing.T) {
+		users, err := userService.GetUsersFullInfo()
+		assert.Nil(t, err)
+
+		expectedUsers := []models.UserFullInfo{
+			{
+				Id:               2,
+				Name:             "John Doe",
+				Email:            "mary@example.com",
+				UserType:         "alumno",
+				RegistrationDate: "2025-05-01",
+				Latitude:         0,
+				Longitude:        0,
+				Blocked:          false,
+			},
+			{
+				Id:               1,
+				Name:             "Johnny Doe",
+				Email:            "johnny@example.com",
+				UserType:         "alumno",
+				RegistrationDate: "2025-05-01",
+				Latitude:         0,
+				Longitude:        0,
+				Blocked:          false,
+			},
+		}
+		assert.Equal(t, expectedUsers, users)
+	})
+
+	t.Run("block user succeeds", func(t *testing.T) {
+		userId := int64(1)
+		err := userService.BlockUser(userId)
+		assert.Nil(t, err)
+		users, err := userService.GetUsersFullInfo()
+		assert.Nil(t, err)
+		for _, user := range users {
+			if user.Id == int(userId) {
+				assert.True(t, user.Blocked)
+			}
+		}
+	})
+
+	t.Run("unblock user succeeds", func(t *testing.T) {
+		userId := int64(1)
+		err := userService.UnblockUser(userId)
+		assert.Nil(t, err)
+		users, err := userService.GetUsersFullInfo()
+		assert.Nil(t, err)
+		for _, user := range users {
+			if user.Id == int(userId) {
+				assert.False(t, user.Blocked)
+			}
+		}
+	})
+
+	t.Run("set user type succeeds", func(t *testing.T) {
+		// Check the user type before updating it
+		user, err := userService.GetUser("1")
+		assert.Nil(t, err)
+		assert.Equal(t, user.UserType, "alumno")
+
+		userId := int64(1)
+		userType := "docente"
+		// Update user type
+		err = userService.SetUserType(userId, userType)
+		assert.Nil(t, err)
+
+		// Check the user type has been updated
+		user, err = userService.GetUser("1")
+		assert.Nil(t, err)
+		assert.Equal(t, user.UserType, userType)
+	})
 }

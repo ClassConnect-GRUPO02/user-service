@@ -2,6 +2,8 @@ package service
 
 import (
 	"log"
+	"math"
+	"strconv"
 	"time"
 	"user_service/auth"
 	"user_service/config"
@@ -83,7 +85,15 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		// If the user reaches the attempts limit, block it
 		if failedLoginAttempts >= s.loginAttemptsLimit {
 			blockedUntil := time.Now().Unix() + s.blockingDuration
-			err := s.userRepository.SetUserBlockedUntil(loginRequest.Email, blockedUntil)
+			userId, err := s.userRepository.GetUserIdByEmail(loginRequest.Email)
+			if err != nil {
+				return models.InternalServerError()
+			}
+			id, err := strconv.ParseInt(userId, 10, 64)
+			if err != nil {
+				return models.InternalServerError()
+			}
+			err = s.userRepository.SetUserBlockedUntil(id, blockedUntil)
 			if err != nil {
 				return models.InternalServerError()
 			}
@@ -95,11 +105,21 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	return nil
 }
 
+func (s *Service) GetUsersFullInfo() ([]models.UserFullInfo, error) {
+	users, err := s.userRepository.GetUsersFullInfo(s.blockingDuration)
+	if err != nil {
+		return nil, models.InternalServerError()
+	}
+
+	return users, nil
+}
+
 func (s *Service) GetUsers() ([]models.UserPublicInfo, error) {
 	users, err := s.userRepository.GetUsers()
 	if err != nil {
 		return nil, models.InternalServerError()
 	}
+
 	return users, nil
 }
 
@@ -190,6 +210,36 @@ func (s *Service) CreateAdmin(admin models.CreateAdminRequest) error {
 	err = s.userRepository.AddAdmin(admin.Email, admin.Name, admin.Password)
 	if err != nil {
 		log.Printf("Failed to add admin %v to the database. Error: %s", admin.Email, err)
+		return models.InternalServerError()
+	}
+	return nil
+}
+
+func (s *Service) BlockUser(id int64) error {
+	log.Printf("Blocking user %d", id)
+	// Block the user permanently
+	blockedUntil := int64(math.MaxInt64)
+	err := s.userRepository.SetUserBlockedUntil(id, blockedUntil)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
+
+func (s *Service) UnblockUser(id int64) error {
+	log.Printf("Unblocking user %d", id)
+	blockedUntil := int64(0)
+	err := s.userRepository.SetUserBlockedUntil(id, blockedUntil)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
+
+func (s *Service) SetUserType(id int64, userType string) error {
+	log.Printf("Setting user with id %d to %s", id, userType)
+	err := s.userRepository.SetUserType(id, userType)
+	if err != nil {
 		return models.InternalServerError()
 	}
 	return nil

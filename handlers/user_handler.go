@@ -83,8 +83,22 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {
-	_, err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
+		return
+	}
+	// If the sender is the admin, then return the full user info,
+	// which contains information such as registration date, whether the user
+	// is blocked, etc.
+	if token.Id == "admin" {
+		users, err := h.service.GetUsersFullInfo()
+		if err, ok := err.(*models.Error); ok {
+			c.JSON(err.Status, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"users": users,
+		})
 		return
 	}
 	users, err := h.service.GetUsers()
@@ -268,5 +282,105 @@ func (h *UserHandler) CreateAdmin(c *gin.Context) {
 		"description": "Admin registered successfully",
 		"email":       admin.Email,
 		"name":        admin.Name,
+	})
+}
+
+func (h *UserHandler) BlockUser(c *gin.Context) {
+	token, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	if token.Id != "admin" {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
+		return
+	}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": "/user/" + idString + "/block",
+		})
+		return
+	}
+	err = h.service.BlockUser(id)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User blocked successfully",
+		"id":          idString,
+		"blocked":     true,
+	})
+}
+
+func (h *UserHandler) UnblockUser(c *gin.Context) {
+	token, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	if token.Id != "admin" {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
+		return
+	}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": "/user/" + idString + "/unblock",
+		})
+		return
+	}
+	err = h.service.UnblockUser(id)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User unblocked successfully",
+		"id":          idString,
+		"blocked":     false,
+	})
+}
+
+func (h *UserHandler) SetUserType(c *gin.Context) {
+	token, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	if token.Id != "admin" {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
+		return
+	}
+	idString := c.Param("id")
+	userType := c.Param("type")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": "/user/" + idString + "/type/" + userType,
+		})
+		return
+	}
+	err = h.service.SetUserType(id, userType)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User type updated successfully",
+		"id":          idString,
+		"userType":    userType,
 	})
 }
