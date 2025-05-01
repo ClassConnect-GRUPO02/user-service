@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 	"user_service/database"
 	"user_service/models"
@@ -45,7 +46,9 @@ func (r *UserRepository) AddUser(user models.User) error {
 	hasher.Write([]byte(user.Password))
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	blockedUntil := 0
-	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', %d, '%f', '%f');", user.Email, user.Name, user.UserType, passwordHash, blockedUntil, user.Latitude, user.Longitude)
+	year, month, day := time.Now().Date()
+	date := strconv.Itoa(year) + "-" + strconv.Itoa(int(month)) + "-" + strconv.Itoa(day)
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', %d, '%f', '%f', '%s');", user.Email, user.Name, user.UserType, passwordHash, blockedUntil, user.Latitude, user.Longitude, date)
 	_, err := r.db.Exec(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)

@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255),
     blocked_until BIGINT,
     latitude FLOAT,
-    longitude FLOAT
+    longitude FLOAT,
+    registration_date DATE
 );
 
 CREATE TABLE IF NOT EXISTS login_attempts (
