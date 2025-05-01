@@ -216,4 +216,10 @@ func TestIntegration(t *testing.T) {
 		expectedError := models.EmailAlreadyRegisteredError(alreadyRegisteredEmail)
 		assert.Equal(t, expectedError, err)
 	})
+
+	t.Run("get admin id by email succeeds", func(t *testing.T) {
+		adminId, err := userService.GetAdminIdByEmail("admin")
+		assert.Nil(t, err)
+		assert.Equal(t, "1", adminId)
+	})
 }
