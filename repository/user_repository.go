@@ -600,3 +600,12 @@ func (r *UserRepository) UpdateUserPassword(id int, password string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) AddModificationLog(affectedUserId int64, modification string, date string) error {
+	_, err := r.db.Exec(`INSERT INTO user_modifications VALUES (DEFAULT, $1, $2, $3)`, affectedUserId, modification, date)
+	if err != nil {
+		log.Printf("Failed to add user modification log. Error: %s", err)
+		return err
+	}
+	return nil
+}
