@@ -182,4 +182,38 @@ func TestIntegration(t *testing.T) {
 		assert.Nil(t, err)
 		assert.False(t, isEmailRegistered)
 	})
+
+	t.Run("admin login with the default account succeeds", func(t *testing.T) {
+		loginRequest := models.LoginRequest{Email: "admin", Password: "admin"}
+		err := userService.LoginAdmin(loginRequest)
+		assert.Nil(t, err)
+	})
+
+	t.Run("admin login with an unregistered email returns error", func(t *testing.T) {
+		loginRequest := models.LoginRequest{Email: "user", Password: "password"}
+		err := userService.LoginAdmin(loginRequest)
+		expectedError := models.InvalidCredentialsError()
+		assert.Equal(t, expectedError, err)
+	})
+
+	t.Run("admin login with wrong password returns error", func(t *testing.T) {
+		loginRequest := models.LoginRequest{Email: "admin", Password: "wrong_password"}
+		err := userService.LoginAdmin(loginRequest)
+		expectedError := models.InvalidCredentialsError()
+		assert.Equal(t, expectedError, err)
+	})
+
+	t.Run("register admin with valid credentials succeeds", func(t *testing.T) {
+		registerRequest := models.CreateAdminRequest{Email: "admin2", Password: "admin2", Name: "admin2"}
+		err := userService.CreateAdmin(registerRequest)
+		assert.Nil(t, err)
+	})
+
+	t.Run("register admin with invalid credentials returns error", func(t *testing.T) {
+		alreadyRegisteredEmail := "admin"
+		registerRequest := models.CreateAdminRequest{Email: alreadyRegisteredEmail, Password: "admin2", Name: "admin2"}
+		err := userService.CreateAdmin(registerRequest)
+		expectedError := models.EmailAlreadyRegisteredError(alreadyRegisteredEmail)
+		assert.Equal(t, expectedError, err)
+	})
 }
