@@ -324,3 +324,29 @@ func (r *UserRepository) AddModificationLog(affectedUserId int64, modification s
 	}
 	return nil
 }
+
+func (r *UserRepository) GetUserModifications() ([]models.AuditLog, error) {
+	query := "SELECT * FROM user_modifications;"
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return nil, err
+	}
+	defer rows.Close()
+	logs := make([]models.AuditLog, 0)
+	for rows.Next() {
+		var id, affectedUserId int
+		var modification, date string
+		err = rows.Scan(&id, &affectedUserId, &modification, &date)
+		if err != nil {
+			log.Printf("failed to scan row. Error: %s", err)
+			return nil, err
+		}
+		log.Printf("User id = %d", id)
+
+		log := models.AuditLog{Id: id, AffectedUserId: affectedUserId, Modification: modification, Date: date}
+		logs = append(logs, log)
+		fmt.Printf("log: %v", log)
+	}
+	return logs, err
+}

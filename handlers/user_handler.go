@@ -384,3 +384,14 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 		"userType":    userType,
 	})
 }
+
+func (h *UserHandler) GetAuditLogs(c *gin.Context) {
+	logs, err := h.service.GetAuditLogs()
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"logs": logs,
+	})
+}

@@ -263,3 +263,11 @@ func (s *Service) SetUserType(id int64, userType string) error {
 	}
 	return nil
 }
+
+func (s *Service) GetAuditLogs() ([]models.AuditLog, error) {
+	logs, err := s.userRepository.GetUserModifications()
+	if err != nil {
+		return nil, models.InternalServerError()
+	}
+	return logs, nil
+}

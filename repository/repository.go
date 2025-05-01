@@ -23,4 +23,5 @@ type Repository interface {
 	AddAdmin(email, name, password string) error
 	SetUserType(id int64, userType string) error
 	AddModificationLog(affectedUserId int64, modification string, date string) error
+	GetUserModifications() ([]models.AuditLog, error)
 }

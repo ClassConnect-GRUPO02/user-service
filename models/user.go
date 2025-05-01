@@ -37,3 +37,10 @@ type UserInfo struct {
 	Latitude  float64 `json:"latitude" binding:"required"`
 	Longitude float64 `json:"longitude" binding:"required"`
 }
+
+type AuditLog struct {
+	Id             int    `json:"id"`
+	AffectedUserId int    `json:"affectedUserId"`
+	Modification   string `json:"modification"`
+	Date           string `json:"date"`
+}

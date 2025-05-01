@@ -21,6 +21,7 @@ func CreateUserRouter(handler *handlers.UserHandler) (*gin.Engine, error) {
 	router.PUT("/user/:id/block", handler.BlockUser)
 	router.PUT("/user/:id/unblock", handler.UnblockUser)
 	router.PUT("/user/:id/type/:type", handler.SetUserType)
+	router.GET("/audit-logs", handler.GetAuditLogs)
 
 	return router, nil
 }
