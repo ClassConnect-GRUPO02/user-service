@@ -207,3 +207,70 @@ func (r *UserRepository) UpdateUser(id int64, name, email string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) IsAdminEmailRegistered(email string) (bool, error) {
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM admins WHERE email='%s');", email)
+	var emailRegistered bool
+	err := r.db.QueryRow(query).Scan(&emailRegistered)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return false, err
+	}
+	log.Printf("email registered: %v", emailRegistered)
+	return emailRegistered, nil
+}
+
+func (r *UserRepository) AdminPasswordMatches(email, password string) (bool, error) {
+	// Hash the password
+	hasher := sha1.New()
+	hasher.Write([]byte(password))
+	passwordHash := hex.EncodeToString(hasher.Sum(nil))
+
+	var registeredPasswordHash string
+	query := fmt.Sprintf("SELECT password_hash FROM admins WHERE email='%s';", email)
+	err := r.db.QueryRow(query).Scan(&registeredPasswordHash)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return false, err
+	}
+	passwordMatches := passwordHash == registeredPasswordHash
+	return passwordMatches, nil
+}
+
+func (r *UserRepository) GetAdminIdByEmail(email string) (string, error) {
+	query := fmt.Sprintf("SELECT id FROM admins WHERE email='%s';", email)
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return "", err
+	}
+	defer rows.Close()
+
+	// If the query returned at least one row
+	if rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Printf("failed to scan row. Error: %s", err)
+			return "", err
+		}
+		log.Printf("User id = %s", id)
+		return id, nil
+	}
+	return "", nil
+}
+
+func (r *UserRepository) AddAdmin(email, name, password string) error {
+	// Hash the password before storing it
+	hasher := sha1.New()
+	hasher.Write([]byte(password))
+	passwordHash := hex.EncodeToString(hasher.Sum(nil))
+	log.Printf("hash(%s) = %s", password, passwordHash)
+	query := fmt.Sprintf("INSERT INTO admins VALUES (DEFAULT, '%s', '%s', '%s');", email, name, passwordHash)
+	_, err := r.db.Exec(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return err
+	}
+	return nil
+}

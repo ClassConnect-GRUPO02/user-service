@@ -13,3 +13,9 @@ type EditUserRequest struct {
 	Name  string `json:"name" binding:"required"`
 	Email string `json:"email" binding:"required"`
 }
+
+type CreateAdminRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Name     string `json:"name" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}

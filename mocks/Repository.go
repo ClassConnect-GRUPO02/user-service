@@ -13,6 +13,24 @@ type Repository struct {
 	mock.Mock
 }
 
+// AddAdmin provides a mock function with given fields: email, name, password
+func (_m *Repository) AddAdmin(email string, name string, password string) error {
+	ret := _m.Called(email, name, password)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddAdmin")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+		r0 = rf(email, name, password)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddUser provides a mock function with given fields: user
 func (_m *Repository) AddUser(user models.User) error {
 	ret := _m.Called(user)
@@ -29,6 +47,62 @@ func (_m *Repository) AddUser(user models.User) error {
 	}
 
 	return r0
+}
+
+// AdminPasswordMatches provides a mock function with given fields: email, password
+func (_m *Repository) AdminPasswordMatches(email string, password string) (bool, error) {
+	ret := _m.Called(email, password)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminPasswordMatches")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) (bool, error)); ok {
+		return rf(email, password)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) bool); ok {
+		r0 = rf(email, password)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(email, password)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetAdminIdByEmail provides a mock function with given fields: email
+func (_m *Repository) GetAdminIdByEmail(email string) (string, error) {
+	ret := _m.Called(email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAdminIdByEmail")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(email)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetUser provides a mock function with given fields: id
@@ -140,6 +214,34 @@ func (_m *Repository) IncrementFailedLoginAttempts(email string, blockingTimeWin
 
 	if rf, ok := ret.Get(1).(func(string, int64) error); ok {
 		r1 = rf(email, blockingTimeWindow)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IsAdminEmailRegistered provides a mock function with given fields: email
+func (_m *Repository) IsAdminEmailRegistered(email string) (bool, error) {
+	ret := _m.Called(email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsAdminEmailRegistered")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (bool, error)); ok {
+		return rf(email)
+	}
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(email)
 	} else {
 		r1 = ret.Error(1)
 	}
