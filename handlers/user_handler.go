@@ -284,3 +284,34 @@ func (h *UserHandler) CreateAdmin(c *gin.Context) {
 		"name":        admin.Name,
 	})
 }
+
+// func (h *UserHandler) BlockUser(c *gin.Context) {
+// 	token, err := h.ValidateToken(c)
+// 	if err != nil {
+// 		return
+// 	}
+// 	if token.Id != "admin" {
+// 		c.JSON(http.StatusUnauthorized, models.InvalidToken())
+// 		return
+// 	}
+// 	idString := c.Param("id")
+// 	id, err := strconv.ParseInt(idString, 10, 64)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"title":    "Bad request",
+// 			"type":     "about:blank",
+// 			"status":   http.StatusBadRequest,
+// 			"detail":   "Invalid id: " + idString,
+// 			"instance": "/user/" + idString + "/block",
+// 		})
+// 		return
+// 	}
+// 	err = h.service.BlockUser(id)
+// 	if err, ok := err.(*models.Error); ok {
+// 		c.JSON(err.Status, err)
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"description": "User blocked successfully",
+// 	})
+// }

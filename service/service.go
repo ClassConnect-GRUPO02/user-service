@@ -2,6 +2,7 @@ package service
 
 import (
 	"log"
+	"strconv"
 	"time"
 	"user_service/auth"
 	"user_service/config"
@@ -83,7 +84,15 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		// If the user reaches the attempts limit, block it
 		if failedLoginAttempts >= s.loginAttemptsLimit {
 			blockedUntil := time.Now().Unix() + s.blockingDuration
-			err := s.userRepository.SetUserBlockedUntil(loginRequest.Email, blockedUntil)
+			userId, err := s.userRepository.GetUserIdByEmail(loginRequest.Email)
+			if err != nil {
+				return models.InternalServerError()
+			}
+			id, err := strconv.ParseInt(userId, 10, 64)
+			if err != nil {
+				return models.InternalServerError()
+			}
+			err = s.userRepository.SetUserBlockedUntil(id, blockedUntil)
 			if err != nil {
 				return models.InternalServerError()
 			}
@@ -204,3 +213,22 @@ func (s *Service) CreateAdmin(admin models.CreateAdminRequest) error {
 	}
 	return nil
 }
+
+// func (s *Service) BlockUser(id int64) error {
+// 	log.Printf("Blocking user %d", id)
+
+// 	s.userRepository.SetUserBlockedUntil()
+// 	emailAlreadyRegistered, err := s.userRepository.IsAdminEmailRegistered(admin.Email)
+// 	if err != nil {
+// 		return models.InternalServerError()
+// 	}
+// 	if emailAlreadyRegistered {
+// 		return models.EmailAlreadyRegisteredError(admin.Email)
+// 	}
+// 	err = s.userRepository.AddAdmin(admin.Email, admin.Name, admin.Password)
+// 	if err != nil {
+// 		log.Printf("Failed to add admin %v to the database. Error: %s", admin.Email, err)
+// 		return models.InternalServerError()
+// 	}
+// 	return nil
+// }

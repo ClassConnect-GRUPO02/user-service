@@ -335,17 +335,17 @@ func (_m *Repository) PasswordMatches(email string, password string) (bool, erro
 	return r0, r1
 }
 
-// SetUserBlockedUntil provides a mock function with given fields: email, timestamp
-func (_m *Repository) SetUserBlockedUntil(email string, timestamp int64) error {
-	ret := _m.Called(email, timestamp)
+// SetUserBlockedUntil provides a mock function with given fields: id, timestamp
+func (_m *Repository) SetUserBlockedUntil(id int64, timestamp int64) error {
+	ret := _m.Called(id, timestamp)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetUserBlockedUntil")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, int64) error); ok {
-		r0 = rf(email, timestamp)
+	if rf, ok := ret.Get(0).(func(int64, int64) error); ok {
+		r0 = rf(id, timestamp)
 	} else {
 		r0 = ret.Error(0)
 	}

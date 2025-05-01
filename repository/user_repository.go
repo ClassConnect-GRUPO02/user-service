@@ -222,8 +222,8 @@ func (r *UserRepository) IncrementFailedLoginAttempts(email string, blockingTime
 	return failedAttempts, nil
 }
 
-func (r *UserRepository) SetUserBlockedUntil(email string, timestamp int64) error {
-	_, err := r.db.Exec(`UPDATE users SET blocked_until = $1 WHERE email=$2`, timestamp, email)
+func (r *UserRepository) SetUserBlockedUntil(id int64, timestamp int64) error {
+	_, err := r.db.Exec(`UPDATE users SET blocked_until = $1 WHERE id=$2`, timestamp, id)
 	if err != nil {
 		log.Printf("Failed to block user. Error: %s", err)
 		return err

@@ -18,6 +18,7 @@ func CreateUserRouter(handler *handlers.UserHandler) (*gin.Engine, error) {
 
 	router.POST("/admin-login", handler.HandleAdminLogin)
 	router.POST("/admins", handler.CreateAdmin)
+	// router.PUT("/user/:id/block", handler.BlockUser)
 
 	return router, nil
 }
