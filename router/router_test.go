@@ -365,6 +365,63 @@ func TestGetUsers(t *testing.T) {
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
+
+	t.Run("Get users with admin token returns the full users info", func(t *testing.T) {
+		usersFullInfo := []models.UserFullInfo{
+			{
+				Id:               1,
+				Name:             "John Doe",
+				UserType:         "alumno",
+				Email:            "john@example.com",
+				Blocked:          false,
+				RegistrationDate: "2025-04-10",
+				Latitude:         123123,
+				Longitude:        123123,
+			},
+		}
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUsersFullInfo", mock.Anything).Return(usersFullInfo, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		token, _ := userService.IssueToken("admin")
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+		expectedBody := `{"users":[{"id":1,"name":"John Doe","email":"john@example.com","userType":"alumno","registrationDate":"2025-04-10","latitude":123123,"longitude":123123,"blocked":false}]}`
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, expectedBody, w.Body.String())
+	})
+
+	t.Run("Get users with admin token returns error when the repository fails", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUsersFullInfo", mock.Anything).Return(nil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/users", nil)
+		token, _ := userService.IssueToken("admin")
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
 }
 
 func TestGetUser(t *testing.T) {

@@ -83,8 +83,22 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {
-	_, err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
+		return
+	}
+	// If the sender is the admin, then return the full user info,
+	// which contains information such as registration date, whether the user
+	// is blocked, etc.
+	if token.Id == "admin" {
+		users, err := h.service.GetUsersFullInfo()
+		if err, ok := err.(*models.Error); ok {
+			c.JSON(err.Status, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"users": users,
+		})
 		return
 	}
 	users, err := h.service.GetUsers()
