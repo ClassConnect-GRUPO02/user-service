@@ -21,4 +21,5 @@ type Repository interface {
 	AdminPasswordMatches(email, password string) (bool, error)
 	GetAdminIdByEmail(email string) (string, error)
 	AddAdmin(email, name, password string) error
+	SetUserType(id int64, userType string) error
 }

@@ -350,3 +350,37 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 		"blocked":     false,
 	})
 }
+
+func (h *UserHandler) SetUserType(c *gin.Context) {
+	token, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	if token.Id != "admin" {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
+		return
+	}
+	idString := c.Param("id")
+	userType := c.Param("type")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": "/user/" + idString + "/type/" + userType,
+		})
+		return
+	}
+	err = h.service.SetUserType(id, userType)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User type updated successfully",
+		"id":          idString,
+		"userType":    userType,
+	})
+}

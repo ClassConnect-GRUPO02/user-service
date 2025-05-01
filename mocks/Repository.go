@@ -353,6 +353,24 @@ func (_m *Repository) SetUserBlockedUntil(id int64, timestamp int64) error {
 	return r0
 }
 
+// SetUserType provides a mock function with given fields: id, userType
+func (_m *Repository) SetUserType(id int64, userType string) error {
+	ret := _m.Called(id, userType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetUserType")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string) error); ok {
+		r0 = rf(id, userType)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateUser provides a mock function with given fields: id, name, email
 func (_m *Repository) UpdateUser(id int64, name string, email string) error {
 	ret := _m.Called(id, name, email)

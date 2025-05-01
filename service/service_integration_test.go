@@ -277,4 +277,22 @@ func TestIntegration(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("set user type succeeds", func(t *testing.T) {
+		// Check the user type before updating it
+		user, err := userService.GetUser("1")
+		assert.Nil(t, err)
+		assert.Equal(t, user.UserType, "alumno")
+
+		userId := int64(1)
+		userType := "docente"
+		// Update user type
+		err = userService.SetUserType(userId, userType)
+		assert.Nil(t, err)
+
+		// Check the user type has been updated
+		user, err = userService.GetUser("1")
+		assert.Nil(t, err)
+		assert.Equal(t, user.UserType, userType)
+	})
 }

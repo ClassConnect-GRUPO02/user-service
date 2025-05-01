@@ -235,3 +235,12 @@ func (s *Service) UnblockUser(id int64) error {
 	}
 	return nil
 }
+
+func (s *Service) SetUserType(id int64, userType string) error {
+	log.Printf("Setting user with id %d to %s", id, userType)
+	err := s.userRepository.SetUserType(id, userType)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}

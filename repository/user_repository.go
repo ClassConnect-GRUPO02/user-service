@@ -306,3 +306,12 @@ func (r *UserRepository) AddAdmin(email, name, password string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) SetUserType(id int64, userType string) error {
+	_, err := r.db.Exec(`UPDATE users SET type = $1 WHERE id = $2`, userType, id)
+	if err != nil {
+		log.Printf("Failed to update user's type. Error: %s", err)
+		return err
+	}
+	return nil
+}
