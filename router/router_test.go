@@ -1082,6 +1082,7 @@ func TestBlockUser(t *testing.T) {
 	t.Run("Block user succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
+		userRepositoryMock.On("AddModificationLog", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -1130,6 +1131,30 @@ func TestBlockUser(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("PUT", "/user/"+id+"/block", nil)
+		req.Header.Set("Content-Type", "application/json")
+		token, _ := userService.IssueToken("admin")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("Block user fails with InternalServerError repository.AddModificationLog returns an error", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
+		userRepositoryMock.On("AddModificationLog", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -1200,6 +1225,7 @@ func TestUnblockUser(t *testing.T) {
 	t.Run("Unblock user succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
+		userRepositoryMock.On("AddModificationLog", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -1309,6 +1335,30 @@ func TestUnblockUser(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
+
+	t.Run("Unblock user fails with InternalServerError repository.AddModificationLog returns an error", func(t *testing.T) {
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
+		userRepositoryMock.On("AddModificationLog", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("PUT", "/user/"+id+"/unblock", nil)
+		req.Header.Set("Content-Type", "application/json")
+		token, _ := userService.IssueToken("admin")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
 }
 
 func TestSetUserType(t *testing.T) {
@@ -1319,7 +1369,7 @@ func TestSetUserType(t *testing.T) {
 	t.Run("Set user type succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserType", mock.Anything, mock.Anything).Return(nil)
-
+		userRepositoryMock.On("AddModificationLog", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)

@@ -27,3 +27,10 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 INSERT INTO admins VALUES (DEFAULT, 'admin', 'admin', 'd033e22ae348aeb5660fc2140aec35850c4da997') ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS user_modifications (
+    id SERIAL PRIMARY KEY,
+    affected_user INTEGER REFERENCES users (id),
+    modification VARCHAR(255),
+    timestamp DATE
+);
