@@ -251,4 +251,17 @@ func TestIntegration(t *testing.T) {
 		}
 		assert.Equal(t, expectedUsers, users)
 	})
+
+	t.Run("block user succeeds", func(t *testing.T) {
+		userId := int64(1)
+		err := userService.BlockUser(userId)
+		assert.Nil(t, err)
+		users, err := userService.GetUsersFullInfo()
+		assert.Nil(t, err)
+		for _, user := range users {
+			if user.Id == int(userId) {
+				assert.True(t, user.Blocked)
+			}
+		}
+	})
 }

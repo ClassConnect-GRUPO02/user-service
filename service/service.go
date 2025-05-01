@@ -2,6 +2,7 @@ package service
 
 import (
 	"log"
+	"math"
 	"strconv"
 	"time"
 	"user_service/auth"
@@ -214,21 +215,13 @@ func (s *Service) CreateAdmin(admin models.CreateAdminRequest) error {
 	return nil
 }
 
-// func (s *Service) BlockUser(id int64) error {
-// 	log.Printf("Blocking user %d", id)
-
-// 	s.userRepository.SetUserBlockedUntil()
-// 	emailAlreadyRegistered, err := s.userRepository.IsAdminEmailRegistered(admin.Email)
-// 	if err != nil {
-// 		return models.InternalServerError()
-// 	}
-// 	if emailAlreadyRegistered {
-// 		return models.EmailAlreadyRegisteredError(admin.Email)
-// 	}
-// 	err = s.userRepository.AddAdmin(admin.Email, admin.Name, admin.Password)
-// 	if err != nil {
-// 		log.Printf("Failed to add admin %v to the database. Error: %s", admin.Email, err)
-// 		return models.InternalServerError()
-// 	}
-// 	return nil
-// }
+func (s *Service) BlockUser(id int64) error {
+	log.Printf("Blocking user %d", id)
+	// Block the user permanently
+	blockedUntil := int64(math.MaxInt64)
+	err := s.userRepository.SetUserBlockedUntil(id, blockedUntil)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
