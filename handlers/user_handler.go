@@ -226,7 +226,7 @@ func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	token, err := h.service.IssueToken("admin") // TODO: check if this is right
+	token, err := h.service.IssueToken("admin")
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
@@ -239,7 +239,6 @@ func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 }
 
 func (h *UserHandler) CreateAdmin(c *gin.Context) {
-	// TODO: token validation
 	admin := models.CreateAdminRequest{}
 	token, err := h.ValidateToken(c)
 	if err != nil {
