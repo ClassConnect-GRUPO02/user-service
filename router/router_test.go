@@ -709,6 +709,25 @@ func TestAdminLogin(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, w.Code)
 	})
 
+	t.Run("Admin login fails with bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"password":"admin"}`
+		req, _ := http.NewRequest("POST", "/admin-login", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
 	t.Run("Admin login fails due to invalid email", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, nil)
@@ -842,6 +861,26 @@ func TestAdminRegister(t *testing.T) {
 
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("Admin register fails with bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"password":"admin"}`
+		token, _ := userService.IssueToken("admin")
+		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 
 	t.Run("Admin register fails due to email already registered", func(t *testing.T) {
