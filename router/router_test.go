@@ -1148,6 +1148,48 @@ func TestBlockUser(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
+
+	t.Run("Block user fails with BadRequest when the id is invalid", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		wrongId := "abc"
+		req, _ := http.NewRequest("PUT", "/user/"+wrongId+"/block", nil)
+		req.Header.Set("Content-Type", "application/json")
+		token, _ := userService.IssueToken("admin")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("Block user fails with InvalidToken when the token is invalid", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("PUT", "/user/"+id+"/block", nil)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer invalidToken")
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
 }
 
 func TestUnblockUser(t *testing.T) {
@@ -1196,6 +1238,49 @@ func TestUnblockUser(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		token, _ := userService.IssueToken("1")
 		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("Unblock user with bad request when the id is invalid", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		wrongId := "abc"
+		req, _ := http.NewRequest("PUT", "/user/"+wrongId+"/unblock", nil)
+		req.Header.Set("Content-Type", "application/json")
+		token, _ := userService.IssueToken("admin")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("Unblock user with bad request when the token is invalid", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("PUT", "/user/"+id+"/unblock", nil)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer invalidToken")
 
 		router.ServeHTTP(w, req)
 
