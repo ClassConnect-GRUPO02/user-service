@@ -29,7 +29,24 @@ type NotifyUserRequest struct {
 	Body  string `json:"body" binding:"required"`
 }
 
+type NotificationPreference = int
+
+const (
+	Push         NotificationPreference = 1
+	Email        NotificationPreference = 2
+	PushAndEmail NotificationPreference = 3
+)
+
 type SetUserNotificationSettingsRequest struct {
-	PushNotifications  *bool `json:"pushNotifications" binding:"required"`
-	EmailNotifications *bool `json:"emailNotifications" binding:"required"`
+	PushEnabled  *bool `json:"pushEnabled" binding:"required"`
+	EmailEnabled *bool `json:"emailEnabled" binding:"required"`
+	// Student specific preferences
+	NewAssignment        *NotificationPreference `json:"newAssignment,omitempty"`
+	DeadlineReminder     *NotificationPreference `json:"deadlineReminder,omitempty"`
+	CourseEnrollment     *NotificationPreference `json:"courseEnrollment,omitempty"`
+	FavoriteCourseUpdate *NotificationPreference `json:"favoriteCourseUpdate,omitempty"`
+	TeacherFeedback      *NotificationPreference `json:"teacherFeedback,omitempty"`
+	// Teacher specific preferences
+	AssignmentSubmission *NotificationPreference `json:"assignmentSubmission,omitempty"`
+	StudentFeedback      *NotificationPreference `json:"studentFeedback,omitempty"`
 }
