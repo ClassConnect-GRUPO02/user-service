@@ -10,9 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     latitude FLOAT,
     longitude FLOAT,
     blocked_until BIGINT,
-    registration_date DATE,
-    push_notifications BOOLEAN,
-    email_notifications BOOLEAN
+    registration_date DATE
 );
 
 CREATE TABLE IF NOT EXISTS login_attempts (
@@ -33,4 +31,22 @@ INSERT INTO admins VALUES (DEFAULT, 'admin', 'admin', 'd033e22ae348aeb5660fc2140
 CREATE TABLE IF NOT EXISTS users_push_tokens (
     id INTEGER REFERENCES users (id),
     token VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS users_notifications_settings (
+    id INTEGER REFERENCES users (id),
+    push_enabled BOOLEAN,
+    email_enabled BOOLEAN,
+    new_assignment SMALLINT,
+    deadline_reminder SMALLINT,
+    course_enrollment SMALLINT,
+    favorite_course_update SMALLINT
+);
+
+CREATE TABLE IF NOT EXISTS teachers_notifications_settings (
+    id INTEGER REFERENCES users (id),
+    push_enabled BOOLEAN,
+    email_enabled BOOLEAN,
+    assignment_submission SMALLINT,
+    student_feedback SMALLINT
 );
