@@ -315,3 +315,13 @@ func (r *UserRepository) SetUserType(id int64, userType string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) AddUserPushToken(id int64, token string) error {
+	query := fmt.Sprintf("INSERT INTO users_push_tokens VALUES (%d, '%s');", id, token)
+	_, err := r.db.Exec(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return err
+	}
+	return nil
+}

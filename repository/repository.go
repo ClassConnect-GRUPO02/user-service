@@ -16,6 +16,7 @@ type Repository interface {
 	IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error)
 	SetUserBlockedUntil(id int64, timestamp int64) error
 	UpdateUser(id int64, name, email string) error
+	AddUserPushToken(id int64, token string) error
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)
 	AdminPasswordMatches(email, password string) (bool, error)

@@ -27,3 +27,8 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 INSERT INTO admins VALUES (DEFAULT, 'admin', 'admin', 'd033e22ae348aeb5660fc2140aec35850c4da997') ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS users_push_tokens (
+    id INTEGER REFERENCES users (id),
+    token VARCHAR(255)
+);

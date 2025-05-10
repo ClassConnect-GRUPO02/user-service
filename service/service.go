@@ -244,3 +244,12 @@ func (s *Service) SetUserType(id int64, userType string) error {
 	}
 	return nil
 }
+
+func (s *Service) SetUserPushToken(id int64, token string) error {
+	log.Printf("Setting push token %s to user with id %d ", token, id)
+	err := s.userRepository.AddUserPushToken(id, token)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}

@@ -49,6 +49,24 @@ func (_m *Repository) AddUser(user models.User) error {
 	return r0
 }
 
+// AddUserPushToken provides a mock function with given fields: id, token
+func (_m *Repository) AddUserPushToken(id int64, token string) error {
+	ret := _m.Called(id, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddUserPushToken")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string) error); ok {
+		r0 = rf(id, token)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AdminPasswordMatches provides a mock function with given fields: email, password
 func (_m *Repository) AdminPasswordMatches(email string, password string) (bool, error) {
 	ret := _m.Called(email, password)

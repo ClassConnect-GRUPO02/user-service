@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -382,5 +383,48 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 		"description": "User type updated successfully",
 		"id":          idString,
 		"userType":    userType,
+	})
+}
+
+func (h *UserHandler) AddPushToken(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	request := models.AddPushTokenRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": "/users/" + idString + "/push-token",
+		})
+		return
+	}
+
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST /users/%s/push-token Error: Bad request", idString)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not authenticate the user",
+			"instance": fmt.Sprintf("/users/%s/push-token", idString),
+		})
+		return
+	}
+
+	err = h.service.SetUserPushToken(id, request.PushToken)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User push token set successfully",
+		"id":          idString,
+		"token":       request.PushToken,
 	})
 }
