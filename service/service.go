@@ -340,7 +340,7 @@ func (s *Service) SendPushNotification(token, title, body string) error {
 	// Validate responses
 	err = response.ValidateResponse()
 	if err != nil {
-		fmt.Println("failed to send notification to %s. Error: %s", response.PushMessage.To, err)
+		fmt.Printf("failed to send notification to %s. Error: %s", response.PushMessage.To, err)
 		return models.InternalServerError()
 	}
 	return nil
