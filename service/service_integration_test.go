@@ -7,6 +7,7 @@ import (
 	"user_service/models"
 	"user_service/repository"
 	"user_service/service"
+	"user_service/utils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -226,14 +227,14 @@ func TestIntegration(t *testing.T) {
 	t.Run("get users full info succeeds", func(t *testing.T) {
 		users, err := userService.GetUsersFullInfo()
 		assert.Nil(t, err)
-
+		date := utils.GetDate()
 		expectedUsers := []models.UserFullInfo{
 			{
 				Id:               2,
 				Name:             "John Doe",
 				Email:            "mary@example.com",
 				UserType:         "alumno",
-				RegistrationDate: "2025-05-01",
+				RegistrationDate: date,
 				Latitude:         0,
 				Longitude:        0,
 				Blocked:          false,
@@ -243,7 +244,7 @@ func TestIntegration(t *testing.T) {
 				Name:             "Johnny Doe",
 				Email:            "johnny@example.com",
 				UserType:         "alumno",
-				RegistrationDate: "2025-05-01",
+				RegistrationDate: date,
 				Latitude:         0,
 				Longitude:        0,
 				Blocked:          false,

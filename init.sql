@@ -7,9 +7,9 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255),
     type VARCHAR(255),
     password_hash VARCHAR(255),
-    blocked_until BIGINT,
     latitude FLOAT,
     longitude FLOAT,
+    blocked_until BIGINT,
     registration_date DATE
 );
 

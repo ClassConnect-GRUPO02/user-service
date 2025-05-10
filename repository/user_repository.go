@@ -47,7 +47,7 @@ func (r *UserRepository) AddUser(user models.User) error {
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	blockedUntil := 0
 	date := utils.GetDate()
-	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', %d, '%f', '%f', '%s');", user.Email, user.Name, user.UserType, passwordHash, blockedUntil, user.Latitude, user.Longitude, date)
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s');", user.Email, user.Name, user.UserType, passwordHash, user.Latitude, user.Longitude, blockedUntil, date)
 	_, err := r.db.Exec(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
