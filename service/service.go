@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"strconv"
@@ -9,6 +10,8 @@ import (
 	"user_service/config"
 	"user_service/models"
 	"user_service/repository"
+
+	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
 type Service struct {
@@ -249,6 +252,37 @@ func (s *Service) SetUserPushToken(id int64, token string) error {
 	log.Printf("Setting push token %s to user with id %d ", token, id)
 	err := s.userRepository.AddUserPushToken(id, token)
 	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
+
+func (s *Service) NotifyUser(id int64, title, body string) error {
+	token, err := s.userRepository.GetUserPushToken(id)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	// Create a new Expo SDK client
+	client := expo.NewPushClient(nil)
+
+	// Publish message
+	response, err := client.Publish(
+		&expo.PushMessage{
+			To:       []expo.ExponentPushToken{expo.ExponentPushToken(token)},
+			Title:    title,
+			Body:     body,
+			Data:     map[string]string{"withSome": "data"},
+			Sound:    "default",
+			Priority: expo.DefaultPriority,
+		},
+	)
+	if err != nil {
+		return models.InternalServerError()
+	}
+
+	// Validate responses
+	if response.ValidateResponse() != nil {
+		fmt.Println(response.PushMessage.To, "failed")
 		return models.InternalServerError()
 	}
 	return nil

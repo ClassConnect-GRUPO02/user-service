@@ -437,3 +437,32 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 		"token":       request.PushToken,
 	})
 }
+
+func (h *UserHandler) NotifyUser(c *gin.Context) {
+	request := models.NotifyUserRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": c.FullPath(),
+		})
+		return
+	}
+
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST /users/%s/notifications Error: Bad request", idString)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not authenticate the user",
+			"instance": c.FullPath(),
+		})
+		return
+	}
+	h.service.NotifyUser(id, request.Title, request.Body)
+}

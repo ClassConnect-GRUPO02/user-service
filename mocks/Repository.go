@@ -181,6 +181,34 @@ func (_m *Repository) GetUserIdByEmail(email string) (string, error) {
 	return r0, r1
 }
 
+// GetUserPushToken provides a mock function with given fields: id
+func (_m *Repository) GetUserPushToken(id int64) (string, error) {
+	ret := _m.Called(id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserPushToken")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int64) (string, error)); ok {
+		return rf(id)
+	}
+	if rf, ok := ret.Get(0).(func(int64) string); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(int64) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUsers provides a mock function with no fields
 func (_m *Repository) GetUsers() ([]models.UserPublicInfo, error) {
 	ret := _m.Called()

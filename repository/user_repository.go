@@ -325,3 +325,13 @@ func (r *UserRepository) AddUserPushToken(id int64, token string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) GetUserPushToken(id int64) (string, error) {
+	var token string
+	err := r.db.QueryRow(`SELECT token FROM users_push_tokens WHERE id=$1`, id).Scan(&token)
+	if err != nil && err != sql.ErrNoRows {
+		log.Printf("failed to scan row. Error: %s", err)
+		return "", err
+	}
+	return token, nil
+}
