@@ -19,3 +19,12 @@ type CreateAdminRequest struct {
 	Name     string `json:"name" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
+
+type AddPushTokenRequest struct {
+	PushToken string `json:"token" binding:"required"`
+}
+
+type NotifyUserRequest struct {
+	Title string `json:"title" binding:"required"`
+	Body  string `json:"body" binding:"required"`
+}

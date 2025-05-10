@@ -49,6 +49,24 @@ func (_m *Repository) AddUser(user models.User) error {
 	return r0
 }
 
+// AddUserPushToken provides a mock function with given fields: id, token
+func (_m *Repository) AddUserPushToken(id int64, token string) error {
+	ret := _m.Called(id, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddUserPushToken")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string) error); ok {
+		r0 = rf(id, token)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AdminPasswordMatches provides a mock function with given fields: email, password
 func (_m *Repository) AdminPasswordMatches(email string, password string) (bool, error) {
 	ret := _m.Called(email, password)
@@ -156,6 +174,34 @@ func (_m *Repository) GetUserIdByEmail(email string) (string, error) {
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetUserPushToken provides a mock function with given fields: id
+func (_m *Repository) GetUserPushToken(id int64) (string, error) {
+	ret := _m.Called(id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserPushToken")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int64) (string, error)); ok {
+		return rf(id)
+	}
+	if rf, ok := ret.Get(0).(func(int64) string); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(int64) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}

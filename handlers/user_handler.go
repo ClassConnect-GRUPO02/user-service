@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"user_service/service"
 
 	"github.com/gin-gonic/gin"
+	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
 type UserHandler struct {
@@ -383,4 +385,110 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 		"id":          idString,
 		"userType":    userType,
 	})
+}
+
+func (h *UserHandler) AddPushToken(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	request := models.AddPushTokenRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": "/users/" + idString + "/push-token",
+		})
+		return
+	}
+
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST /users/%s/push-token Error: Bad request", idString)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not authenticate the user",
+			"instance": fmt.Sprintf("/users/%s/push-token", idString),
+		})
+		return
+	}
+
+	_, err = expo.NewExponentPushToken(request.PushToken)
+	if err != nil {
+		err = models.InvalidExpoToken(id, request.PushToken)
+		c.JSON(http.StatusUnauthorized, err)
+		return
+	}
+
+	err = h.service.SetUserPushToken(id, request.PushToken)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User push token set successfully",
+		"id":          idString,
+		"token":       request.PushToken,
+	})
+}
+
+func (h *UserHandler) NotifyUser(c *gin.Context) {
+	request := models.NotifyUserRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": c.FullPath(),
+		})
+		return
+	}
+
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST /users/%s/notifications Error: Bad request", idString)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Could not authenticate the user",
+			"instance": c.FullPath(),
+		})
+		return
+	}
+	userData, err := h.service.GetUser(idString)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	pushToken, err := h.service.GetUserPushToken(id)
+	if err != nil {
+		if err.Error() == service.MissingExpoPushToken {
+			c.JSON(http.StatusNotFound, models.MissingExpoPushToken(idString, c.FullPath()))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Sending notification",
+		"id":          idString,
+		"email":       userData.Email,
+	})
+	err = h.service.SendEmail(userData.Email, request.Title, request.Body)
+	if err != nil {
+		log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
+	}
+	err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
+	if err != nil {
+		log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
+	}
 }
