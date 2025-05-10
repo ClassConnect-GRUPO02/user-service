@@ -1,9 +1,12 @@
 package service
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"math"
+	"net/smtp"
 	"strconv"
 	"time"
 	"user_service/auth"
@@ -21,6 +24,8 @@ type Service struct {
 	authService        *auth.Auth
 	blockingDuration   int64
 	loginAttemptsLimit int64
+	email              string
+	emailPassword      string
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
@@ -31,6 +36,8 @@ func NewService(repository repository.Repository, config *config.Config) (*Servi
 		blockingTimeWindow: config.BlockingTimeWindow,
 		blockingDuration:   config.BlockingDuration,
 		loginAttemptsLimit: config.LoginAttemptsLimit,
+		email:              config.Email,
+		emailPassword:      config.EmailPassword,
 	}
 	return &service, nil
 }
@@ -257,11 +264,61 @@ func (s *Service) SetUserPushToken(id int64, token string) error {
 	return nil
 }
 
-func (s *Service) NotifyUser(id int64, title, body string) error {
+func (s *Service) GetUserPushToken(id int64) (string, error) {
 	token, err := s.userRepository.GetUserPushToken(id)
-	if err != nil {
-		return models.InternalServerError()
+	if err == sql.ErrNoRows {
+		return "", errors.New(MissingExpoPushToken)
 	}
+	if err != nil {
+		return "", models.InternalServerError()
+	}
+	return token, nil
+}
+
+// func (s *Service) NotifyUser(id int64, title, body string) error {
+// 	idString := strconv.Itoa(int(id))
+// 	userData, err := s.userRepository.GetUser(idString)
+// 	if err != nil {
+// 		return models.UserNotFoundError(idString)
+// 	}
+
+// 	err = s.sendEmail(userData.Email, title, body)
+// 	if err != nil {
+// 		log.Printf("Failed to send email to user %s", userData.Email)
+// 		return models.InternalServerError()
+// 	}
+
+// 	token, err := s.userRepository.GetUserPushToken(id)
+// 	if err != nil {
+// 		return models.InternalServerError()
+// 	}
+// 	// Create a new Expo SDK client
+// 	client := expo.NewPushClient(nil)
+
+// 	// Publish message
+// 	response, err := client.Publish(
+// 		&expo.PushMessage{
+// 			To:       []expo.ExponentPushToken{expo.ExponentPushToken(token)},
+// 			Title:    title,
+// 			Body:     body,
+// 			Data:     map[string]string{"withSome": "data"},
+// 			Sound:    "default",
+// 			Priority: expo.DefaultPriority,
+// 		},
+// 	)
+// 	if err != nil {
+// 		return models.InternalServerError()
+// 	}
+
+// 	// Validate responses
+// 	if response.ValidateResponse() != nil {
+// 		fmt.Println(response.PushMessage.To, "failed")
+// 		return models.InternalServerError()
+// 	}
+// 	return nil
+// }
+
+func (s *Service) SendPushNotification(token, title, body string) error {
 	// Create a new Expo SDK client
 	client := expo.NewPushClient(nil)
 
@@ -281,9 +338,36 @@ func (s *Service) NotifyUser(id int64, title, body string) error {
 	}
 
 	// Validate responses
-	if response.ValidateResponse() != nil {
-		fmt.Println(response.PushMessage.To, "failed")
+	err = response.ValidateResponse()
+	if err != nil {
+		fmt.Println("failed to send notification to %s. Error: %s", response.PushMessage.To, err)
 		return models.InternalServerError()
 	}
+	return nil
+}
+
+func (s *Service) SendEmail(to, subject, body string) error {
+	// Gmail SMTP configuration
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+	from := s.email
+	password := s.emailPassword
+
+	// Authentication
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	// Email headers and body
+
+	msg := "From: \"ClassConnect\" <" + from + ">\n" +
+		"To: " + to + "\n" +
+		"Subject: " + subject + "\n\n" +
+		body
+
+	// Sending email
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, []byte(msg))
+	if err != nil {
+		return fmt.Errorf("error sending email: %v", err)
+	}
+
 	return nil
 }

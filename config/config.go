@@ -14,6 +14,8 @@ type Config struct {
 	BlockingTimeWindow int64
 	BlockingDuration   int64
 	LoginAttemptsLimit int64
+	Email              string
+	EmailPassword      string
 }
 
 func LoadConfig() (*Config, error) {
@@ -49,6 +51,14 @@ func LoadConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	email, err := utils.GetEnvVar("EMAIL")
+	if err != nil {
+		return nil, fmt.Errorf("missing environment variable EMAIL")
+	}
+	emailPassword, err := utils.GetEnvVar("EMAIL_PASSWORD")
+	if err != nil {
+		return nil, fmt.Errorf("missing environment variable EMAIL_PASSWORD")
+	}
 
 	return &Config{
 		Host:               host,
@@ -58,5 +68,7 @@ func LoadConfig() (*Config, error) {
 		BlockingTimeWindow: blockingTimeWindow,
 		BlockingDuration:   blockingDuration,
 		LoginAttemptsLimit: loginAttemptsLimit,
+		Email:              email,
+		EmailPassword:      emailPassword,
 	}, nil
 }

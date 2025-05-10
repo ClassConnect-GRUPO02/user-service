@@ -464,5 +464,31 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 		})
 		return
 	}
-	h.service.NotifyUser(id, request.Title, request.Body)
+	userData, err := h.service.GetUser(idString)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	pushToken, err := h.service.GetUserPushToken(id)
+	if err != nil {
+		if err.Error() == service.MissingExpoPushToken {
+			c.JSON(http.StatusNotFound, models.MissingExpoPushToken(idString, c.FullPath()))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Sending notification",
+		"id":          idString,
+		"email":       userData.Email,
+	})
+	err = h.service.SendEmail(userData.Email, request.Title, request.Body)
+	if err != nil {
+		log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
+	}
+	err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
+	if err != nil {
+		log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
+	}
 }

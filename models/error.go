@@ -95,3 +95,13 @@ func InvalidExpoToken(userId int64, expoToken string) error {
 		Instance: fmt.Sprintf("/users/%d/push-token", userId),
 	}
 }
+
+func MissingExpoPushToken(id string, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Missing expo push token",
+		Status:   http.StatusNotFound,
+		Detail:   fmt.Sprintf("The user %s is missing an Expo push token", id),
+		Instance: instance,
+	}
+}
