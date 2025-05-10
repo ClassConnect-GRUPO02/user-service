@@ -533,7 +533,7 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 		})
 		return
 	}
-	err = h.service.SetUserNotificationSettings(id, request.PushNotifications, request.EmailNotifications)
+	err = h.service.SetUserNotificationSettings(id, *request.PushNotifications, *request.EmailNotifications)
 	if err != nil {
 		if err.Error() == service.UserNotFoundError {
 			c.JSON(http.StatusNotFound, models.Error{
@@ -556,5 +556,43 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 		"id":                 idString,
 		"pushNotifications":  request.PushNotifications,
 		"emailNotifications": request.EmailNotifications,
+	})
+}
+
+func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": c.FullPath(),
+		})
+		return
+	}
+	pushNotifications, emailNotifications, err := h.service.GetUserNotificationSettings(id)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.Error{
+				Detail:   "User not found",
+				Status:   http.StatusNotFound,
+				Instance: c.FullPath(),
+				Title:    "User not found",
+				Type:     "about:blank",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"pushNotifications":  pushNotifications,
+		"emailNotifications": emailNotifications,
 	})
 }

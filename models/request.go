@@ -30,6 +30,6 @@ type NotifyUserRequest struct {
 }
 
 type SetUserNotificationSettingsRequest struct {
-	PushNotifications  bool `json:"pushNotifications" binding:"required"`
-	EmailNotifications bool `json:"emailNotifications" binding:"required"`
+	PushNotifications  *bool `json:"pushNotifications" binding:"required"`
+	EmailNotifications *bool `json:"emailNotifications" binding:"required"`
 }
