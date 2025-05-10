@@ -9,6 +9,7 @@ import (
 	"user_service/service"
 
 	"github.com/gin-gonic/gin"
+	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
 type UserHandler struct {
@@ -417,11 +418,19 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 		return
 	}
 
+	_, err = expo.NewExponentPushToken(request.PushToken)
+	if err != nil {
+		err = models.InvalidExpoToken(id, request.PushToken)
+		c.JSON(http.StatusUnauthorized, err)
+		return
+	}
+
 	err = h.service.SetUserPushToken(id, request.PushToken)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"description": "User push token set successfully",
 		"id":          idString,
