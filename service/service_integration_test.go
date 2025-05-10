@@ -23,13 +23,13 @@ func TestIntegration(t *testing.T) {
 	}
 
 	config, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config. Error: %s", err)
+	}
 	config.BlockingDuration = 3
 	config.BlockingTimeWindow = 1
 	config.LoginAttemptsLimit = 3
 
-	if err != nil {
-		log.Fatalf("Failed to load config. Error: %s", err)
-	}
 	userRepository, err := repository.NewUserRepository()
 	if err != nil {
 		log.Fatalf("Failed to create user repository. Error: %s", err)
