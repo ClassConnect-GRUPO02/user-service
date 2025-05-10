@@ -412,7 +412,7 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 			"title":    "Bad request",
 			"type":     "about:blank",
 			"status":   http.StatusBadRequest,
-			"detail":   "Could not authenticate the user",
+			"detail":   "Request is missing required fields",
 			"instance": fmt.Sprintf("/users/%s/push-token", idString),
 		})
 		return
@@ -459,7 +459,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 			"title":    "Bad request",
 			"type":     "about:blank",
 			"status":   http.StatusBadRequest,
-			"detail":   "Could not authenticate the user",
+			"detail":   "Request is missing required fields",
 			"instance": c.FullPath(),
 		})
 		return
@@ -483,12 +483,78 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 		"id":          idString,
 		"email":       userData.Email,
 	})
-	err = h.service.SendEmail(userData.Email, request.Title, request.Body)
-	if err != nil {
-		log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
+	pushNotifications, emailNotifications, err := h.service.GetUserNotificationSettings(id)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
 	}
-	err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
-	if err != nil {
-		log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
+	if emailNotifications {
+		err = h.service.SendEmail(userData.Email, request.Title, request.Body)
+		if err != nil {
+			log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
+		}
 	}
+	if pushNotifications {
+		err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
+		if err != nil {
+			log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
+		}
+	}
+}
+
+func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	request := models.SetUserNotificationSettingsRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Invalid id: " + idString,
+			"instance": c.FullPath(),
+		})
+		return
+	}
+
+	log.Printf("request body = %v", c.Request.Body)
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST %s Error: %s", c.FullPath(), err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"title":    "Bad request",
+			"type":     "about:blank",
+			"status":   http.StatusBadRequest,
+			"detail":   "Request is missing required fields",
+			"instance": c.FullPath(),
+		})
+		return
+	}
+	err = h.service.SetUserNotificationSettings(id, request.PushNotifications, request.EmailNotifications)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.Error{
+				Detail:   "Could not update notification settings because user was not found",
+				Status:   http.StatusNotFound,
+				Instance: c.FullPath(),
+				Title:    "User not found",
+				Type:     "about:blank",
+			})
+			return
+		}
+		// TODO: return status code depending on the error returned by the service
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"description": "Failed to update user notification settings",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description":        "User notification settings updated successfully",
+		"id":                 idString,
+		"pushNotifications":  request.PushNotifications,
+		"emailNotifications": request.EmailNotifications,
+	})
 }

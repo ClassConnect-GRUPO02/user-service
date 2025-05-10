@@ -275,49 +275,6 @@ func (s *Service) GetUserPushToken(id int64) (string, error) {
 	return token, nil
 }
 
-// func (s *Service) NotifyUser(id int64, title, body string) error {
-// 	idString := strconv.Itoa(int(id))
-// 	userData, err := s.userRepository.GetUser(idString)
-// 	if err != nil {
-// 		return models.UserNotFoundError(idString)
-// 	}
-
-// 	err = s.sendEmail(userData.Email, title, body)
-// 	if err != nil {
-// 		log.Printf("Failed to send email to user %s", userData.Email)
-// 		return models.InternalServerError()
-// 	}
-
-// 	token, err := s.userRepository.GetUserPushToken(id)
-// 	if err != nil {
-// 		return models.InternalServerError()
-// 	}
-// 	// Create a new Expo SDK client
-// 	client := expo.NewPushClient(nil)
-
-// 	// Publish message
-// 	response, err := client.Publish(
-// 		&expo.PushMessage{
-// 			To:       []expo.ExponentPushToken{expo.ExponentPushToken(token)},
-// 			Title:    title,
-// 			Body:     body,
-// 			Data:     map[string]string{"withSome": "data"},
-// 			Sound:    "default",
-// 			Priority: expo.DefaultPriority,
-// 		},
-// 	)
-// 	if err != nil {
-// 		return models.InternalServerError()
-// 	}
-
-// 	// Validate responses
-// 	if response.ValidateResponse() != nil {
-// 		fmt.Println(response.PushMessage.To, "failed")
-// 		return models.InternalServerError()
-// 	}
-// 	return nil
-// }
-
 func (s *Service) SendPushNotification(token, title, body string) error {
 	// Create a new Expo SDK client
 	client := expo.NewPushClient(nil)
@@ -370,4 +327,16 @@ func (s *Service) SendEmail(to, subject, body string) error {
 	}
 
 	return nil
+}
+
+func (s *Service) SetUserNotificationSettings(id int64, pushNotifications bool, emailNotifications bool) error {
+	err := s.userRepository.SetUserNotificationSettings(id, pushNotifications, emailNotifications)
+	if err != nil && err.Error() == repository.UserNotFoundError {
+		return errors.New(UserNotFoundError)
+	}
+	return err
+}
+
+func (s *Service) GetUserNotificationSettings(id int64) (bool, bool, error) {
+	return s.userRepository.GetUserNotificationSettings(id)
 }

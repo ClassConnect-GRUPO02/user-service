@@ -28,3 +28,8 @@ type NotifyUserRequest struct {
 	Title string `json:"title" binding:"required"`
 	Body  string `json:"body" binding:"required"`
 }
+
+type SetUserNotificationSettingsRequest struct {
+	PushNotifications  bool `json:"pushNotifications" binding:"required"`
+	EmailNotifications bool `json:"emailNotifications" binding:"required"`
+}

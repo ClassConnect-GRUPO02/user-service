@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -47,7 +48,9 @@ func (r *UserRepository) AddUser(user models.User) error {
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	blockedUntil := 0
 	date := utils.GetDate()
-	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s');", user.Email, user.Name, user.UserType, passwordHash, user.Latitude, user.Longitude, blockedUntil, date)
+	pushNotifications := true
+	emailNotifications := true
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s', %v, %v);", user.Email, user.Name, user.UserType, passwordHash, user.Latitude, user.Longitude, blockedUntil, date, pushNotifications, emailNotifications)
 	_, err := r.db.Exec(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
@@ -334,4 +337,32 @@ func (r *UserRepository) GetUserPushToken(id int64) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+func (r *UserRepository) SetUserNotificationSettings(id int64, pushNotifications bool, emailNotifications bool) error {
+	result, err := r.db.Exec(`UPDATE users SET push_notifications = $1, email_notifications = $2 WHERE id = $3`, pushNotifications, emailNotifications, id)
+	if err != nil {
+		log.Printf("Failed to update user's notification settings. Error: %s", err)
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get rows affected. Error: %s", err)
+		return err
+	}
+	if rowsAffected == 0 {
+		log.Printf("User not found")
+		return errors.New(UserNotFoundError)
+	}
+	return nil
+}
+
+func (r *UserRepository) GetUserNotificationSettings(id int64) (bool, bool, error) {
+	var pushNotifications, emailNotifications bool
+	err := r.db.QueryRow(`SELECT push_notifications, email_notifications FROM users WHERE id=$1`, id).Scan(&pushNotifications, &emailNotifications)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return true, true, err
+	}
+	return pushNotifications, emailNotifications, nil
 }

@@ -18,6 +18,8 @@ type Repository interface {
 	UpdateUser(id int64, name, email string) error
 	AddUserPushToken(id int64, token string) error
 	GetUserPushToken(id int64) (string, error)
+	SetUserNotificationSettings(id int64, pushNotifications bool, emailNotifications bool) error
+	GetUserNotificationSettings(id int64) (bool, bool, error)
 
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)
