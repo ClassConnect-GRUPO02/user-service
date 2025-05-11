@@ -65,10 +65,16 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
+	refreshToken, err := h.service.IssueRefreshToken(userId)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
 	c.JSON(http.StatusAccepted, gin.H{
-		"description": "User logged in successfully",
-		"id":          userId,
-		"token":       token,
+		"description":  "User logged in successfully",
+		"id":           userId,
+		"token":        token,
+		"refreshToken": refreshToken,
 	})
 }
 
