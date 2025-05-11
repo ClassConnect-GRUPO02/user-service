@@ -115,3 +115,13 @@ func BadRequestInvalidId(id, instance string) error {
 		Instance: instance,
 	}
 }
+
+func BadRequestMissingFields(instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Bad Request",
+		Status:   http.StatusBadRequest,
+		Detail:   "The request is missing fields",
+		Instance: instance,
+	}
+}

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,13 +25,7 @@ func NewUserHandler(service *service.Service) *UserHandler {
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	user := models.User{}
 	if err := c.ShouldBind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not register the user",
-			"instance": "/users",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 	err := h.service.CreateUser(user)
@@ -52,13 +45,7 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
 		log.Print("POST /login Error: Bad request")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not authenticate the user",
-			"instance": "/login",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 
@@ -159,13 +146,7 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 	editUserRequest := models.EditUserRequest{}
 	idString := c.Param("id")
 	if err := c.ShouldBind(&editUserRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not update the user info",
-			"instance": "/user/" + idString,
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 	id, err := strconv.ParseInt(idString, 10, 64)
@@ -216,13 +197,7 @@ func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
 		log.Print("POST /login Error: Bad request")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not authenticate the user",
-			"instance": "/admin-login",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 
@@ -259,13 +234,7 @@ func (h *UserHandler) CreateAdmin(c *gin.Context) {
 		return
 	}
 	if err := c.ShouldBind(&admin); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not register the admin",
-			"instance": "/admins",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 	err = h.service.CreateAdmin(admin)
@@ -378,13 +347,7 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 
 	if err := c.ShouldBind(&request); err != nil {
 		log.Printf("POST /users/%s/push-token Error: Bad request", idString)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Request is missing required fields",
-			"instance": fmt.Sprintf("/users/%s/push-token", idString),
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 
@@ -419,13 +382,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 
 	if err := c.ShouldBind(&request); err != nil {
 		log.Printf("POST /users/%s/notifications Error: Bad request", idString)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Request is missing required fields",
-			"instance": c.Request.URL.Path,
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 	userData, err := h.service.GetUser(idString)
@@ -491,13 +448,7 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 		notificationSettings := models.StudentNotificationSettingsRequest{}
 		if err := c.ShouldBind(&notificationSettings); err != nil {
 			log.Printf("POST %s Error: %s", c.Request.URL.Path, err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"title":    "Bad request",
-				"type":     "about:blank",
-				"status":   http.StatusBadRequest,
-				"detail":   "Request is missing required fields",
-				"instance": c.Request.URL.Path,
-			})
+			c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 			return
 		}
 		err := h.service.SetStudentNotificationSettings(id, notificationSettings)
@@ -509,13 +460,7 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 		notificationSettings := models.TeacherNotificationSettingsRequest{}
 		if err := c.ShouldBind(&notificationSettings); err != nil {
 			log.Printf("POST %s Error: %s", c.Request.URL.Path, err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"title":    "Bad request",
-				"type":     "about:blank",
-				"status":   http.StatusBadRequest,
-				"detail":   "Request is missing required fields",
-				"instance": c.Request.URL.Path,
-			})
+			c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 			return
 		}
 		err := h.service.SetTeacherNotificationSettings(id, notificationSettings)
