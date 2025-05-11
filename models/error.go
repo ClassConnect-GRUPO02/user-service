@@ -38,6 +38,16 @@ func InternalServerError() error {
 	}
 }
 
+func EmailNotVerifiedError(email string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Email not verified",
+		Status:   http.StatusUnauthorized,
+		Detail:   fmt.Sprintf("User cannot login because the email %s is not verified", email),
+		Instance: "/login",
+	}
+}
+
 func InvalidCredentialsError() error {
 	return &Error{
 		Type:     "about:blank", // TODO: consider setting the right type here

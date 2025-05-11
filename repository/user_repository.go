@@ -49,7 +49,8 @@ func (r *UserRepository) AddUser(user models.User) error {
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	blockedUntil := 0
 	date := utils.GetDate()
-	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s') RETURNING id;",
+	activated := false
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s', %v) RETURNING id;",
 		user.Email,
 		user.Name,
 		user.UserType,
@@ -58,6 +59,7 @@ func (r *UserRepository) AddUser(user models.User) error {
 		user.Longitude,
 		blockedUntil,
 		date,
+		activated,
 	)
 	var id int64
 	err := r.db.QueryRow(query).Scan(&id)
@@ -72,6 +74,17 @@ func (r *UserRepository) AddUser(user models.User) error {
 		return err
 	}
 	return nil
+}
+
+func (r *UserRepository) UserIsActivated(email string) (bool, error) {
+	var isActivated bool
+	query := fmt.Sprintf("SELECT activated FROM users WHERE email='%s';", email)
+	err := r.db.QueryRow(query).Scan(&isActivated)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return false, err
+	}
+	return isActivated, nil
 }
 
 func (r *UserRepository) AddUserNotificationSettings(id int64, user models.User) error {

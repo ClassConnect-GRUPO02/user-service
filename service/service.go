@@ -73,6 +73,14 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 		return models.InvalidCredentialsError()
 	}
 
+	userIsActivated, err := s.userRepository.UserIsActivated(loginRequest.Email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	if !userIsActivated {
+		return models.EmailNotVerifiedError(loginRequest.Email)
+	}
+
 	// Check if the user is blocked
 	blockedUntil, err := s.userRepository.UserBlockedUntil(loginRequest.Email)
 	if err != nil {

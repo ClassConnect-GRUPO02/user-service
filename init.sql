@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
     latitude FLOAT,
     longitude FLOAT,
     blocked_until BIGINT,
-    registration_date DATE
+    registration_date DATE,
+    activated BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS login_attempts (
