@@ -78,6 +78,31 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 	})
 }
 
+func (h *UserHandler) HandleBiometricLogin(c *gin.Context) {
+	loginRequest := models.BiometricLoginRequest{}
+	if err := c.ShouldBind(&loginRequest); err != nil {
+		log.Printf("%s Error: %s", c.Request.URL.Path, err)
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	refreshToken, err := h.service.ValidateRefreshToken(loginRequest.RefreshToken)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	userId := refreshToken.Id
+	token, err := h.service.IssueToken(userId)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{
+		"description": "User logged in successfully",
+		"id":          userId,
+		"token":       token,
+	})
+}
+
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
