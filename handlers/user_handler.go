@@ -170,13 +170,7 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 	}
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString,
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 	err = h.service.EditUser(id, editUserRequest)
@@ -299,13 +293,7 @@ func (h *UserHandler) BlockUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString + "/block",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 	err = h.service.BlockUser(id)
@@ -332,13 +320,7 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString + "/unblock",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 	err = h.service.UnblockUser(id)
@@ -366,13 +348,7 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 	userType := c.Param("type")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString + "/type/" + userType,
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 	err = h.service.SetUserType(id, userType)
@@ -396,13 +372,7 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/users/" + idString + "/push-token",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 
@@ -443,13 +413,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": c.FullPath(),
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 
@@ -510,13 +474,7 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": c.FullPath(),
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 
@@ -580,13 +538,7 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": c.FullPath(),
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
 		return
 	}
 	pushNotifications, emailNotifications, err := h.service.GetUserNotificationSettings(id)
