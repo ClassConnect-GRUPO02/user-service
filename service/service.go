@@ -430,3 +430,11 @@ func (s *Service) SendEmailVerificationPin(email string, pin int) error {
 	}
 	return nil
 }
+
+func (s *Service) VerifyUserEmail(email string, pin int) error {
+	err := s.userRepository.ActivateUserEmail(email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}

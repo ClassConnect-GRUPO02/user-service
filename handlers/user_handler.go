@@ -46,6 +46,24 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	})
 }
 
+func (h *UserHandler) VerifyUserEmail(c *gin.Context) {
+	request := models.EmailVerificationRequest{}
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	err := h.service.VerifyUserEmail(request.Email, request.Pin)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"description": "User registered successfully",
+		"email":       request.Email,
+	})
+}
+
 func (h *UserHandler) HandleLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {

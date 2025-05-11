@@ -13,6 +13,24 @@ type Repository struct {
 	mock.Mock
 }
 
+// ActivateUserEmail provides a mock function with given fields: email
+func (_m *Repository) ActivateUserEmail(email string) error {
+	ret := _m.Called(email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ActivateUserEmail")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddAdmin provides a mock function with given fields: email, name, password
 func (_m *Repository) AddAdmin(email string, name string, password string) error {
 	ret := _m.Called(email, name, password)

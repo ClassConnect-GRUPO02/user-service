@@ -13,6 +13,7 @@ func CreateUserRouter(handler *handlers.UserHandler) (*gin.Engine, error) {
 	router.POST("/login", handler.HandleLogin)
 	router.POST("/biometric-login", handler.HandleBiometricLogin)
 	router.GET("/users", handler.GetUsers)
+	router.POST("/users/verify", handler.VerifyUserEmail)
 	router.GET("/user/:id", handler.GetUser)
 	router.PUT("/user/:id", handler.EditUser)
 	router.GET("/check-email-exists/:email", handler.EmailExists)

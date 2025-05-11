@@ -543,3 +543,12 @@ func (r *UserRepository) GetTeacherNotificationSettings(id int64) (*models.Teach
 	}
 	return &notificationSettings, nil
 }
+
+func (r *UserRepository) ActivateUserEmail(email string) error {
+	_, err := r.db.Exec(`UPDATE users SET activated = $1 WHERE email = $2`, true, email)
+	if err != nil {
+		log.Printf("Failed to activate user email. Error: %s", err)
+		return err
+	}
+	return nil
+}

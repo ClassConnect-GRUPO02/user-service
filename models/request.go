@@ -36,6 +36,11 @@ type NotifyUserRequest struct {
 	NotificationType string `json:"notificationType" binding:"required"`
 }
 
+type EmailVerificationRequest struct {
+	Email string `json:"email" binding:"required"`
+	Pin   int    `json:"pin" binding:"required"`
+}
+
 type NotificationPreference = int
 
 const (
