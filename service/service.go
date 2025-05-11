@@ -13,6 +13,7 @@ import (
 	"user_service/config"
 	"user_service/models"
 	"user_service/repository"
+	"user_service/utils"
 
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
@@ -417,4 +418,15 @@ func (s *Service) GetUserNotificationPreferences(id int64, userType models.UserT
 		return false, false, 0, errors.New(InvalidUserType)
 	}
 	return pushEnabled, emailEnabled, notificationPreference, nil
+}
+
+func (s *Service) SendEmailVerificationPin(email string, pin int) error {
+	mailSubject := "ClassConnect - Verificación de correo"
+	mailBody := utils.GetVerificationMessage(email, pin)
+	err := s.SendEmail(email, mailSubject, mailBody)
+	if err != nil {
+		log.Printf("Failed to send verification pin to %s. Error: %s", email, err)
+		return err
+	}
+	return nil
 }

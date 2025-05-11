@@ -7,6 +7,7 @@ import (
 	"strings"
 	"user_service/models"
 	"user_service/service"
+	"user_service/utils"
 
 	"github.com/gin-gonic/gin"
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
@@ -35,8 +36,11 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	pin := utils.GenerateRandomNumber()
+	h.service.SendEmailVerificationPin(user.Email, pin)
+
 	c.JSON(http.StatusCreated, gin.H{
-		"description": "User registered successfully",
+		"description": "Verification PIN sent to the provided email",
 		"email":       user.Email,
 		"name":        user.Name,
 	})
