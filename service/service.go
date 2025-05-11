@@ -358,6 +358,10 @@ func (s *Service) SetTeacherNotificationSettings(id int64, notificationSettings 
 	return err
 }
 
-func (s *Service) GetUserNotificationSettings(id int64) (bool, bool, error) {
-	return s.userRepository.GetUserNotificationSettings(id)
+func (s *Service) GetStudentNotificationSettings(id int64) (*models.StudentNotificationSettingsRequest, error) {
+	return s.userRepository.GetStudentNotificationSettings(id)
+}
+
+func (s *Service) GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error) {
+	return s.userRepository.GetTeacherNotificationSettings(id)
 }

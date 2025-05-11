@@ -476,3 +476,57 @@ func (r *UserRepository) SetTeacherNotificationSettings(id int64, notificationSe
 	}
 	return nil
 }
+
+func (r *UserRepository) GetStudentNotificationSettings(id int64) (*models.StudentNotificationSettingsRequest, error) {
+	var pushEnabled, emailEnabled bool
+	var newAssignment, deadlineReminder, courseEnrollment, favoriteCourseUpdate, teacherFeedback models.NotificationPreference
+	err := r.db.QueryRow(
+		`SELECT 
+			push_enabled,
+			email_enabled,
+			new_assignment,
+			deadline_reminder,
+			course_enrollment,
+			favorite_course_update,
+			teacher_feedback 
+		FROM students_notifications_settings WHERE id=$1`, id,
+	).Scan(&pushEnabled, &emailEnabled, &newAssignment, &deadlineReminder, &courseEnrollment, &favoriteCourseUpdate, &teacherFeedback)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return nil, err
+	}
+	notificationSettings := models.StudentNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		NewAssignment:        &newAssignment,
+		DeadlineReminder:     &deadlineReminder,
+		CourseEnrollment:     &courseEnrollment,
+		FavoriteCourseUpdate: &favoriteCourseUpdate,
+		TeacherFeedback:      &teacherFeedback,
+	}
+	return &notificationSettings, nil
+}
+
+func (r *UserRepository) GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error) {
+	var pushEnabled, emailEnabled bool
+	var assignmentSubmission, studentFeedback models.NotificationPreference
+	err := r.db.QueryRow(
+		`SELECT 
+			push_enabled,
+			email_enabled,
+			assignment_submission,
+			student_feedback
+		FROM teachers_notifications_settings WHERE id=$1`, id,
+	).Scan(&pushEnabled, &emailEnabled, &assignmentSubmission, &studentFeedback)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return nil, err
+	}
+	notificationSettings := models.TeacherNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		AssignmentSubmission: &assignmentSubmission,
+		StudentFeedback:      &studentFeedback,
+	}
+	return &notificationSettings, nil
+}
