@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"user_service/models"
 	"user_service/service"
 
@@ -371,57 +372,77 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 	})
 }
 
-// func (h *UserHandler) NotifyUser(c *gin.Context) {
-// 	request := models.NotifyUserRequest{}
-// 	idString := c.Param("id")
-// 	id, err := strconv.ParseInt(idString, 10, 64)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
-// 		return
-// 	}
+func (h *UserHandler) NotifyUser(c *gin.Context) {
+	request := models.NotifyUserRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
 
-// 	if err := c.ShouldBind(&request); err != nil {
-// 		log.Printf("POST /users/%s/notifications Error: Bad request", idString)
-// 		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
-// 		return
-// 	}
-// 	userData, err := h.service.GetUser(idString)
-// 	if err, ok := err.(*models.Error); ok {
-// 		c.JSON(err.Status, err)
-// 		return
-// 	}
-// 	pushToken, err := h.service.GetUserPushToken(id)
-// 	if err != nil {
-// 		if err.Error() == service.MissingExpoPushToken {
-// 			c.JSON(http.StatusNotFound, models.MissingExpoPushToken(idString, c.Request.URL.Path))
-// 		} else {
-// 			c.JSON(http.StatusInternalServerError, models.InternalServerError())
-// 		}
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"description": "Sending notification",
-// 		"id":          idString,
-// 		"email":       userData.Email,
-// 	})
-// 	pushNotifications, emailNotifications, err := h.service.GetUserNotificationSettings(id)
-// 	if err, ok := err.(*models.Error); ok {
-// 		c.JSON(err.Status, err)
-// 		return
-// 	}
-// 	if emailNotifications {
-// 		err = h.service.SendEmail(userData.Email, request.Title, request.Body)
-// 		if err != nil {
-// 			log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
-// 		}
-// 	}
-// 	if pushNotifications {
-// 		err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
-// 		if err != nil {
-// 			log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
-// 		}
-// 	}
-// }
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST /users/%s/notifications Error: Bad request", idString)
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	userData, err := h.service.GetUser(idString)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	pushToken, err := h.service.GetUserPushToken(id)
+	if err != nil {
+		if err.Error() == service.MissingExpoPushToken {
+			c.JSON(http.StatusNotFound, models.MissingExpoPushToken(idString, c.Request.URL.Path))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+
+	var pushEnabled, emailEnabled bool
+	userType := models.UserType(strings.ToLower(userData.UserType))
+	if userType == models.Student {
+		notificationSettings, err := h.service.GetStudentNotificationSettings(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			return
+		}
+		pushEnabled = *notificationSettings.PushEnabled
+		emailEnabled = *notificationSettings.EmailEnabled
+	} else if userType == models.Teacher {
+		notificationSettings, err := h.service.GetTeacherNotificationSettings(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			return
+		}
+		pushEnabled = *notificationSettings.PushEnabled
+		emailEnabled = *notificationSettings.EmailEnabled
+	}
+
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	if emailEnabled {
+		err = h.service.SendEmail(userData.Email, request.Title, request.Body)
+		if err != nil {
+			log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
+		}
+	}
+	if pushEnabled {
+		err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
+		if err != nil {
+			log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Sending notification",
+		"id":          idString,
+		"email":       userData.Email,
+	})
+}
 
 func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	_, err := h.ValidateToken(c)
