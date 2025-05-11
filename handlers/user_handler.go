@@ -170,7 +170,7 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 	}
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.EditUser(id, editUserRequest)
@@ -293,7 +293,7 @@ func (h *UserHandler) BlockUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.BlockUser(id)
@@ -320,7 +320,7 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.UnblockUser(id)
@@ -348,7 +348,7 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 	userType := c.Param("type")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.SetUserType(id, userType)
@@ -372,7 +372,7 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 
@@ -413,7 +413,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 
@@ -424,7 +424,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 			"type":     "about:blank",
 			"status":   http.StatusBadRequest,
 			"detail":   "Request is missing required fields",
-			"instance": c.FullPath(),
+			"instance": c.Request.URL.Path,
 		})
 		return
 	}
@@ -436,7 +436,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 	pushToken, err := h.service.GetUserPushToken(id)
 	if err != nil {
 		if err.Error() == service.MissingExpoPushToken {
-			c.JSON(http.StatusNotFound, models.MissingExpoPushToken(idString, c.FullPath()))
+			c.JSON(http.StatusNotFound, models.MissingExpoPushToken(idString, c.Request.URL.Path))
 		} else {
 			c.JSON(http.StatusInternalServerError, models.InternalServerError())
 		}
@@ -474,7 +474,7 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 
@@ -490,13 +490,13 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	if models.UserType(userType) == models.Student {
 		notificationSettings := models.StudentNotificationSettingsRequest{}
 		if err := c.ShouldBind(&notificationSettings); err != nil {
-			log.Printf("POST %s Error: %s", c.FullPath(), err)
+			log.Printf("POST %s Error: %s", c.Request.URL.Path, err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"title":    "Bad request",
 				"type":     "about:blank",
 				"status":   http.StatusBadRequest,
 				"detail":   "Request is missing required fields",
-				"instance": c.FullPath(),
+				"instance": c.Request.URL.Path,
 			})
 			return
 		}
@@ -508,13 +508,13 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	} else if models.UserType(userType) == models.Teacher {
 		notificationSettings := models.TeacherNotificationSettingsRequest{}
 		if err := c.ShouldBind(&notificationSettings); err != nil {
-			log.Printf("POST %s Error: %s", c.FullPath(), err)
+			log.Printf("POST %s Error: %s", c.Request.URL.Path, err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"title":    "Bad request",
 				"type":     "about:blank",
 				"status":   http.StatusBadRequest,
 				"detail":   "Request is missing required fields",
-				"instance": c.FullPath(),
+				"instance": c.Request.URL.Path,
 			})
 			return
 		}
@@ -538,7 +538,7 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.FullPath()))
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	pushNotifications, emailNotifications, err := h.service.GetUserNotificationSettings(id)
@@ -547,7 +547,7 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 			c.JSON(http.StatusNotFound, models.Error{
 				Detail:   "User not found",
 				Status:   http.StatusNotFound,
-				Instance: c.FullPath(),
+				Instance: c.Request.URL.Path,
 				Title:    "User not found",
 				Type:     "about:blank",
 			})

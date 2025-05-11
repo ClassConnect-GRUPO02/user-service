@@ -581,7 +581,7 @@ func TestEditUser(t *testing.T) {
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
-		expectedBody := `{"detail":"Invalid id: abc","instance":"/user/abc","status":400,"title":"Bad request","type":"about:blank"}`
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"Invalid id: abc","instance":"/user/abc"}`
 
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
