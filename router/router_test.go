@@ -666,9 +666,11 @@ func TestCheckEmailExists(t *testing.T) {
 		response := w.Body.String()
 		emailExists := strings.Contains(response, `"exists":true`)
 		responseContainsToken := strings.Contains(response, `"token":`)
+		responseContainsId := strings.Contains(response, `"id":`)
 
 		assert.True(t, emailExists)
 		assert.True(t, responseContainsToken)
+		assert.True(t, responseContainsId)
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
