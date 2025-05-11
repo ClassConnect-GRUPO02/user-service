@@ -20,6 +20,8 @@ type Repository interface {
 	GetUserPushToken(id int64) (string, error)
 	SetUserNotificationSettings(id int64, pushNotifications bool, emailNotifications bool) error
 	GetUserNotificationSettings(id int64) (bool, bool, error)
+	GetUserType(id int64) (string, error)
+	SetStudentNotificationSettings(id int64, notificationSettings models.StudentNotificationSettingsRequest) error
 
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)

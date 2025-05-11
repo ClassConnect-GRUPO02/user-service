@@ -244,6 +244,34 @@ func (_m *Repository) GetUserPushToken(id int64) (string, error) {
 	return r0, r1
 }
 
+// GetUserType provides a mock function with given fields: id
+func (_m *Repository) GetUserType(id int64) (string, error) {
+	ret := _m.Called(id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserType")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int64) (string, error)); ok {
+		return rf(id)
+	}
+	if rf, ok := ret.Get(0).(func(int64) string); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(int64) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUsers provides a mock function with no fields
 func (_m *Repository) GetUsers() ([]models.UserPublicInfo, error) {
 	ret := _m.Called()
@@ -414,6 +442,24 @@ func (_m *Repository) PasswordMatches(email string, password string) (bool, erro
 	}
 
 	return r0, r1
+}
+
+// SetStudentNotificationSettings provides a mock function with given fields: id, notificationSettings
+func (_m *Repository) SetStudentNotificationSettings(id int64, notificationSettings models.StudentNotificationSettingsRequest) error {
+	ret := _m.Called(id, notificationSettings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetStudentNotificationSettings")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, models.StudentNotificationSettingsRequest) error); ok {
+		r0 = rf(id, notificationSettings)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // SetUserBlockedUntil provides a mock function with given fields: id, timestamp

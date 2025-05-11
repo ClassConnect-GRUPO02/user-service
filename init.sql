@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS users_push_tokens (
     token VARCHAR(255)
 );
 
-CREATE TABLE IF NOT EXISTS users_notifications_settings (
+CREATE TABLE IF NOT EXISTS students_notifications_settings (
     id INTEGER REFERENCES users (id),
     push_enabled BOOLEAN,
     email_enabled BOOLEAN,

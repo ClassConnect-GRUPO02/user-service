@@ -255,6 +255,17 @@ func (s *Service) SetUserType(id int64, userType string) error {
 	return nil
 }
 
+func (s *Service) GetUserType(id int64) (string, error) {
+	userType, err := s.userRepository.GetUserType(id)
+	if err != nil {
+		if err.Error() == UserNotFoundError {
+			return "", errors.New(UserNotFoundError)
+		}
+		return "", models.InternalServerError()
+	}
+	return userType, nil
+}
+
 func (s *Service) SetUserPushToken(id int64, token string) error {
 	log.Printf("Setting push token %s to user with id %d ", token, id)
 	err := s.userRepository.AddUserPushToken(id, token)
@@ -329,8 +340,9 @@ func (s *Service) SendEmail(to, subject, body string) error {
 	return nil
 }
 
-func (s *Service) SetUserNotificationSettings(id int64, pushNotifications bool, emailNotifications bool) error {
-	err := s.userRepository.SetUserNotificationSettings(id, pushNotifications, emailNotifications)
+func (s *Service) SetStudentNotificationSettings(id int64, notificationSettings models.StudentNotificationSettingsRequest) error {
+	// TODO: validate settings before setting em
+	err := s.userRepository.SetStudentNotificationSettings(id, notificationSettings)
 	if err != nil && err.Error() == repository.UserNotFoundError {
 		return errors.New(UserNotFoundError)
 	}

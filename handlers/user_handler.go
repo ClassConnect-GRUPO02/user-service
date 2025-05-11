@@ -507,7 +507,6 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	request := models.SetUserNotificationSettingsRequest{}
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
@@ -521,42 +520,47 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 		return
 	}
 
-	log.Printf("request body = %v", c.Request.Body)
-	if err := c.ShouldBind(&request); err != nil {
-		log.Printf("POST %s Error: %s", c.FullPath(), err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Request is missing required fields",
-			"instance": c.FullPath(),
-		})
-		return
-	}
-	err = h.service.SetUserNotificationSettings(id, *request.PushNotifications, *request.EmailNotifications)
+	userType, err := h.service.GetUserType(id)
 	if err != nil {
 		if err.Error() == service.UserNotFoundError {
-			c.JSON(http.StatusNotFound, models.Error{
-				Detail:   "Could not update notification settings because user was not found",
-				Status:   http.StatusNotFound,
-				Instance: c.FullPath(),
-				Title:    "User not found",
-				Type:     "about:blank",
+			c.JSON(http.StatusNotFound, models.UserNotFoundError(idString))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	if models.UserType(userType) == models.Student {
+		notificationSettings := models.StudentNotificationSettingsRequest{}
+		if err := c.ShouldBind(&notificationSettings); err != nil {
+			log.Printf("POST %s Error: %s", c.FullPath(), err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"title":    "Bad request",
+				"type":     "about:blank",
+				"status":   http.StatusBadRequest,
+				"detail":   "Request is missing required fields",
+				"instance": c.FullPath(),
 			})
 			return
 		}
-		// TODO: return status code depending on the error returned by the service
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"description": "Failed to update user notification settings",
-		})
-		return
+		err := h.service.SetStudentNotificationSettings(id, notificationSettings)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			return
+		}
+	} else if models.UserType(userType) == models.Teacher {
+		request := models.StudentNotificationSettingsRequest{}
+		if err := c.ShouldBind(&request); err != nil {
+			log.Printf("POST %s Error: %s", c.FullPath(), err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"title":    "Bad request",
+				"type":     "about:blank",
+				"status":   http.StatusBadRequest,
+				"detail":   "Request is missing required fields",
+				"instance": c.FullPath(),
+			})
+			return
+		}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"description":        "User notification settings updated successfully",
-		"id":                 idString,
-		"pushNotifications":  request.PushNotifications,
-		"emailNotifications": request.EmailNotifications,
-	})
 }
 
 func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {

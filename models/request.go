@@ -37,16 +37,19 @@ const (
 	PushAndEmail NotificationPreference = 3
 )
 
-type SetUserNotificationSettingsRequest struct {
-	PushEnabled  *bool `json:"pushEnabled" binding:"required"`
-	EmailEnabled *bool `json:"emailEnabled" binding:"required"`
-	// Student specific preferences
-	NewAssignment        *NotificationPreference `json:"newAssignment,omitempty"`
-	DeadlineReminder     *NotificationPreference `json:"deadlineReminder,omitempty"`
-	CourseEnrollment     *NotificationPreference `json:"courseEnrollment,omitempty"`
-	FavoriteCourseUpdate *NotificationPreference `json:"favoriteCourseUpdate,omitempty"`
-	TeacherFeedback      *NotificationPreference `json:"teacherFeedback,omitempty"`
-	// Teacher specific preferences
-	AssignmentSubmission *NotificationPreference `json:"assignmentSubmission,omitempty"`
-	StudentFeedback      *NotificationPreference `json:"studentFeedback,omitempty"`
+type TeacherNotificationSettingsRequest struct {
+	PushEnabled          *bool                   `json:"pushEnabled" binding:"required"`
+	EmailEnabled         *bool                   `json:"emailEnabled" binding:"required"`
+	AssignmentSubmission *NotificationPreference `json:"assignmentSubmission" binding:"required"`
+	StudentFeedback      *NotificationPreference `json:"studentFeedback" binding:"required"`
+}
+
+type StudentNotificationSettingsRequest struct {
+	PushEnabled          *bool                   `json:"pushEnabled" binding:"required"`
+	EmailEnabled         *bool                   `json:"emailEnabled" binding:"required"`
+	NewAssignment        *NotificationPreference `json:"newAssignment" binding:"required"`
+	DeadlineReminder     *NotificationPreference `json:"deadlineReminder" binding:"required"`
+	CourseEnrollment     *NotificationPreference `json:"courseEnrollment" binding:"required"`
+	FavoriteCourseUpdate *NotificationPreference `json:"favoriteCourseUpdate" binding:"required"`
+	TeacherFeedback      *NotificationPreference `json:"teacherFeedback" binding:"required"`
 }
