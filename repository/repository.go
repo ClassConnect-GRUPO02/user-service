@@ -22,6 +22,7 @@ type Repository interface {
 	GetUserNotificationSettings(id int64) (bool, bool, error)
 	GetUserType(id int64) (string, error)
 	SetStudentNotificationSettings(id int64, notificationSettings models.StudentNotificationSettingsRequest) error
+	SetTeacherNotificationSettings(id int64, notificationSettings models.TeacherNotificationSettingsRequest) error
 
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)

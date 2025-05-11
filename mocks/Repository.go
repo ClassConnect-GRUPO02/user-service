@@ -462,6 +462,24 @@ func (_m *Repository) SetStudentNotificationSettings(id int64, notificationSetti
 	return r0
 }
 
+// SetTeacherNotificationSettings provides a mock function with given fields: id, notificationSettings
+func (_m *Repository) SetTeacherNotificationSettings(id int64, notificationSettings models.TeacherNotificationSettingsRequest) error {
+	ret := _m.Called(id, notificationSettings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetTeacherNotificationSettings")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, models.TeacherNotificationSettingsRequest) error); ok {
+		r0 = rf(id, notificationSettings)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SetUserBlockedUntil provides a mock function with given fields: id, timestamp
 func (_m *Repository) SetUserBlockedUntil(id int64, timestamp int64) error {
 	ret := _m.Called(id, timestamp)

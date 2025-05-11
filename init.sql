@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS students_notifications_settings (
     new_assignment SMALLINT,
     deadline_reminder SMALLINT,
     course_enrollment SMALLINT,
-    favorite_course_update SMALLINT
+    favorite_course_update SMALLINT,
+    teacher_feedback SMALLINT
 );
 
 CREATE TABLE IF NOT EXISTS teachers_notifications_settings (

@@ -349,6 +349,15 @@ func (s *Service) SetStudentNotificationSettings(id int64, notificationSettings 
 	return err
 }
 
+func (s *Service) SetTeacherNotificationSettings(id int64, notificationSettings models.TeacherNotificationSettingsRequest) error {
+	// TODO: validate settings before setting em
+	err := s.userRepository.SetTeacherNotificationSettings(id, notificationSettings)
+	if err != nil && err.Error() == repository.UserNotFoundError {
+		return errors.New(UserNotFoundError)
+	}
+	return err
+}
+
 func (s *Service) GetUserNotificationSettings(id int64) (bool, bool, error) {
 	return s.userRepository.GetUserNotificationSettings(id)
 }

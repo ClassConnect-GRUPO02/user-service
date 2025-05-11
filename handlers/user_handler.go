@@ -548,8 +548,8 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 			return
 		}
 	} else if models.UserType(userType) == models.Teacher {
-		request := models.StudentNotificationSettingsRequest{}
-		if err := c.ShouldBind(&request); err != nil {
+		notificationSettings := models.TeacherNotificationSettingsRequest{}
+		if err := c.ShouldBind(&notificationSettings); err != nil {
 			log.Printf("POST %s Error: %s", c.FullPath(), err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"title":    "Bad request",
@@ -560,7 +560,16 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 			})
 			return
 		}
+		err := h.service.SetTeacherNotificationSettings(id, notificationSettings)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			return
+		}
 	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Notification settings updated successfully",
+		"id":          id,
+	})
 }
 
 func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
