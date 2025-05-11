@@ -125,3 +125,13 @@ func BadRequestMissingFields(instance string) error {
 		Instance: instance,
 	}
 }
+
+func BadRequestInvalidNotificationType(notificationType, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Bad Request",
+		Status:   http.StatusBadRequest,
+		Detail:   fmt.Sprintf("Invalid notification type: %s", notificationType),
+		Instance: instance,
+	}
+}

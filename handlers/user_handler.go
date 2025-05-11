@@ -401,44 +401,52 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 		return
 	}
 
-	var pushEnabled, emailEnabled bool
+	notificationType := request.NotificationType
 	userType := models.UserType(strings.ToLower(userData.UserType))
-	if userType == models.Student {
-		notificationSettings, err := h.service.GetStudentNotificationSettings(id)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, models.InternalServerError())
-			return
-		}
-		pushEnabled = *notificationSettings.PushEnabled
-		emailEnabled = *notificationSettings.EmailEnabled
-	} else if userType == models.Teacher {
-		notificationSettings, err := h.service.GetTeacherNotificationSettings(id)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, models.InternalServerError())
-			return
-		}
-		pushEnabled = *notificationSettings.PushEnabled
-		emailEnabled = *notificationSettings.EmailEnabled
-	}
 
+	pushEnabled, emailEnabled, notificationPreference, err := h.service.GetUserNotificationPreferences(id, userType, notificationType)
+	if err != nil {
+		switch err.Error() {
+		case service.InternalServerError:
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		case service.InvalidNotificationType:
+			c.JSON(http.StatusBadRequest, models.BadRequestInvalidNotificationType(notificationType, c.Request.URL.Path))
+		case service.InvalidUserType:
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
 	}
-	if emailEnabled {
+	sendPushNotification := false
+	sendEmailNotification := false
+
+	switch notificationPreference {
+	case models.Push:
+		sendPushNotification = true
+	case models.Email:
+		sendEmailNotification = true
+	case models.PushAndEmail:
+		sendPushNotification = true
+		sendEmailNotification = true
+	}
+
+	if sendEmailNotification && emailEnabled {
 		err = h.service.SendEmail(userData.Email, request.Title, request.Body)
 		if err != nil {
 			log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
 		}
 	}
-	if pushEnabled {
+	if sendPushNotification && pushEnabled {
 		err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
 		if err != nil {
 			log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
 		}
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"description": "Sending notification",
+		"description": "Notification scheduled",
 		"id":          idString,
 		"email":       userData.Email,
 	})

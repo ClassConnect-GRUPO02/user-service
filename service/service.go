@@ -365,3 +365,37 @@ func (s *Service) GetStudentNotificationSettings(id int64) (*models.StudentNotif
 func (s *Service) GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error) {
 	return s.userRepository.GetTeacherNotificationSettings(id)
 }
+
+// Given a user and a notification type, returns the user's preferences for that notification type
+func (s *Service) GetUserNotificationPreferences(id int64, userType models.UserType, notificationType string) (bool, bool, models.NotificationPreference, error) {
+	var notificationPreference models.NotificationPreference
+
+	var pushEnabled, emailEnabled bool
+	switch userType {
+	case models.Student:
+		notificationSettings, err := s.GetStudentNotificationSettings(id)
+		if err != nil {
+			return false, false, 0, errors.New(InternalServerError)
+		}
+		pushEnabled = *notificationSettings.PushEnabled
+		emailEnabled = *notificationSettings.EmailEnabled
+		notificationPreference, err = notificationSettings.GetNotificationTypePreference(notificationType)
+		if err != nil {
+			return false, false, 0, errors.New(InvalidNotificationType)
+		}
+	case models.Teacher:
+		notificationSettings, err := s.GetTeacherNotificationSettings(id)
+		if err != nil {
+			return false, false, 0, errors.New(InternalServerError)
+		}
+		pushEnabled = *notificationSettings.PushEnabled
+		emailEnabled = *notificationSettings.EmailEnabled
+		notificationPreference, err = notificationSettings.GetNotificationTypePreference(notificationType)
+		if err != nil {
+			return false, false, 0, errors.New(InvalidNotificationType)
+		}
+	default:
+		return false, false, 0, errors.New(InvalidUserType)
+	}
+	return pushEnabled, emailEnabled, notificationPreference, nil
+}
