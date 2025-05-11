@@ -64,6 +64,25 @@ func (h *UserHandler) VerifyUserEmail(c *gin.Context) {
 	})
 }
 
+func (h *UserHandler) RequestNewPin(c *gin.Context) {
+	request := models.RequestNewVerificationPin{}
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	pin := utils.GenerateRandomNumber()
+	err := h.service.SendEmailVerificationPin(request.Email, pin)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Verification PIN sent to email",
+		"email":       request.Email,
+	})
+}
+
 func (h *UserHandler) HandleLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
