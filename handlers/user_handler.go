@@ -50,6 +50,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		"description": "Verification PIN sent to the provided email",
 		"email":       user.Email,
 		"name":        user.Name,
+		"duration":    h.service.VerificationPinDurationInMinutes(),
 	})
 }
 
@@ -640,8 +641,4 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, notificationSettings)
 	}
-}
-
-func isTestEmail(email string) bool {
-	return email == "john@example.com"
 }

@@ -478,3 +478,7 @@ func (s *Service) IssueVerificationPinForEmail(email string) (int, error) {
 func isTestEmail(email string) bool {
 	return email == "john@example.com"
 }
+
+func (s *Service) VerificationPinDurationInMinutes() int {
+	return int(s.verificationPinDuration) / 60
+}
