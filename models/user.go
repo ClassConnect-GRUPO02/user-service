@@ -37,3 +37,10 @@ type UserInfo struct {
 	Latitude  float64 `json:"latitude" binding:"required"`
 	Longitude float64 `json:"longitude" binding:"required"`
 }
+
+type UserType string
+
+const (
+	Student UserType = "alumno"
+	Teacher UserType = "docente"
+)

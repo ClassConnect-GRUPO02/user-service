@@ -16,6 +16,16 @@ type Repository interface {
 	IncrementFailedLoginAttempts(email string, blockingTimeWindow int64) (int64, error)
 	SetUserBlockedUntil(id int64, timestamp int64) error
 	UpdateUser(id int64, name, email string) error
+	AddUserPushToken(id int64, token string) error
+	GetUserPushToken(id int64) (string, error)
+	SetUserNotificationSettings(id int64, pushNotifications bool, emailNotifications bool) error
+	GetUserNotificationSettings(id int64) (bool, bool, error)
+	GetUserType(id int64) (string, error)
+	SetStudentNotificationSettings(id int64, notificationSettings models.StudentNotificationSettingsRequest) error
+	SetTeacherNotificationSettings(id int64, notificationSettings models.TeacherNotificationSettingsRequest) error
+	GetStudentNotificationSettings(id int64) (*models.StudentNotificationSettingsRequest, error)
+	GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error)
+
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)
 	AdminPasswordMatches(email, password string) (bool, error)

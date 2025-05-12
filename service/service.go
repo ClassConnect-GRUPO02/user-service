@@ -1,14 +1,20 @@
 package service
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 	"math"
+	"net/smtp"
 	"strconv"
 	"time"
 	"user_service/auth"
 	"user_service/config"
 	"user_service/models"
 	"user_service/repository"
+
+	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
 type Service struct {
@@ -18,6 +24,8 @@ type Service struct {
 	authService        *auth.Auth
 	blockingDuration   int64
 	loginAttemptsLimit int64
+	email              string
+	emailPassword      string
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
@@ -28,6 +36,8 @@ func NewService(repository repository.Repository, config *config.Config) (*Servi
 		blockingTimeWindow: config.BlockingTimeWindow,
 		blockingDuration:   config.BlockingDuration,
 		loginAttemptsLimit: config.LoginAttemptsLimit,
+		email:              config.Email,
+		emailPassword:      config.EmailPassword,
 	}
 	return &service, nil
 }
@@ -243,4 +253,149 @@ func (s *Service) SetUserType(id int64, userType string) error {
 		return models.InternalServerError()
 	}
 	return nil
+}
+
+func (s *Service) GetUserType(id int64) (string, error) {
+	userType, err := s.userRepository.GetUserType(id)
+	if err != nil {
+		if err.Error() == UserNotFoundError {
+			return "", errors.New(UserNotFoundError)
+		}
+		return "", models.InternalServerError()
+	}
+	return userType, nil
+}
+
+func (s *Service) SetUserPushToken(id int64, token string) error {
+	log.Printf("Setting push token %s to user with id %d ", token, id)
+	err := s.userRepository.AddUserPushToken(id, token)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
+
+func (s *Service) GetUserPushToken(id int64) (string, error) {
+	token, err := s.userRepository.GetUserPushToken(id)
+	if err == sql.ErrNoRows {
+		return "", errors.New(MissingExpoPushToken)
+	}
+	if err != nil {
+		return "", models.InternalServerError()
+	}
+	return token, nil
+}
+
+func (s *Service) SendPushNotification(token, title, body string) error {
+	// Create a new Expo SDK client
+	client := expo.NewPushClient(nil)
+
+	// Publish message
+	response, err := client.Publish(
+		&expo.PushMessage{
+			To:       []expo.ExponentPushToken{expo.ExponentPushToken(token)},
+			Title:    title,
+			Body:     body,
+			Data:     map[string]string{"withSome": "data"},
+			Sound:    "default",
+			Priority: expo.DefaultPriority,
+		},
+	)
+	if err != nil {
+		return models.InternalServerError()
+	}
+
+	// Validate responses
+	err = response.ValidateResponse()
+	if err != nil {
+		fmt.Printf("failed to send notification to %s. Error: %s", response.PushMessage.To, err)
+		return models.InternalServerError()
+	}
+	return nil
+}
+
+func (s *Service) SendEmail(to, subject, body string) error {
+	// Gmail SMTP configuration
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+	from := s.email
+	password := s.emailPassword
+
+	// Authentication
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	// Email headers and body
+
+	msg := "From: \"ClassConnect\" <" + from + ">\n" +
+		"To: " + to + "\n" +
+		"Subject: " + subject + "\n\n" +
+		body
+
+	// Sending email
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, []byte(msg))
+	if err != nil {
+		return fmt.Errorf("error sending email: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Service) SetStudentNotificationSettings(id int64, notificationSettings models.StudentNotificationSettingsRequest) error {
+	// TODO: validate settings before setting em
+	err := s.userRepository.SetStudentNotificationSettings(id, notificationSettings)
+	if err != nil && err.Error() == repository.UserNotFoundError {
+		return errors.New(UserNotFoundError)
+	}
+	return err
+}
+
+func (s *Service) SetTeacherNotificationSettings(id int64, notificationSettings models.TeacherNotificationSettingsRequest) error {
+	// TODO: validate settings before setting em
+	err := s.userRepository.SetTeacherNotificationSettings(id, notificationSettings)
+	if err != nil && err.Error() == repository.UserNotFoundError {
+		return errors.New(UserNotFoundError)
+	}
+	return err
+}
+
+func (s *Service) GetStudentNotificationSettings(id int64) (*models.StudentNotificationSettingsRequest, error) {
+	return s.userRepository.GetStudentNotificationSettings(id)
+}
+
+func (s *Service) GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error) {
+	return s.userRepository.GetTeacherNotificationSettings(id)
+}
+
+// Given a user and a notification type, returns the user's preferences for that notification type
+func (s *Service) GetUserNotificationPreferences(id int64, userType models.UserType, notificationType string) (bool, bool, models.NotificationPreference, error) {
+	var notificationPreference models.NotificationPreference
+
+	var pushEnabled, emailEnabled bool
+	switch userType {
+	case models.Student:
+		notificationSettings, err := s.GetStudentNotificationSettings(id)
+		if err != nil {
+			return false, false, 0, errors.New(InternalServerError)
+		}
+		pushEnabled = *notificationSettings.PushEnabled
+		emailEnabled = *notificationSettings.EmailEnabled
+		notificationPreference, err = notificationSettings.GetNotificationTypePreference(notificationType)
+		if err != nil {
+			return false, false, 0, errors.New(InvalidNotificationType)
+		}
+	case models.Teacher:
+		notificationSettings, err := s.GetTeacherNotificationSettings(id)
+		if err != nil {
+			return false, false, 0, errors.New(InternalServerError)
+		}
+		pushEnabled = *notificationSettings.PushEnabled
+		emailEnabled = *notificationSettings.EmailEnabled
+		notificationPreference, err = notificationSettings.GetNotificationTypePreference(notificationType)
+		if err != nil {
+			return false, false, 0, errors.New(InvalidNotificationType)
+		}
+	default:
+		return false, false, 0, errors.New(InvalidUserType)
+	}
+	return pushEnabled, emailEnabled, notificationPreference, nil
 }

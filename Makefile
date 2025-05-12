@@ -9,5 +9,5 @@ start:
 	docker compose down
 
 test:
-	docker build -f Dockerfile.test -t service_test .
-	docker run service_test
+	docker compose -f docker-compose-test.yaml up --abort-on-container-exit --build
+	docker compose down -v

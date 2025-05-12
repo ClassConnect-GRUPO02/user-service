@@ -85,3 +85,53 @@ func UserNotFoundError(id string) error {
 		Instance: fmt.Sprintf("/user/%s", id),
 	}
 }
+
+func InvalidExpoToken(userId int64, expoToken string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Invalid expo token",
+		Status:   http.StatusUnauthorized,
+		Detail:   fmt.Sprintf("The expo token '%s' is invalid", expoToken),
+		Instance: fmt.Sprintf("/users/%d/push-token", userId),
+	}
+}
+
+func MissingExpoPushToken(id string, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Missing expo push token",
+		Status:   http.StatusNotFound,
+		Detail:   fmt.Sprintf("The user %s is missing an Expo push token", id),
+		Instance: instance,
+	}
+}
+
+func BadRequestInvalidId(id, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Bad Request",
+		Status:   http.StatusBadRequest,
+		Detail:   fmt.Sprintf("Invalid id: %s", id),
+		Instance: instance,
+	}
+}
+
+func BadRequestMissingFields(instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Bad Request",
+		Status:   http.StatusBadRequest,
+		Detail:   "The request is missing fields",
+		Instance: instance,
+	}
+}
+
+func BadRequestInvalidNotificationType(notificationType, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Bad Request",
+		Status:   http.StatusBadRequest,
+		Detail:   fmt.Sprintf("Invalid notification type: %s", notificationType),
+		Instance: instance,
+	}
+}

@@ -4,10 +4,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"user_service/models"
 	"user_service/service"
 
 	"github.com/gin-gonic/gin"
+	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
 type UserHandler struct {
@@ -24,13 +26,7 @@ func NewUserHandler(service *service.Service) *UserHandler {
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	user := models.User{}
 	if err := c.ShouldBind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not register the user",
-			"instance": "/users",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 	err := h.service.CreateUser(user)
@@ -50,13 +46,7 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
 		log.Print("POST /login Error: Bad request")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not authenticate the user",
-			"instance": "/login",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 
@@ -157,24 +147,12 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 	editUserRequest := models.EditUserRequest{}
 	idString := c.Param("id")
 	if err := c.ShouldBind(&editUserRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not update the user info",
-			"instance": "/user/" + idString,
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString,
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.EditUser(id, editUserRequest)
@@ -221,13 +199,7 @@ func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
 		log.Print("POST /login Error: Bad request")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not authenticate the user",
-			"instance": "/admin-login",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 
@@ -264,13 +236,7 @@ func (h *UserHandler) CreateAdmin(c *gin.Context) {
 		return
 	}
 	if err := c.ShouldBind(&admin); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Could not register the admin",
-			"instance": "/admins",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
 	err = h.service.CreateAdmin(admin)
@@ -298,13 +264,7 @@ func (h *UserHandler) BlockUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString + "/block",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.BlockUser(id)
@@ -331,13 +291,7 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 	idString := c.Param("id")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString + "/unblock",
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.UnblockUser(id)
@@ -365,13 +319,7 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 	userType := c.Param("type")
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"title":    "Bad request",
-			"type":     "about:blank",
-			"status":   http.StatusBadRequest,
-			"detail":   "Invalid id: " + idString,
-			"instance": "/user/" + idString + "/type/" + userType,
-		})
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
 		return
 	}
 	err = h.service.SetUserType(id, userType)
@@ -384,4 +332,220 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 		"id":          idString,
 		"userType":    userType,
 	})
+}
+
+func (h *UserHandler) AddPushToken(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	request := models.AddPushTokenRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST /users/%s/push-token Error: Bad request", idString)
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+
+	_, err = expo.NewExponentPushToken(request.PushToken)
+	if err != nil {
+		err = models.InvalidExpoToken(id, request.PushToken)
+		c.JSON(http.StatusUnauthorized, err)
+		return
+	}
+
+	err = h.service.SetUserPushToken(id, request.PushToken)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"description": "User push token set successfully",
+		"id":          idString,
+		"token":       request.PushToken,
+	})
+}
+
+func (h *UserHandler) NotifyUser(c *gin.Context) {
+	request := models.NotifyUserRequest{}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+
+	if err := c.ShouldBind(&request); err != nil {
+		log.Printf("POST /users/%s/notifications Error: Bad request", idString)
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	userData, err := h.service.GetUser(idString)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	pushToken, err := h.service.GetUserPushToken(id)
+	if err != nil {
+		if err.Error() == service.MissingExpoPushToken {
+			c.JSON(http.StatusNotFound, models.MissingExpoPushToken(idString, c.Request.URL.Path))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+
+	notificationType := request.NotificationType
+	userType := models.UserType(strings.ToLower(userData.UserType))
+
+	pushEnabled, emailEnabled, notificationPreference, err := h.service.GetUserNotificationPreferences(id, userType, notificationType)
+	if err != nil {
+		switch err.Error() {
+		case service.InternalServerError:
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		case service.InvalidNotificationType:
+			c.JSON(http.StatusBadRequest, models.BadRequestInvalidNotificationType(notificationType, c.Request.URL.Path))
+		case service.InvalidUserType:
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	sendPushNotification := false
+	sendEmailNotification := false
+
+	switch notificationPreference {
+	case models.Push:
+		sendPushNotification = true
+	case models.Email:
+		sendEmailNotification = true
+	case models.PushAndEmail:
+		sendPushNotification = true
+		sendEmailNotification = true
+	}
+
+	if sendEmailNotification && emailEnabled {
+		err = h.service.SendEmail(userData.Email, request.Title, request.Body)
+		if err != nil {
+			log.Printf("Failed to send email to %s. Error: %s", userData.Email, err)
+		}
+	}
+	if sendPushNotification && pushEnabled {
+		err = h.service.SendPushNotification(pushToken, request.Title, request.Body)
+		if err != nil {
+			log.Printf("Failed to send notification to %s. Error: %s", pushToken, err)
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Notification scheduled",
+		"id":          idString,
+		"email":       userData.Email,
+	})
+}
+
+func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+
+	userType, err := h.service.GetUserType(id)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.UserNotFoundError(idString))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	if models.UserType(userType) == models.Student {
+		notificationSettings := models.StudentNotificationSettingsRequest{}
+		if err := c.ShouldBind(&notificationSettings); err != nil {
+			log.Printf("POST %s Error: %s", c.Request.URL.Path, err)
+			c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+			return
+		}
+		err := h.service.SetStudentNotificationSettings(id, notificationSettings)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			return
+		}
+	} else if models.UserType(userType) == models.Teacher {
+		notificationSettings := models.TeacherNotificationSettingsRequest{}
+		if err := c.ShouldBind(&notificationSettings); err != nil {
+			log.Printf("POST %s Error: %s", c.Request.URL.Path, err)
+			c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+			return
+		}
+		err := h.service.SetTeacherNotificationSettings(id, notificationSettings)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			return
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Notification settings updated successfully",
+		"id":          id,
+	})
+}
+
+func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
+	_, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	idString := c.Param("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+	userType, err := h.service.GetUserType(id)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.UserNotFoundError(idString))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	if models.UserType(userType) == models.Student {
+		notificationSettings, err := h.service.GetStudentNotificationSettings(id)
+		if err != nil {
+			if err.Error() == service.UserNotFoundError {
+				c.JSON(http.StatusNotFound, models.UserNotFoundError(idString))
+			} else {
+				c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			}
+			return
+		}
+		c.JSON(http.StatusOK, notificationSettings)
+	} else if models.UserType(userType) == models.Teacher {
+		notificationSettings, err := h.service.GetTeacherNotificationSettings(id)
+		if err != nil {
+			if err.Error() == service.UserNotFoundError {
+				c.JSON(http.StatusNotFound, models.UserNotFoundError(idString))
+			} else {
+				c.JSON(http.StatusInternalServerError, models.InternalServerError())
+			}
+			return
+		}
+		c.JSON(http.StatusOK, notificationSettings)
+	}
 }

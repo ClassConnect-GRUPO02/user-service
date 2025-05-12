@@ -4,8 +4,10 @@ import (
 	"crypto/sha1"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 	"user_service/database"
 	"user_service/models"
@@ -47,7 +49,58 @@ func (r *UserRepository) AddUser(user models.User) error {
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	blockedUntil := 0
 	date := utils.GetDate()
-	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s');", user.Email, user.Name, user.UserType, passwordHash, user.Latitude, user.Longitude, blockedUntil, date)
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s') RETURNING id;",
+		user.Email,
+		user.Name,
+		user.UserType,
+		passwordHash,
+		user.Latitude,
+		user.Longitude,
+		blockedUntil,
+		date,
+	)
+	var id int64
+	err := r.db.QueryRow(query).Scan(&id)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return err
+
+	}
+	err = r.AddUserNotificationSettings(id, user)
+	if err != nil {
+		log.Printf("Failed to set user notification settings. Error: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepository) AddUserNotificationSettings(id int64, user models.User) error {
+	userType := models.UserType(strings.ToLower(user.UserType))
+	var query string
+	enablePush := true
+	enableEmail := true
+	if userType == models.Student {
+		query = fmt.Sprintf(
+			"INSERT INTO students_notifications_settings VALUES (%d, %v, %v, %d, %d, %d, %d, %d);",
+			id,
+			enablePush,
+			enableEmail,
+			models.PushAndEmail,
+			models.PushAndEmail,
+			models.PushAndEmail,
+			models.PushAndEmail,
+			models.PushAndEmail,
+		)
+	} else if userType == models.Teacher {
+		query = fmt.Sprintf(
+			"INSERT INTO teachers_notifications_settings VALUES (%d, %v, %v, %d, %d);",
+			id,
+			enablePush,
+			enableEmail,
+			models.PushAndEmail,
+			models.PushAndEmail,
+		)
+	}
 	_, err := r.db.Exec(query)
 	if err != nil {
 		log.Printf("Failed to query %s. Error: %s", query, err)
@@ -314,4 +367,166 @@ func (r *UserRepository) SetUserType(id int64, userType string) error {
 		return err
 	}
 	return nil
+}
+
+func (r *UserRepository) AddUserPushToken(id int64, token string) error {
+	query := fmt.Sprintf("INSERT INTO users_push_tokens VALUES (%d, '%s');", id, token)
+	_, err := r.db.Exec(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepository) GetUserPushToken(id int64) (string, error) {
+	var token string
+	err := r.db.QueryRow(`SELECT token FROM users_push_tokens WHERE id=$1`, id).Scan(&token)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return "", err
+	}
+	return token, nil
+}
+
+func (r *UserRepository) SetUserNotificationSettings(id int64, pushNotifications bool, emailNotifications bool) error {
+	result, err := r.db.Exec(`UPDATE users SET push_notifications = $1, email_notifications = $2 WHERE id = $3`, pushNotifications, emailNotifications, id)
+	if err != nil {
+		log.Printf("Failed to update user's notification settings. Error: %s", err)
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get rows affected. Error: %s", err)
+		return err
+	}
+	if rowsAffected == 0 {
+		log.Printf("User not found")
+		return errors.New(UserNotFoundError)
+	}
+	return nil
+}
+
+func (r *UserRepository) GetUserNotificationSettings(id int64) (bool, bool, error) {
+	var pushNotifications, emailNotifications bool
+	err := r.db.QueryRow(`SELECT push_notifications, email_notifications FROM users WHERE id=$1`, id).Scan(&pushNotifications, &emailNotifications)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return true, true, err
+	}
+	return pushNotifications, emailNotifications, nil
+}
+
+func (r *UserRepository) GetUserType(id int64) (string, error) {
+	var userType string
+	err := r.db.QueryRow(`SELECT type FROM users WHERE id=$1`, id).Scan(&userType)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return "", err
+	}
+	return strings.ToLower(userType), nil
+}
+
+func (r *UserRepository) SetStudentNotificationSettings(id int64, notificationSettings models.StudentNotificationSettingsRequest) error {
+	_, err := r.db.Exec(`
+		UPDATE students_notifications_settings 
+		SET 
+		push_enabled = $1,
+		email_enabled = $2,
+		new_assignment = $3,
+		deadline_reminder = $4,
+		course_enrollment = $5,
+		favorite_course_update = $6,
+		teacher_feedback = $7
+		WHERE id = $8`,
+		notificationSettings.PushEnabled,
+		notificationSettings.EmailEnabled,
+		notificationSettings.NewAssignment,
+		notificationSettings.DeadlineReminder,
+		notificationSettings.CourseEnrollment,
+		notificationSettings.FavoriteCourseUpdate,
+		notificationSettings.TeacherFeedback,
+		id,
+	)
+	if err != nil {
+		log.Printf("Failed to update student notification settings. Error: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepository) SetTeacherNotificationSettings(id int64, notificationSettings models.TeacherNotificationSettingsRequest) error {
+	_, err := r.db.Exec(`
+		UPDATE teachers_notifications_settings 
+		SET 
+		push_enabled = $1,
+		email_enabled = $2,
+		assignment_submission = $3,
+		student_feedback = $4
+		WHERE id = $5`,
+		notificationSettings.PushEnabled,
+		notificationSettings.EmailEnabled,
+		notificationSettings.AssignmentSubmission,
+		notificationSettings.StudentFeedback,
+		id,
+	)
+	if err != nil {
+		log.Printf("Failed to update teacher notification settings. Error: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepository) GetStudentNotificationSettings(id int64) (*models.StudentNotificationSettingsRequest, error) {
+	var pushEnabled, emailEnabled bool
+	var newAssignment, deadlineReminder, courseEnrollment, favoriteCourseUpdate, teacherFeedback models.NotificationPreference
+	err := r.db.QueryRow(
+		`SELECT 
+			push_enabled,
+			email_enabled,
+			new_assignment,
+			deadline_reminder,
+			course_enrollment,
+			favorite_course_update,
+			teacher_feedback 
+		FROM students_notifications_settings WHERE id=$1`, id,
+	).Scan(&pushEnabled, &emailEnabled, &newAssignment, &deadlineReminder, &courseEnrollment, &favoriteCourseUpdate, &teacherFeedback)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return nil, err
+	}
+	notificationSettings := models.StudentNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		NewAssignment:        &newAssignment,
+		DeadlineReminder:     &deadlineReminder,
+		CourseEnrollment:     &courseEnrollment,
+		FavoriteCourseUpdate: &favoriteCourseUpdate,
+		TeacherFeedback:      &teacherFeedback,
+	}
+	return &notificationSettings, nil
+}
+
+func (r *UserRepository) GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error) {
+	var pushEnabled, emailEnabled bool
+	var assignmentSubmission, studentFeedback models.NotificationPreference
+	err := r.db.QueryRow(
+		`SELECT 
+			push_enabled,
+			email_enabled,
+			assignment_submission,
+			student_feedback
+		FROM teachers_notifications_settings WHERE id=$1`, id,
+	).Scan(&pushEnabled, &emailEnabled, &assignmentSubmission, &studentFeedback)
+	if err != nil {
+		log.Printf("failed to scan row. Error: %s", err)
+		return nil, err
+	}
+	notificationSettings := models.TeacherNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		AssignmentSubmission: &assignmentSubmission,
+		StudentFeedback:      &studentFeedback,
+	}
+	return &notificationSettings, nil
 }

@@ -27,3 +27,27 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 INSERT INTO admins VALUES (DEFAULT, 'admin', 'admin', 'd033e22ae348aeb5660fc2140aec35850c4da997') ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS users_push_tokens (
+    id INTEGER REFERENCES users (id),
+    token VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS students_notifications_settings (
+    id INTEGER REFERENCES users (id),
+    push_enabled BOOLEAN,
+    email_enabled BOOLEAN,
+    new_assignment SMALLINT,
+    deadline_reminder SMALLINT,
+    course_enrollment SMALLINT,
+    favorite_course_update SMALLINT,
+    teacher_feedback SMALLINT
+);
+
+CREATE TABLE IF NOT EXISTS teachers_notifications_settings (
+    id INTEGER REFERENCES users (id),
+    push_enabled BOOLEAN,
+    email_enabled BOOLEAN,
+    assignment_submission SMALLINT,
+    student_feedback SMALLINT
+);

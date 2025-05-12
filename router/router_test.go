@@ -581,7 +581,7 @@ func TestEditUser(t *testing.T) {
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
-		expectedBody := `{"detail":"Invalid id: abc","instance":"/user/abc","status":400,"title":"Bad request","type":"about:blank"}`
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"Invalid id: abc","instance":"/user/abc"}`
 
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -632,7 +632,7 @@ func TestEditUser(t *testing.T) {
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
-		expectedBody := `{"detail":"Could not update the user info","instance":"/user/1","status":400,"title":"Bad request","type":"about:blank"}`
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/user/1"}`
 
 		router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
