@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
     latitude FLOAT,
     longitude FLOAT,
     blocked_until BIGINT,
-    registration_date DATE
+    registration_date DATE,
+    activated BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS login_attempts (
@@ -50,4 +51,11 @@ CREATE TABLE IF NOT EXISTS teachers_notifications_settings (
     email_enabled BOOLEAN,
     assignment_submission SMALLINT,
     student_feedback SMALLINT
+);
+
+CREATE TABLE IF NOT EXISTS verification_pins (
+    pin BIGINT,
+    email VARCHAR(255),
+    expires_at BIGINT,
+    consumed BOOLEAN
 );

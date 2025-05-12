@@ -49,7 +49,8 @@ func (r *UserRepository) AddUser(user models.User) error {
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	blockedUntil := 0
 	date := utils.GetDate()
-	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s') RETURNING id;",
+	activated := false
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%f', '%f', %d, '%s', %v) RETURNING id;",
 		user.Email,
 		user.Name,
 		user.UserType,
@@ -58,6 +59,7 @@ func (r *UserRepository) AddUser(user models.User) error {
 		user.Longitude,
 		blockedUntil,
 		date,
+		activated,
 	)
 	var id int64
 	err := r.db.QueryRow(query).Scan(&id)
@@ -72,6 +74,17 @@ func (r *UserRepository) AddUser(user models.User) error {
 		return err
 	}
 	return nil
+}
+
+func (r *UserRepository) UserIsActivated(email string) (bool, error) {
+	var isActivated bool
+	query := fmt.Sprintf("SELECT activated FROM users WHERE email='%s';", email)
+	err := r.db.QueryRow(query).Scan(&isActivated)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return false, err
+	}
+	return isActivated, nil
 }
 
 func (r *UserRepository) AddUserNotificationSettings(id int64, user models.User) error {
@@ -529,4 +542,47 @@ func (r *UserRepository) GetTeacherNotificationSettings(id int64) (*models.Teach
 		StudentFeedback:      &studentFeedback,
 	}
 	return &notificationSettings, nil
+}
+
+func (r *UserRepository) ActivateUserEmail(email string) error {
+	_, err := r.db.Exec(`UPDATE users SET activated = $1 WHERE email = $2`, true, email)
+	if err != nil {
+		log.Printf("Failed to activate user email. Error: %s", err)
+		return err
+	}
+	return nil
+}
+func (r *UserRepository) AddVerificationPin(pin int, email string, expiresAt int) error {
+	consumed := false
+	query := fmt.Sprintf("INSERT INTO verification_pins VALUES (%d, '%s', %d, %v);", pin, email, expiresAt, consumed)
+	_, err := r.db.Exec(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepository) GetPin(pin int, email string) (int, bool, error) {
+	var expirationTimestamp int
+	var consumed bool
+	err := r.db.QueryRow(`SELECT expires_at, consumed FROM verification_pins WHERE pin=$1 AND email=$2`, pin, email).Scan(&expirationTimestamp, &consumed)
+	if err != nil && err != sql.ErrNoRows {
+		if err == sql.ErrNoRows {
+			return 0, false, errors.New(PinNotFoundError)
+		}
+		log.Printf("failed to scan row. Error: %s", err)
+		return 0, false, err
+	}
+	return expirationTimestamp, consumed, nil
+}
+
+func (r *UserRepository) SetPinAsConsumed(pin int, email string) error {
+	consumed := true
+	_, err := r.db.Exec(`UPDATE verification_pins SET consumed = $1 WHERE pin=$2 AND email=$3`, consumed, pin, email)
+	if err != nil {
+		log.Printf("Failed to consume pin. Error: %s", err)
+		return err
+	}
+	return nil
 }

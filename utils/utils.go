@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"math/rand/v2"
 )
 
 // GetEnvVar reads the value of the given variable from the enviroment and returns it.
@@ -32,4 +34,21 @@ func GetIntEnvVar(envVar string) (int64, error) {
 
 func GetDate() string {
 	return time.Now().Format("2006-01-02")
+}
+
+func GetVerificationMessage(email string, pin int) string {
+	message := fmt.Sprintf(
+		`Hola, %s.
+Gracias por registrarte en ClassConnect. Para verificar tu correo, utiliza el siguiente código:  %d
+Si no solicitaste este código, por favor ignora este mensaje.
+
+¡Bienvenido/a!
+El equipo de ClassConnect`, email, pin)
+	return message
+}
+
+func GenerateRandomNumber() int {
+	min := 100000
+	max := 999999
+	return rand.IntN(max-min) + min
 }

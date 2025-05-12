@@ -13,33 +13,36 @@ import (
 	"user_service/config"
 	"user_service/models"
 	"user_service/repository"
+	"user_service/utils"
 
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
 type Service struct {
-	userRepository       repository.Repository
-	tokenDuration        uint64
-	refreshTokenDuration uint64
-	blockingTimeWindow   int64
-	authService          *auth.Auth
-	blockingDuration     int64
-	loginAttemptsLimit   int64
-	email                string
-	emailPassword        string
+	userRepository          repository.Repository
+	tokenDuration           uint64
+	refreshTokenDuration    uint64
+	verificationPinDuration uint64
+	blockingTimeWindow      int64
+	authService             *auth.Auth
+	blockingDuration        int64
+	loginAttemptsLimit      int64
+	email                   string
+	emailPassword           string
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
-		userRepository:       repository,
-		tokenDuration:        config.TokenDuration,
-		refreshTokenDuration: config.RefreshTokenDuration,
-		authService:          &auth.Auth{SecretKey: config.SecretKey},
-		blockingTimeWindow:   config.BlockingTimeWindow,
-		blockingDuration:     config.BlockingDuration,
-		loginAttemptsLimit:   config.LoginAttemptsLimit,
-		email:                config.Email,
-		emailPassword:        config.EmailPassword,
+		userRepository:          repository,
+		tokenDuration:           config.TokenDuration,
+		refreshTokenDuration:    config.RefreshTokenDuration,
+		authService:             &auth.Auth{SecretKey: config.SecretKey},
+		blockingTimeWindow:      config.BlockingTimeWindow,
+		blockingDuration:        config.BlockingDuration,
+		loginAttemptsLimit:      config.LoginAttemptsLimit,
+		email:                   config.Email,
+		emailPassword:           config.EmailPassword,
+		verificationPinDuration: config.VerificationPinDuration,
 	}
 	return &service, nil
 }
@@ -71,6 +74,14 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	}
 	if !emailRegistered {
 		return models.InvalidCredentialsError()
+	}
+
+	userIsActivated, err := s.userRepository.UserIsActivated(loginRequest.Email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	if !userIsActivated {
+		return models.EmailNotVerifiedError(loginRequest.Email)
 	}
 
 	// Check if the user is blocked
@@ -409,4 +420,65 @@ func (s *Service) GetUserNotificationPreferences(id int64, userType models.UserT
 		return false, false, 0, errors.New(InvalidUserType)
 	}
 	return pushEnabled, emailEnabled, notificationPreference, nil
+}
+
+func (s *Service) SendEmailVerificationPin(email string, pin int) error {
+	if isTestEmail(email) {
+		return nil
+	}
+	mailSubject := "ClassConnect - Verificación de correo"
+	mailBody := utils.GetVerificationMessage(email, pin)
+	err := s.SendEmail(email, mailSubject, mailBody)
+	if err != nil {
+		log.Printf("Failed to send verification pin to %s. Error: %s", email, err)
+		return err
+	}
+	return nil
+}
+
+func (s *Service) VerifyUserEmail(email string, pin int) error {
+	expirationTimestamp, consumed, err := s.userRepository.GetPin(pin, email)
+	if err != nil {
+		if err.Error() == repository.PinNotFoundError {
+			return errors.New(InvalidPinError)
+		}
+		return errors.New(InternalServerError)
+	}
+	if expirationTimestamp == 0 {
+		return errors.New(InvalidPinError)
+	}
+	if consumed {
+		return errors.New(ConsumedPinError)
+	}
+	now := int(time.Now().Unix())
+	if expirationTimestamp < now {
+		return errors.New(ExpiredPinError)
+	}
+	err = s.userRepository.SetPinAsConsumed(pin, email)
+	if err != nil {
+		return errors.New(InternalServerError)
+	}
+	err = s.userRepository.ActivateUserEmail(email)
+	if err != nil {
+		return errors.New(InternalServerError)
+	}
+	return nil
+}
+
+func (s *Service) IssueVerificationPinForEmail(email string) (int, error) {
+	pin := utils.GenerateRandomNumber()
+	expiresAt := time.Now().Unix() + int64(s.verificationPinDuration)
+	err := s.userRepository.AddVerificationPin(pin, email, int(expiresAt))
+	if err != nil {
+		return 0, errors.New(InternalServerError)
+	}
+	return pin, nil
+}
+
+func isTestEmail(email string) bool {
+	return email == "john@example.com"
+}
+
+func (s *Service) VerificationPinDurationInMinutes() int {
+	return int(s.verificationPinDuration) / 60
 }

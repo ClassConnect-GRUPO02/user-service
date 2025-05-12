@@ -29,6 +29,7 @@ func TestIntegration(t *testing.T) {
 	config.BlockingDuration = 3
 	config.BlockingTimeWindow = 1
 	config.LoginAttemptsLimit = 3
+	config.VerificationPinDuration = 100
 
 	userRepository, err := repository.NewUserRepository()
 	if err != nil {
@@ -48,6 +49,24 @@ func TestIntegration(t *testing.T) {
 		err = userService.CreateUser(user)
 		expectedError := models.EmailAlreadyRegisteredError(user.Email)
 		assert.Equal(t, expectedError, err)
+	})
+
+	t.Run("user login fails due to account not verified", func(t *testing.T) {
+		loginRequest := models.LoginRequest{
+			Email:    user.Email,
+			Password: user.Password,
+		}
+		err := userService.LoginUser(loginRequest)
+		expectedError := models.EmailNotVerifiedError(loginRequest.Email)
+		assert.Equal(t, expectedError, err)
+	})
+
+	t.Run("issue and verify verification pin", func(t *testing.T) {
+		pin, err := userService.IssueVerificationPinForEmail(user.Email)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(user.Email, pin)
+		assert.NoError(t, err)
 	})
 
 	t.Run("user logged in successfully", func(t *testing.T) {
@@ -128,13 +147,20 @@ func TestIntegration(t *testing.T) {
 		err = userService.CreateUser(user) // register
 		assert.Nil(t, err)
 
+		// verify the email
+		pin, err := userService.IssueVerificationPinForEmail(user.Email)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(user.Email, pin)
+		assert.NoError(t, err)
+
 		wrongLoginRequest := models.LoginRequest{
 			Email:    user.Email,
 			Password: "wrong_password",
 		}
 		expectedError := models.InvalidCredentialsError()
 
-		err := userService.LoginUser(wrongLoginRequest)
+		err = userService.LoginUser(wrongLoginRequest)
 		assert.Equal(t, expectedError, err)
 
 		err = userService.LoginUser(wrongLoginRequest)

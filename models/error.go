@@ -38,6 +38,16 @@ func InternalServerError() error {
 	}
 }
 
+func EmailNotVerifiedError(email string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Email not verified",
+		Status:   http.StatusUnauthorized,
+		Detail:   fmt.Sprintf("User cannot login because the email %s is not verified", email),
+		Instance: "/login",
+	}
+}
+
 func InvalidCredentialsError() error {
 	return &Error{
 		Type:     "about:blank", // TODO: consider setting the right type here
@@ -132,6 +142,26 @@ func BadRequestInvalidNotificationType(notificationType, instance string) error 
 		Title:    "Bad Request",
 		Status:   http.StatusBadRequest,
 		Detail:   fmt.Sprintf("Invalid notification type: %s", notificationType),
+		Instance: instance,
+	}
+}
+
+func InvalidPinError(pin int, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Invalid PIN",
+		Status:   http.StatusUnauthorized,
+		Detail:   fmt.Sprintf("The verification PIN %d is invalid", pin),
+		Instance: instance,
+	}
+}
+
+func ExpiredPinError(pin int, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Expired PIN",
+		Status:   http.StatusUnauthorized,
+		Detail:   fmt.Sprintf("The verification PIN %d has already expired", pin),
 		Instance: instance,
 	}
 }

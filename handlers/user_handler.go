@@ -35,10 +35,72 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	pin, err := h.service.IssueVerificationPinForEmail(user.Email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	err = h.service.SendEmailVerificationPin(user.Email, pin)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		return
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
-		"description": "User registered successfully",
+		"description": "Verification PIN sent to the provided email",
 		"email":       user.Email,
 		"name":        user.Name,
+		"duration":    h.service.VerificationPinDurationInMinutes(),
+	})
+}
+
+func (h *UserHandler) VerifyUserEmail(c *gin.Context) {
+	request := models.EmailVerificationRequest{}
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	err := h.service.VerifyUserEmail(request.Email, request.Pin)
+	if err != nil {
+		switch err.Error() {
+		case service.InvalidPinError:
+			c.JSON(http.StatusUnauthorized, models.InvalidPinError(request.Pin, c.Request.URL.Path))
+		case service.ConsumedPinError:
+			c.JSON(http.StatusUnauthorized, models.InvalidPinError(request.Pin, c.Request.URL.Path))
+		case service.ExpiredPinError:
+			c.JSON(http.StatusUnauthorized, models.ExpiredPinError(request.Pin, c.Request.URL.Path))
+		case service.InternalServerError:
+			c.JSON(http.StatusUnauthorized, models.InternalServerError())
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Email verified successfully",
+		"email":       request.Email,
+	})
+}
+
+func (h *UserHandler) RequestNewPin(c *gin.Context) {
+	request := models.RequestNewVerificationPin{}
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	pin, err := h.service.IssueVerificationPinForEmail(request.Email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	err = h.service.SendEmailVerificationPin(request.Email, pin)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Verification PIN sent to email",
+		"email":       request.Email,
 	})
 }
 

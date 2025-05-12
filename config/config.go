@@ -7,16 +7,17 @@ import (
 )
 
 type Config struct {
-	Host                 string
-	Port                 string
-	SecretKey            []byte
-	TokenDuration        uint64
-	RefreshTokenDuration uint64
-	BlockingTimeWindow   int64
-	BlockingDuration     int64
-	LoginAttemptsLimit   int64
-	Email                string
-	EmailPassword        string
+	Host                    string
+	Port                    string
+	SecretKey               []byte
+	TokenDuration           uint64
+	RefreshTokenDuration    uint64
+	VerificationPinDuration uint64
+	BlockingTimeWindow      int64
+	BlockingDuration        int64
+	LoginAttemptsLimit      int64
+	Email                   string
+	EmailPassword           string
 }
 
 func LoadConfig() (*Config, error) {
@@ -44,6 +45,10 @@ func LoadConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	verificationPinDuration, err := utils.GetIntEnvVar("VERIFICATION_PIN_DURATION_IN_SECONDS")
+	if err != nil {
+		return nil, err
+	}
 	blockingTimeWindow, err := utils.GetIntEnvVar("BLOCKING_TIME_WINDOW_IN_SECONDS")
 	if err != nil {
 		return nil, err
@@ -66,15 +71,16 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &Config{
-		Host:                 host,
-		Port:                 port,
-		SecretKey:            secretKey,
-		TokenDuration:        uint64(tokenDuration),
-		BlockingTimeWindow:   blockingTimeWindow,
-		BlockingDuration:     blockingDuration,
-		LoginAttemptsLimit:   loginAttemptsLimit,
-		Email:                email,
-		EmailPassword:        emailPassword,
-		RefreshTokenDuration: uint64(refreshTokenDuration),
+		Host:                    host,
+		Port:                    port,
+		SecretKey:               secretKey,
+		TokenDuration:           uint64(tokenDuration),
+		BlockingTimeWindow:      blockingTimeWindow,
+		BlockingDuration:        blockingDuration,
+		LoginAttemptsLimit:      loginAttemptsLimit,
+		Email:                   email,
+		EmailPassword:           emailPassword,
+		RefreshTokenDuration:    uint64(refreshTokenDuration),
+		VerificationPinDuration: uint64(verificationPinDuration),
 	}, nil
 }

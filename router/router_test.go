@@ -30,6 +30,7 @@ func TestUserCreation(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("AddUser", mock.Anything).Return(nil)
+		userRepositoryMock.On("AddVerificationPin", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
@@ -102,13 +103,14 @@ func TestUserCreation(t *testing.T) {
 }
 
 func TestUserLogin(t *testing.T) {
-	config := config.Config{BlockingDuration: 120}
+	config := config.Config{BlockingDuration: 120, LoginAttemptsLimit: 5}
 	body := `{"email":"john@example.com", "password":"1234"}`
 
 	// Test valid login
 	t.Run("User logged in successfully", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
@@ -149,9 +151,11 @@ func TestUserLogin(t *testing.T) {
 
 	t.Run("Login with invalid password fails", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
+		userRepositoryMock.On("IncrementFailedLoginAttempts", mock.Anything, mock.Anything).Return(int64(1), nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -171,6 +175,7 @@ func TestUserLogin(t *testing.T) {
 	t.Run("Blocked users cannot login", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 		blockedUntil := time.Now().Unix() + config.BlockingDuration
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
 
@@ -193,6 +198,7 @@ func TestUserLogin(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
