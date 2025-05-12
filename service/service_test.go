@@ -34,6 +34,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), mockError)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -47,6 +48,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, mockError)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -61,6 +63,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
 		userRepositoryMock.On("IncrementFailedLoginAttempts", mock.Anything, mock.Anything).Return(int64(0), mockError)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -72,6 +75,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 	t.Run("Login fails with internal server error when SetUserBlockedUntil returns an error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
 		userRepositoryMock.On("IncrementFailedLoginAttempts", mock.Anything, mock.Anything).Return(int64(1), nil)

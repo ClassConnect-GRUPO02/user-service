@@ -641,3 +641,7 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 		c.JSON(http.StatusOK, notificationSettings)
 	}
 }
+
+func isTestEmail(email string) bool {
+	return email == "john@example.com"
+}
