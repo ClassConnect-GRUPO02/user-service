@@ -562,3 +562,27 @@ func (r *UserRepository) AddVerificationPin(pin int, email string, expiresAt int
 	}
 	return nil
 }
+
+func (r *UserRepository) GetPin(pin int, email string) (int, bool, error) {
+	var expirationTimestamp int
+	var consumed bool
+	err := r.db.QueryRow(`SELECT expires_at, consumed FROM verification_pins WHERE pin=$1 AND email=$2`, pin, email).Scan(&expirationTimestamp, &consumed)
+	if err != nil && err != sql.ErrNoRows {
+		if err == sql.ErrNoRows {
+			return 0, false, errors.New(PinNotFoundError)
+		}
+		log.Printf("failed to scan row. Error: %s", err)
+		return 0, false, err
+	}
+	return expirationTimestamp, consumed, nil
+}
+
+func (r *UserRepository) SetPinAsConsumed(pin int, email string) error {
+	consumed := true
+	_, err := r.db.Exec(`UPDATE verification_pins SET consumed = $1 WHERE pin=$2 AND email=$3`, consumed, pin, email)
+	if err != nil {
+		log.Printf("Failed to consume pin. Error: %s", err)
+		return err
+	}
+	return nil
+}

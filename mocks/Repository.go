@@ -159,6 +159,41 @@ func (_m *Repository) GetAdminIdByEmail(email string) (string, error) {
 	return r0, r1
 }
 
+// GetPin provides a mock function with given fields: pin, email
+func (_m *Repository) GetPin(pin int, email string) (int, bool, error) {
+	ret := _m.Called(pin, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPin")
+	}
+
+	var r0 int
+	var r1 bool
+	var r2 error
+	if rf, ok := ret.Get(0).(func(int, string) (int, bool, error)); ok {
+		return rf(pin, email)
+	}
+	if rf, ok := ret.Get(0).(func(int, string) int); ok {
+		r0 = rf(pin, email)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(int, string) bool); ok {
+		r1 = rf(pin, email)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	if rf, ok := ret.Get(2).(func(int, string) error); ok {
+		r2 = rf(pin, email)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // GetStudentNotificationSettings provides a mock function with given fields: id
 func (_m *Repository) GetStudentNotificationSettings(id int64) (*models.StudentNotificationSettingsRequest, error) {
 	ret := _m.Called(id)
@@ -538,6 +573,24 @@ func (_m *Repository) PasswordMatches(email string, password string) (bool, erro
 	}
 
 	return r0, r1
+}
+
+// SetPinAsConsumed provides a mock function with given fields: pin, email
+func (_m *Repository) SetPinAsConsumed(pin int, email string) error {
+	ret := _m.Called(pin, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetPinAsConsumed")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int, string) error); ok {
+		r0 = rf(pin, email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // SetStudentNotificationSettings provides a mock function with given fields: id, notificationSettings

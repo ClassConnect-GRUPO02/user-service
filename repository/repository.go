@@ -28,6 +28,8 @@ type Repository interface {
 	UserIsActivated(email string) (bool, error)
 	ActivateUserEmail(email string) error
 	AddVerificationPin(pin int, email string, expiresAt int) error
+	GetPin(pin int, email string) (int, bool, error)
+	SetPinAsConsumed(pin int, email string) error
 
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)

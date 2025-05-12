@@ -145,3 +145,23 @@ func BadRequestInvalidNotificationType(notificationType, instance string) error 
 		Instance: instance,
 	}
 }
+
+func InvalidPinError(pin int, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Invalid PIN",
+		Status:   http.StatusUnauthorized,
+		Detail:   fmt.Sprintf("The verification PIN %d is invalid", pin),
+		Instance: instance,
+	}
+}
+
+func ExpiredPinError(pin int, instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Expired PIN",
+		Status:   http.StatusUnauthorized,
+		Detail:   fmt.Sprintf("The verification PIN %d has already expired", pin),
+		Instance: instance,
+	}
+}

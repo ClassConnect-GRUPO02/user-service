@@ -434,9 +434,30 @@ func (s *Service) SendEmailVerificationPin(email string, pin int) error {
 }
 
 func (s *Service) VerifyUserEmail(email string, pin int) error {
-	err := s.userRepository.ActivateUserEmail(email)
+	expirationTimestamp, consumed, err := s.userRepository.GetPin(pin, email)
 	if err != nil {
-		return models.InternalServerError()
+		if err.Error() == repository.PinNotFoundError {
+			return errors.New(InvalidPinError)
+		}
+		return errors.New(InternalServerError)
+	}
+	if expirationTimestamp == 0 {
+		return errors.New(InvalidPinError)
+	}
+	if consumed {
+		return errors.New(ConsumedPinError)
+	}
+	now := int(time.Now().Unix())
+	if expirationTimestamp < now {
+		return errors.New(ExpiredPinError)
+	}
+	err = s.userRepository.SetPinAsConsumed(pin, email)
+	if err != nil {
+		return errors.New(InternalServerError)
+	}
+	err = s.userRepository.ActivateUserEmail(email)
+	if err != nil {
+		return errors.New(InternalServerError)
 	}
 	return nil
 }
@@ -446,7 +467,7 @@ func (s *Service) IssueVerificationPinForEmail(email string) (int, error) {
 	expiresAt := time.Now().Unix() + int64(s.verificationPinDuration)
 	err := s.userRepository.AddVerificationPin(pin, email, int(expiresAt))
 	if err != nil {
-		return 0, models.InternalServerError()
+		return 0, errors.New(InternalServerError)
 	}
 	return pin, nil
 }

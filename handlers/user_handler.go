@@ -56,13 +56,22 @@ func (h *UserHandler) VerifyUserEmail(c *gin.Context) {
 		return
 	}
 	err := h.service.VerifyUserEmail(request.Email, request.Pin)
-	if err, ok := err.(*models.Error); ok {
-		c.JSON(err.Status, err)
+	if err != nil {
+		switch err.Error() {
+		case service.InvalidPinError:
+			c.JSON(http.StatusUnauthorized, models.InvalidPinError(request.Pin, c.Request.URL.Path))
+		case service.ConsumedPinError:
+			c.JSON(http.StatusUnauthorized, models.InvalidPinError(request.Pin, c.Request.URL.Path))
+		case service.ExpiredPinError:
+			c.JSON(http.StatusUnauthorized, models.ExpiredPinError(request.Pin, c.Request.URL.Path))
+		case service.InternalServerError:
+			c.JSON(http.StatusUnauthorized, models.InternalServerError())
+		}
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"description": "User registered successfully",
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Email verified successfully",
 		"email":       request.Email,
 	})
 }

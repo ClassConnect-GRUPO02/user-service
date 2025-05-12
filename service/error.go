@@ -7,4 +7,7 @@ const (
 	InvalidUserType         = "invalid user type"
 	InternalServerError     = "internal server error"
 	EmailNotVerified        = "email not verified"
+	InvalidPinError         = "invalid pin"
+	ExpiredPinError         = "expired pin"
+	ConsumedPinError        = "consumed pin"
 )
