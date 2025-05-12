@@ -40,7 +40,11 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	h.service.SendEmailVerificationPin(user.Email, pin)
+	err = h.service.SendEmailVerificationPin(user.Email, pin)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		return
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"description": "Verification PIN sent to the provided email",
