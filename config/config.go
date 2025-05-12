@@ -7,15 +7,16 @@ import (
 )
 
 type Config struct {
-	Host               string
-	Port               string
-	SecretKey          []byte
-	TokenDuration      uint64
-	BlockingTimeWindow int64
-	BlockingDuration   int64
-	LoginAttemptsLimit int64
-	Email              string
-	EmailPassword      string
+	Host                 string
+	Port                 string
+	SecretKey            []byte
+	TokenDuration        uint64
+	RefreshTokenDuration uint64
+	BlockingTimeWindow   int64
+	BlockingDuration     int64
+	LoginAttemptsLimit   int64
+	Email                string
+	EmailPassword        string
 }
 
 func LoadConfig() (*Config, error) {
@@ -36,6 +37,10 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to decode secret key")
 	}
 	tokenDuration, err := utils.GetIntEnvVar("TOKEN_DURATION_IN_SECONDS")
+	if err != nil {
+		return nil, err
+	}
+	refreshTokenDuration, err := utils.GetIntEnvVar("REFRESH_TOKEN_DURATION_IN_SECONDS")
 	if err != nil {
 		return nil, err
 	}
@@ -61,14 +66,15 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &Config{
-		Host:               host,
-		Port:               port,
-		SecretKey:          secretKey,
-		TokenDuration:      uint64(tokenDuration),
-		BlockingTimeWindow: blockingTimeWindow,
-		BlockingDuration:   blockingDuration,
-		LoginAttemptsLimit: loginAttemptsLimit,
-		Email:              email,
-		EmailPassword:      emailPassword,
+		Host:                 host,
+		Port:                 port,
+		SecretKey:            secretKey,
+		TokenDuration:        uint64(tokenDuration),
+		BlockingTimeWindow:   blockingTimeWindow,
+		BlockingDuration:     blockingDuration,
+		LoginAttemptsLimit:   loginAttemptsLimit,
+		Email:                email,
+		EmailPassword:        emailPassword,
+		RefreshTokenDuration: uint64(refreshTokenDuration),
 	}, nil
 }

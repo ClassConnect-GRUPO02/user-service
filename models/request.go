@@ -7,6 +7,10 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type BiometricLoginRequest struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
 type AuthRequest struct {
 	Token string `header:"Authorization" binding:"required"`
 }

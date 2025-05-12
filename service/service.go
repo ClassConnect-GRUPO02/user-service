@@ -18,26 +18,28 @@ import (
 )
 
 type Service struct {
-	userRepository     repository.Repository
-	tokenDuration      uint64
-	blockingTimeWindow int64
-	authService        *auth.Auth
-	blockingDuration   int64
-	loginAttemptsLimit int64
-	email              string
-	emailPassword      string
+	userRepository       repository.Repository
+	tokenDuration        uint64
+	refreshTokenDuration uint64
+	blockingTimeWindow   int64
+	authService          *auth.Auth
+	blockingDuration     int64
+	loginAttemptsLimit   int64
+	email                string
+	emailPassword        string
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
-		userRepository:     repository,
-		tokenDuration:      config.TokenDuration,
-		authService:        &auth.Auth{SecretKey: config.SecretKey},
-		blockingTimeWindow: config.BlockingTimeWindow,
-		blockingDuration:   config.BlockingDuration,
-		loginAttemptsLimit: config.LoginAttemptsLimit,
-		email:              config.Email,
-		emailPassword:      config.EmailPassword,
+		userRepository:       repository,
+		tokenDuration:        config.TokenDuration,
+		refreshTokenDuration: config.RefreshTokenDuration,
+		authService:          &auth.Auth{SecretKey: config.SecretKey},
+		blockingTimeWindow:   config.BlockingTimeWindow,
+		blockingDuration:     config.BlockingDuration,
+		loginAttemptsLimit:   config.LoginAttemptsLimit,
+		email:                config.Email,
+		emailPassword:        config.EmailPassword,
 	}
 	return &service, nil
 }
@@ -146,6 +148,15 @@ func (s *Service) GetUser(id string) (*models.UserInfo, error) {
 
 func (s *Service) IssueToken(id string) (string, error) {
 	token, err := s.authService.IssueToken(id)
+	if err != nil {
+		log.Printf("Failed to generate JWT token. Error: %s", err)
+		return "", models.InternalServerError()
+	}
+	return token, nil
+}
+
+func (s *Service) IssueRefreshToken(id string) (string, error) {
+	token, err := s.authService.IssueRefreshToken(id)
 	if err != nil {
 		log.Printf("Failed to generate JWT token. Error: %s", err)
 		return "", models.InternalServerError()
