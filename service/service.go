@@ -19,28 +19,30 @@ import (
 )
 
 type Service struct {
-	userRepository       repository.Repository
-	tokenDuration        uint64
-	refreshTokenDuration uint64
-	blockingTimeWindow   int64
-	authService          *auth.Auth
-	blockingDuration     int64
-	loginAttemptsLimit   int64
-	email                string
-	emailPassword        string
+	userRepository          repository.Repository
+	tokenDuration           uint64
+	refreshTokenDuration    uint64
+	verificationPinDuration uint64
+	blockingTimeWindow      int64
+	authService             *auth.Auth
+	blockingDuration        int64
+	loginAttemptsLimit      int64
+	email                   string
+	emailPassword           string
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
-		userRepository:       repository,
-		tokenDuration:        config.TokenDuration,
-		refreshTokenDuration: config.RefreshTokenDuration,
-		authService:          &auth.Auth{SecretKey: config.SecretKey},
-		blockingTimeWindow:   config.BlockingTimeWindow,
-		blockingDuration:     config.BlockingDuration,
-		loginAttemptsLimit:   config.LoginAttemptsLimit,
-		email:                config.Email,
-		emailPassword:        config.EmailPassword,
+		userRepository:          repository,
+		tokenDuration:           config.TokenDuration,
+		refreshTokenDuration:    config.RefreshTokenDuration,
+		authService:             &auth.Auth{SecretKey: config.SecretKey},
+		blockingTimeWindow:      config.BlockingTimeWindow,
+		blockingDuration:        config.BlockingDuration,
+		loginAttemptsLimit:      config.LoginAttemptsLimit,
+		email:                   config.Email,
+		emailPassword:           config.EmailPassword,
+		verificationPinDuration: config.VerificationPinDuration,
 	}
 	return &service, nil
 }
@@ -437,4 +439,14 @@ func (s *Service) VerifyUserEmail(email string, pin int) error {
 		return models.InternalServerError()
 	}
 	return nil
+}
+
+func (s *Service) IssueVerificationPinForEmail(email string) (int, error) {
+	pin := utils.GenerateRandomNumber()
+	expiresAt := time.Now().Unix() + int64(s.verificationPinDuration)
+	err := s.userRepository.AddVerificationPin(pin, email, int(expiresAt))
+	if err != nil {
+		return 0, models.InternalServerError()
+	}
+	return pin, nil
 }

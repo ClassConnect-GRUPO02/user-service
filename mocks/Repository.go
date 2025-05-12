@@ -85,6 +85,24 @@ func (_m *Repository) AddUserPushToken(id int64, token string) error {
 	return r0
 }
 
+// AddVerificationPin provides a mock function with given fields: pin, email, expiresAt
+func (_m *Repository) AddVerificationPin(pin int, email string, expiresAt int) error {
+	ret := _m.Called(pin, email, expiresAt)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddVerificationPin")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int, string, int) error); ok {
+		r0 = rf(pin, email, expiresAt)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AdminPasswordMatches provides a mock function with given fields: email, password
 func (_m *Repository) AdminPasswordMatches(email string, password string) (bool, error) {
 	ret := _m.Called(email, password)

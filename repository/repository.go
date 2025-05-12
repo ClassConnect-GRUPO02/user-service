@@ -27,6 +27,7 @@ type Repository interface {
 	GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error)
 	UserIsActivated(email string) (bool, error)
 	ActivateUserEmail(email string) error
+	AddVerificationPin(pin int, email string, expiresAt int) error
 
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)

@@ -52,3 +52,10 @@ CREATE TABLE IF NOT EXISTS teachers_notifications_settings (
     assignment_submission SMALLINT,
     student_feedback SMALLINT
 );
+
+CREATE TABLE IF NOT EXISTS verification_pins (
+    pin BIGINT,
+    email VARCHAR(255),
+    expires_at BIGINT,
+    consumed BOOLEAN
+);

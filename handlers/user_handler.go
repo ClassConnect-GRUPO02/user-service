@@ -7,7 +7,6 @@ import (
 	"strings"
 	"user_service/models"
 	"user_service/service"
-	"user_service/utils"
 
 	"github.com/gin-gonic/gin"
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
@@ -36,7 +35,11 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	pin := utils.GenerateRandomNumber()
+	pin, err := h.service.IssueVerificationPinForEmail(user.Email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
 	h.service.SendEmailVerificationPin(user.Email, pin)
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -70,8 +73,12 @@ func (h *UserHandler) RequestNewPin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
-	pin := utils.GenerateRandomNumber()
-	err := h.service.SendEmailVerificationPin(request.Email, pin)
+	pin, err := h.service.IssueVerificationPinForEmail(request.Email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	err = h.service.SendEmailVerificationPin(request.Email, pin)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return

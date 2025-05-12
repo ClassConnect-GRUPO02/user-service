@@ -552,3 +552,13 @@ func (r *UserRepository) ActivateUserEmail(email string) error {
 	}
 	return nil
 }
+func (r *UserRepository) AddVerificationPin(pin int, email string, expiresAt int) error {
+	consumed := false
+	query := fmt.Sprintf("INSERT INTO verification_pins VALUES (%d, '%s', %d, %v);", pin, email, expiresAt, consumed)
+	_, err := r.db.Exec(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return err
+	}
+	return nil
+}
