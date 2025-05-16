@@ -52,3 +52,6 @@ func GenerateRandomNumber() int {
 	max := 999999
 	return rand.IntN(max-min) + min
 }
+
+const TEST_PUSH_TOKEN = "ExponentPushToken[TEST_PUSH_TOKEN]"
+const TEST_EMAIL = "test@email.com"
