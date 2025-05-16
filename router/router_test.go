@@ -2,6 +2,7 @@ package router_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -1596,6 +1597,129 @@ func TestAddPushToken(t *testing.T) {
 	})
 }
 
+func TestSetUserNotificationSettings(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+	id := "1"
+	mockError := fmt.Errorf("mock error")
+	pushEnabled := true
+	emailEnabled := true
+	// push := models.Push
+	// email := models.Email
+	pushAndEmail := models.PushAndEmail
+	studentNotificationSettings := models.StudentNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		NewAssignment:        &pushAndEmail,
+		DeadlineReminder:     &pushAndEmail,
+		CourseEnrollment:     &pushAndEmail,
+		FavoriteCourseUpdate: &pushAndEmail,
+		TeacherFeedback:      &pushAndEmail,
+	}
+	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		AssignmentSubmission: &pushAndEmail,
+		StudentFeedback:      &pushAndEmail,
+	}
+	studentUserType := "alumno"
+	teacherUserType := "docente"
+
+	t.Run("Set student notification settings succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
+		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body, _ := json.Marshal(studentNotificationSettings)
+		request := PutUserNotificationSettingsReq(id, string(body), token)
+		expectedStatusCode := http.StatusOK
+		expectedBody := `{"description":"Notification settings updated successfully","id":1}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Set student notification settings fails due to invalid request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
+		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body, _ := json.Marshal(teacherNotificationSettings) // use teacher notification settings
+		request := PutUserNotificationSettingsReq(id, string(body), token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/1/notification-settings"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Set student notification settings fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
+		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body, _ := json.Marshal(studentNotificationSettings)
+		request := PutUserNotificationSettingsReq(id, string(body), token)
+		expectedStatusCode := http.StatusInternalServerError
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Set teacher notification settings succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(teacherUserType, nil)
+		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body, _ := json.Marshal(teacherNotificationSettings)
+		request := PutUserNotificationSettingsReq(id, string(body), token)
+		expectedStatusCode := http.StatusOK
+		expectedBody := `{"description":"Notification settings updated successfully","id":1}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Set teacher notification settings fails due to bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(teacherUserType, nil)
+		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body, _ := json.Marshal(studentNotificationSettings)
+		request := PutUserNotificationSettingsReq(id, string(body), token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/1/notification-settings"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Set user notification settings fails due invalid jwt token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		invalidToken := "invalid token"
+		assert.NoError(t, err)
+		body, _ := json.Marshal(studentNotificationSettings)
+		request := PutUserNotificationSettingsReq(id, string(body), invalidToken)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Invalid token","status":401,"detail":"The given JWT token is invalid","instance":""}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+}
+
 type Request struct {
 	Method  string
 	Path    string
@@ -1638,4 +1762,22 @@ func SetupRouterAndSendRequest(service *service.Service, request Request) (int, 
 	}
 	router.ServeHTTP(w, req)
 	return w.Code, w.Body.String(), nil
+}
+
+func SetupRouterSendRequestAndCompareResults(t *testing.T, service *service.Service, request Request, expectedStatusCode int, expectedBody string) {
+	statusCode, body, err := SetupRouterAndSendRequest(service, request)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedStatusCode, statusCode)
+	assert.Equal(t, expectedBody, body)
+}
+
+func PutUserNotificationSettingsReq(id, body, token string) Request {
+	request := NewRequest(
+		"PUT",
+		"/users/"+id+"/notification-settings",
+		string(body),
+		Header("Content-Type", "application/json"),
+		Header("Authorization", "Bearer "+token),
+	)
+	return request
 }
