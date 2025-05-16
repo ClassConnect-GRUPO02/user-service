@@ -1444,3 +1444,198 @@ func TestSetUserType(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }
+
+func TestAddPushToken(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+	id := "1"
+	mockError := fmt.Errorf("mock error")
+	t.Run("Add push token succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"token":"ExponentPushToken[**************]"}`
+		req, _ := http.NewRequest("POST", "/users/"+id+"/push-token", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		token, _ := userService.IssueToken(id)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Add push token fails due to invalid id", func(t *testing.T) {
+		invalidId := "abc"
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		body := `{"token":"ExponentPushToken[**************]"}`
+		req, _ := http.NewRequest("POST", "/users/"+invalidId+"/push-token", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		token, _ := userService.IssueToken(invalidId)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"Invalid id: abc","instance":"/users/abc/push-token"}`
+		assert.Equal(t, expectedBody, w.Body.String())
+	})
+
+	t.Run("Add push token fails due to bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		emptyBody := "{}"
+		req, _ := http.NewRequest("POST", "/users/"+id+"/push-token", strings.NewReader(emptyBody))
+		req.Header.Set("Content-Type", "application/json")
+		token, _ := userService.IssueToken(id)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/1/push-token"}`
+		assert.Equal(t, expectedBody, w.Body.String())
+	})
+
+	t.Run("Add push token fails due to invalid expo token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body := "{}"
+		request := NewRequest(
+			"POST",
+			"/users/"+id+"/push-token",
+			body,
+			Header("Content-Type", "application/json"),
+			Header("Authorization", "Bearer "+token),
+		)
+		statusCode, responseBody, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, statusCode)
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/1/push-token"}`
+		assert.Equal(t, expectedBody, responseBody)
+	})
+
+	t.Run("Add push token fails due to invalid expo token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body := `{"token": "invalidExpoToken"}`
+		request := NewRequest(
+			"POST",
+			"/users/"+id+"/push-token",
+			body,
+			Header("Content-Type", "application/json"),
+			Header("Authorization", "Bearer "+token),
+		)
+		statusCode, responseBody, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusUnauthorized, statusCode)
+		expectedBody := `{"type":"about:blank","title":"Invalid expo token","status":401,"detail":"The expo token 'invalidExpoToken' is invalid","instance":"/users/1/push-token"}`
+		assert.Equal(t, expectedBody, responseBody)
+	})
+
+	t.Run("Add push token fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body := `{"token": "ExponentPushToken[*************]"}`
+		request := NewRequest(
+			"POST",
+			"/users/"+id+"/push-token",
+			body,
+			Header("Content-Type", "application/json"),
+			Header("Authorization", "Bearer "+token),
+		)
+		statusCode, responseBody, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusInternalServerError, statusCode)
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		assert.Equal(t, expectedBody, responseBody)
+	})
+}
+
+type Request struct {
+	Method  string
+	Path    string
+	Body    string
+	Headers []RequestHeader
+}
+
+type RequestHeader struct {
+	Key   string
+	Value string
+}
+
+func NewRequest(method string, path string, body string, headers ...RequestHeader) Request {
+	return Request{
+		Method:  method,
+		Path:    path,
+		Body:    body,
+		Headers: headers,
+	}
+}
+
+func Header(key, value string) RequestHeader {
+	return RequestHeader{
+		Key:   key,
+		Value: value,
+	}
+}
+
+func SetupRouterAndSendRequest(service *service.Service, request Request) (int, string, error) {
+	handler := handlers.NewUserHandler(service)
+
+	router, err := router.CreateUserRouter(handler)
+	if err != nil {
+		return 0, "", err
+	}
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(request.Method, request.Path, strings.NewReader(request.Body))
+	for _, header := range request.Headers {
+		req.Header.Set(header.Key, header.Value)
+	}
+	router.ServeHTTP(w, req)
+	return w.Code, w.Body.String(), nil
+}
