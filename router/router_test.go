@@ -2159,7 +2159,54 @@ func TestNotifyUser(t *testing.T) {
 		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, string(expectedBody))
 	})
+}
 
+func TestBiometricLogin(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey, RefreshTokenDuration: 300}
+	id := "1"
+
+	t.Run("Biometric login succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		refreshToken, err := userService.IssueRefreshToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.BiometricLoginRequest{RefreshToken: refreshToken})
+		request := BiometricLoginReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusAccepted
+		statusCode, _, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatusCode, statusCode)
+	})
+
+	t.Run("Biometric login fails due to bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		invalidBody := "{}"
+		request := BiometricLoginReq(id, invalidBody, token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/biometric-login"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, string(expectedBody))
+	})
+
+	t.Run("Biometric login fails due to invalid refresh token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		body := `{"token": "invalid refresh token"}`
+		request := BiometricLoginReq(id, body, token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/biometric-login"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, string(expectedBody))
+	})
 }
 
 type Request struct {
@@ -2254,4 +2301,15 @@ func NotificationRequestBodyWithType(notificationType string) string {
 	}
 	body, _ := json.Marshal(request)
 	return string(body)
+}
+
+func BiometricLoginReq(id, body, token string) Request {
+	request := NewRequest(
+		"POST",
+		"/biometric-login",
+		string(body),
+		Header("Content-Type", "application/json"),
+		Header("Authorization", "Bearer "+token),
+	)
+	return request
 }
