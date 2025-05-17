@@ -38,6 +38,8 @@ services:
   db:
     image: postgres:latest
     hostname: users-db
+    networks:
+      - traefik-shared
     environment:
       PGPORT: 5432
       PGUSER: postgres
