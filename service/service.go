@@ -477,7 +477,7 @@ func (s *Service) IssueVerificationPinForEmail(email string) (int, error) {
 	expiresAt := time.Now().Unix() + int64(s.verificationPinDuration)
 	err := s.userRepository.AddVerificationPin(pin, email, int(expiresAt))
 	if err != nil {
-		return 0, errors.New(InternalServerError)
+		return 0, models.InternalServerError()
 	}
 	return pin, nil
 }

@@ -2316,6 +2316,55 @@ func TestVerifyUserEmail(t *testing.T) {
 	})
 }
 
+func TestRequestNewPin(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey, RefreshTokenDuration: 300}
+	id := "1"
+
+	t.Run("Request new pin succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddVerificationPin", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.RequestNewVerificationPin{Email: utils.TEST_EMAIL})
+		request := RequestNewPinReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusOK
+		expectedBody := `{"description":"Verification PIN sent to email","email":"test@email.com"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Request new pin fails due to invalid request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		invalidBody := "{}"
+		request := RequestNewPinReq(id, invalidBody, token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/request-new-pin"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+	t.Run("Request new pin fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddVerificationPin", mock.Anything, mock.Anything, mock.Anything).Return(errors.New(service.InternalServerError))
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.RequestNewVerificationPin{Email: utils.TEST_EMAIL})
+		request := RequestNewPinReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusInternalServerError
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+}
+
 type Request struct {
 	Method  string
 	Path    string
@@ -2425,6 +2474,17 @@ func VerifyUserEmailReq(id, body, token string) Request {
 	request := NewRequest(
 		"POST",
 		"/users/verify",
+		string(body),
+		Header("Content-Type", "application/json"),
+		Header("Authorization", "Bearer "+token),
+	)
+	return request
+}
+
+func RequestNewPinReq(id, body, token string) Request {
+	request := NewRequest(
+		"POST",
+		"/users/request-new-pin",
 		string(body),
 		Header("Content-Type", "application/json"),
 		Header("Authorization", "Bearer "+token),
