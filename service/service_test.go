@@ -342,3 +342,38 @@ func TestServiceSetStudentNotificationSettings(t *testing.T) {
 		assert.Equal(t, errors.New(service.UserNotFoundError), err)
 	})
 }
+
+func TestServiceSetTeacherNotificationSettings(t *testing.T) {
+	config := config.Config{}
+	userId := int64(1)
+	pushEnabled := true
+	emailEnabled := true
+	pushAndEmail := models.PushAndEmail
+	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		AssignmentSubmission: &pushAndEmail,
+		StudentFeedback:      &pushAndEmail,
+	}
+
+	t.Run("set teacher notification settings succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.SetTeacherNotificationSettings(userId, teacherNotificationSettings)
+		assert.NoError(t, err)
+	})
+
+	t.Run("set teacher notification settings fails due to user not found", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(errors.New(repository.UserNotFoundError))
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.SetTeacherNotificationSettings(userId, teacherNotificationSettings)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.UserNotFoundError), err)
+	})
+}
