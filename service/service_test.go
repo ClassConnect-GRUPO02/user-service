@@ -303,6 +303,17 @@ func TestServiceSendEmail(t *testing.T) {
 		err = userService.SendEmail(email, subject, body)
 		assert.NoError(t, err)
 	})
+
+	t.Run("Send email verification pin succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		email := "john@example.com"
+		pin := 999999
+		err = userService.SendEmailVerificationPin(email, pin)
+		assert.NoError(t, err)
+	})
 }
 
 func TestServiceSetStudentNotificationSettings(t *testing.T) {
