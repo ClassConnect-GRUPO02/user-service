@@ -8,6 +8,7 @@ import (
 	"user_service/config"
 	"user_service/mocks"
 	"user_service/models"
+	"user_service/repository"
 	"user_service/service"
 	"user_service/utils"
 
@@ -301,5 +302,43 @@ func TestServiceSendEmail(t *testing.T) {
 		body := "Sorry to bother"
 		err = userService.SendEmail(email, subject, body)
 		assert.NoError(t, err)
+	})
+}
+
+func TestServiceSetStudentNotificationSettings(t *testing.T) {
+	config := config.Config{}
+	userId := int64(1)
+	pushEnabled := true
+	emailEnabled := true
+	pushAndEmail := models.PushAndEmail
+	studentNotificationSettings := models.StudentNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		NewAssignment:        &pushAndEmail,
+		DeadlineReminder:     &pushAndEmail,
+		CourseEnrollment:     &pushAndEmail,
+		FavoriteCourseUpdate: &pushAndEmail,
+		TeacherFeedback:      &pushAndEmail,
+	}
+
+	t.Run("set student notification settings succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.SetStudentNotificationSettings(userId, studentNotificationSettings)
+		assert.NoError(t, err)
+	})
+
+	t.Run("set student notification settings fails due to user not found", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(errors.New(repository.UserNotFoundError))
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.SetStudentNotificationSettings(userId, studentNotificationSettings)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.UserNotFoundError), err)
 	})
 }
