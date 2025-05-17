@@ -91,7 +91,7 @@ jobs:
             echo "IMAGE_URI=$IMAGE_URI" > .env
             
             export EMAIL=${{ secrets.EMAIL }}
-            export EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+            export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
             export SECRET_KEY=${{ secrets.SECRET_KEY }}
             
             echo EMAIL = $EMAIL
