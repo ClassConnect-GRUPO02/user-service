@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
@@ -241,5 +242,44 @@ func TestServiceSetUserPushToken(t *testing.T) {
 
 		err = userService.SetUserPushToken(userId, utils.TEST_PUSH_TOKEN)
 		assert.Error(t, err)
+	})
+}
+
+func TestServiceGetUserPushToken(t *testing.T) {
+	config := config.Config{}
+	userId := int64(1)
+	mockError := fmt.Errorf("mock error")
+	t.Run("Get user push token succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		pushToken, err := userService.GetUserPushToken(userId)
+		assert.NoError(t, err)
+		assert.Equal(t, utils.TEST_PUSH_TOKEN, pushToken)
+	})
+
+	t.Run("get user push token fails due to push token not found", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return("", sql.ErrNoRows)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		pushToken, err := userService.GetUserPushToken(userId)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.MissingExpoPushToken), err)
+		assert.Equal(t, "", pushToken)
+	})
+
+	t.Run("get user push token fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return("", mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		pushToken, err := userService.GetUserPushToken(userId)
+		assert.Error(t, err)
+		assert.Equal(t, "", pushToken)
 	})
 }
