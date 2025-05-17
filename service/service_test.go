@@ -177,3 +177,31 @@ func TestServiceIsEmailRegisteredWithRepositoryErrors(t *testing.T) {
 		assert.Equal(t, expectedError, err)
 	})
 }
+
+func TestServiceGetUserType(t *testing.T) {
+	mockError := fmt.Errorf("mock error")
+	config := config.Config{}
+	userId := int64(1)
+	t.Run("Get user type succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(string(models.Student), nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		userType, err := userService.GetUserType(userId)
+		assert.NoError(t, err)
+		expectedUserType := string(models.Student)
+		assert.Equal(t, expectedUserType, userType)
+	})
+
+	t.Run("Get user type fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(string(models.Student), mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		userType, err := userService.GetUserType(userId)
+		assert.Error(t, err)
+		assert.Equal(t, "", userType)
+	})
+}
