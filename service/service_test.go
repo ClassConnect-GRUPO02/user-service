@@ -1,12 +1,14 @@
 package service_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"user_service/config"
 	"user_service/mocks"
 	"user_service/models"
 	"user_service/service"
+	"user_service/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -194,6 +196,17 @@ func TestServiceGetUserType(t *testing.T) {
 		assert.Equal(t, expectedUserType, userType)
 	})
 
+	t.Run("Get user type due to user not found error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(string(models.Student), errors.New(service.UserNotFoundError))
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		userType, err := userService.GetUserType(userId)
+		assert.Error(t, err)
+		assert.Equal(t, "", userType)
+	})
+
 	t.Run("Get user type fails", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(string(models.Student), mockError)
@@ -203,5 +216,30 @@ func TestServiceGetUserType(t *testing.T) {
 		userType, err := userService.GetUserType(userId)
 		assert.Error(t, err)
 		assert.Equal(t, "", userType)
+	})
+}
+
+func TestServiceSetUserPushToken(t *testing.T) {
+	config := config.Config{}
+	userId := int64(1)
+	mockError := fmt.Errorf("mock error")
+	t.Run("Set user push token succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.SetUserPushToken(userId, utils.TEST_PUSH_TOKEN)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Set user push token fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.SetUserPushToken(userId, utils.TEST_PUSH_TOKEN)
+		assert.Error(t, err)
 	})
 }
