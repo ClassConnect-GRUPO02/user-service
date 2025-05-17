@@ -422,3 +422,114 @@ func TestServiceGetUserNotificationSettings(t *testing.T) {
 		assert.Equal(t, &teacherNotificationSettings, notificationSettings)
 	})
 }
+
+func TestServiceGetUserNotificationPreferences(t *testing.T) {
+	config := config.Config{}
+	userId := int64(1)
+	mockError := fmt.Errorf("mock error")
+	pushEnabled := true
+	emailEnabled := true
+	pushAndEmail := models.PushAndEmail
+	push := models.Push
+	email := models.Email
+	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		AssignmentSubmission: &push,
+		StudentFeedback:      &email,
+	}
+	studentNotificationSettings := models.StudentNotificationSettingsRequest{
+		PushEnabled:          &pushEnabled,
+		EmailEnabled:         &emailEnabled,
+		NewAssignment:        &push,
+		DeadlineReminder:     &email,
+		CourseEnrollment:     &pushAndEmail,
+		FavoriteCourseUpdate: &pushAndEmail,
+		TeacherFeedback:      &pushAndEmail,
+	}
+	student := models.Student
+	teacher := models.Teacher
+
+	t.Run("get student notification settings", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything, mock.Anything).Return(&studentNotificationSettings, nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		notificationType := models.NewAssignment
+		pushEnabled, emailEnabled, notificationPreference, err := userService.GetUserNotificationPreferences(userId, student, notificationType)
+		assert.NoError(t, err)
+		assert.Equal(t, true, pushEnabled)
+		assert.Equal(t, true, emailEnabled)
+		assert.Equal(t, models.Push, notificationPreference)
+
+		notificationType = models.DeadlineReminder
+		pushEnabled, emailEnabled, notificationPreference, err = userService.GetUserNotificationPreferences(userId, student, notificationType)
+		assert.NoError(t, err)
+		assert.Equal(t, true, pushEnabled)
+		assert.Equal(t, true, emailEnabled)
+		assert.Equal(t, models.Email, notificationPreference)
+
+		notificationType = models.CourseEnrollment
+		pushEnabled, emailEnabled, notificationPreference, err = userService.GetUserNotificationPreferences(userId, student, notificationType)
+		assert.NoError(t, err)
+		assert.Equal(t, true, pushEnabled)
+		assert.Equal(t, true, emailEnabled)
+		assert.Equal(t, models.PushAndEmail, notificationPreference)
+	})
+
+	t.Run("get student notification fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil, mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		notificationType := models.NewAssignment
+		_, _, _, err = userService.GetUserNotificationPreferences(userId, student, notificationType)
+		assert.Error(t, err)
+	})
+
+	t.Run("get teacher notification settings", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(&teacherNotificationSettings, nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		notificationType := models.AssignmentSubmission
+		pushEnabled, emailEnabled, notificationPreference, err := userService.GetUserNotificationPreferences(userId, teacher, notificationType)
+		assert.NoError(t, err)
+		assert.Equal(t, true, pushEnabled)
+		assert.Equal(t, true, emailEnabled)
+		assert.Equal(t, models.Push, notificationPreference)
+
+		notificationType = models.StudentFeedback
+		pushEnabled, emailEnabled, notificationPreference, err = userService.GetUserNotificationPreferences(userId, teacher, notificationType)
+		assert.NoError(t, err)
+		assert.Equal(t, true, pushEnabled)
+		assert.Equal(t, true, emailEnabled)
+		assert.Equal(t, models.Email, notificationPreference)
+	})
+
+	t.Run("get teacher notification fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil, mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		notificationType := models.NewAssignment
+		_, _, _, err = userService.GetUserNotificationPreferences(userId, teacher, notificationType)
+		assert.Error(t, err)
+	})
+
+	t.Run("get user notification preferences fails due to invalid user type", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil, mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		notificationType := models.NewAssignment
+		invalidUserType := "abc"
+		_, _, _, err = userService.GetUserNotificationPreferences(userId, models.UserType(invalidUserType), notificationType)
+		assert.Error(t, err)
+	})
+}
