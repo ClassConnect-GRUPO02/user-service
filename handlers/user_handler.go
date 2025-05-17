@@ -122,7 +122,21 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	token, err := h.service.IssueToken(userId)
+	id, err := strconv.ParseInt(userId, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(userId, c.Request.URL.Path))
+		return
+	}
+	userType, err := h.service.GetUserType(id)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.UserNotFoundError(userId))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	token, err := h.service.IssueToken(userId, userType)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
@@ -153,7 +167,21 @@ func (h *UserHandler) HandleBiometricLogin(c *gin.Context) {
 		return
 	}
 	userId := refreshToken.Id
-	token, err := h.service.IssueToken(userId)
+	id, err := strconv.ParseInt(userId, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(userId, c.Request.URL.Path))
+		return
+	}
+	userType, err := h.service.GetUserType(id)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.UserNotFoundError(userId))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	token, err := h.service.IssueToken(userId, userType)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
@@ -173,7 +201,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 	// If the sender is the admin, then return the full user info,
 	// which contains information such as registration date, whether the user
 	// is blocked, etc.
-	if token.Id == "admin" {
+	if token.UserType == "admin" {
 		users, err := h.service.GetUsersFullInfo()
 		if err, ok := err.(*models.Error); ok {
 			c.JSON(err.Status, err)
@@ -271,12 +299,26 @@ func (h *UserHandler) EmailExists(c *gin.Context) {
 		})
 		return
 	}
-	id, err := h.service.GetUserIdByEmail(email)
+	userId, err := h.service.GetUserIdByEmail(email)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
 	}
-	token, err := h.service.IssueToken(id)
+	id, err := strconv.ParseInt(userId, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(userId, c.Request.URL.Path))
+		return
+	}
+	userType, err := h.service.GetUserType(id)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.UserNotFoundError(userId))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	token, err := h.service.IssueToken(userId, userType)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
@@ -306,7 +348,7 @@ func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	token, err := h.service.IssueToken("admin")
+	token, err := h.service.IssueToken(adminId, "admin")
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
 		return
@@ -324,7 +366,7 @@ func (h *UserHandler) CreateAdmin(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if token.Id != "admin" {
+	if token.UserType != "admin" {
 		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
@@ -350,7 +392,7 @@ func (h *UserHandler) BlockUser(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if token.Id != "admin" {
+	if token.UserType != "admin" {
 		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
@@ -377,7 +419,7 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if token.Id != "admin" {
+	if token.UserType != "admin" {
 		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
@@ -404,7 +446,7 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if token.Id != "admin" {
+	if token.UserType != "admin" {
 		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}

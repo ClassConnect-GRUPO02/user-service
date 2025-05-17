@@ -110,6 +110,7 @@ func TestUserCreation(t *testing.T) {
 func TestUserLogin(t *testing.T) {
 	config := config.Config{BlockingDuration: 120, LoginAttemptsLimit: 5}
 	body := `{"email":"john@example.com", "password":"1234"}`
+	studentUserType := "alumno"
 
 	// Test valid login
 	t.Run("User logged in successfully", func(t *testing.T) {
@@ -119,6 +120,7 @@ func TestUserLogin(t *testing.T) {
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
@@ -262,7 +264,7 @@ func TestGetUsers(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 		expectedBody := `{"users":[{"id":1,"name":"John Doe","email":"john@example.com","userType":"alumno"}]}`
@@ -286,7 +288,7 @@ func TestGetUsers(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -402,7 +404,7 @@ func TestGetUsers(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 		expectedBody := `{"users":[{"id":1,"name":"John Doe","email":"john@example.com","userType":"alumno","registrationDate":"2025-04-10","latitude":123123,"longitude":123123,"blocked":false}]}`
@@ -426,7 +428,7 @@ func TestGetUsers(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/users", nil)
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -453,7 +455,7 @@ func TestGetUser(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
-		token, _ := userService.IssueToken("2")
+		token, _ := userService.IssueToken("2", "alumno")
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 		expectedBody := `{"user":{"id":1,"name":"John Doe","email":"john@example.com","userType":"alumno"}}`
@@ -476,7 +478,7 @@ func TestGetUser(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 		expectedBody := `{"user":{"id":1,"name":"John Doe","email":"john@example.com","userType":"alumno","latitude":10000,"longitude":-10000}}`
@@ -500,7 +502,7 @@ func TestGetUser(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/user/1", nil)
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
@@ -545,7 +547,7 @@ func TestEditUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req, _ := http.NewRequest("PUT", "/user/1", strings.NewReader(body))
 
 		req.Header.Set("Content-Type", "application/json")
@@ -587,7 +589,7 @@ func TestEditUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req, _ := http.NewRequest("PUT", "/user/abc", strings.NewReader(body))
 
 		req.Header.Set("Content-Type", "application/json")
@@ -612,7 +614,7 @@ func TestEditUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req, _ := http.NewRequest("PUT", "/user/1", strings.NewReader(body))
 
 		req.Header.Set("Content-Type", "application/json")
@@ -638,7 +640,7 @@ func TestEditUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req, _ := http.NewRequest("PUT", "/user/1", strings.NewReader(bodyWithMissingParameters))
 
 		req.Header.Set("Content-Type", "application/json")
@@ -656,12 +658,13 @@ func TestCheckEmailExists(t *testing.T) {
 	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
 	email := "john@example.com"
 	id := "1"
+	studentUserType := "student"
 
 	t.Run("Check email exists", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
-
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
@@ -924,7 +927,7 @@ func TestAdminRegister(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		body := `{"email":"admin","name":"admin","password":"admin"}`
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -944,7 +947,7 @@ func TestAdminRegister(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		body := `{"password":"admin"}`
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -966,7 +969,7 @@ func TestAdminRegister(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		body := `{"email":"admin","name":"admin","password":"admin"}`
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -1031,7 +1034,7 @@ func TestAdminRegister(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		body := `{"email":"admin","name":"admin","password":"admin"}`
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -1054,7 +1057,7 @@ func TestAdminRegister(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		body := `{"email":"admin","name":"admin","password":"admin"}`
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -1077,7 +1080,7 @@ func TestAdminRegister(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		body := `{"email":"admin","name":"admin","password":"admin"}`
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req, _ := http.NewRequest("POST", "/admins", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -1106,7 +1109,7 @@ func TestBlockUser(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/block", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1131,7 +1134,7 @@ func TestBlockUser(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/block", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1154,7 +1157,7 @@ func TestBlockUser(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/block", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1176,7 +1179,7 @@ func TestBlockUser(t *testing.T) {
 		wrongId := "abc"
 		req, _ := http.NewRequest("PUT", "/user/"+wrongId+"/block", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1224,7 +1227,7 @@ func TestUnblockUser(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/unblock", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1249,7 +1252,7 @@ func TestUnblockUser(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/unblock", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1271,7 +1274,7 @@ func TestUnblockUser(t *testing.T) {
 		wrongId := "abc"
 		req, _ := http.NewRequest("PUT", "/user/"+wrongId+"/unblock", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1315,7 +1318,7 @@ func TestUnblockUser(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/unblock", nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1344,7 +1347,7 @@ func TestSetUserType(t *testing.T) {
 		userType := "docente"
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/type/"+userType, nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1370,7 +1373,7 @@ func TestSetUserType(t *testing.T) {
 		userType := "docente"
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/type/"+userType, nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("1")
+		token, _ := userService.IssueToken("1", "alumno")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1417,7 +1420,7 @@ func TestSetUserType(t *testing.T) {
 		wrongId := "abc"
 		req, _ := http.NewRequest("PUT", "/user/"+wrongId+"/type/"+userType, nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1441,7 +1444,7 @@ func TestSetUserType(t *testing.T) {
 		userType := "docente"
 		req, _ := http.NewRequest("PUT", "/user/"+id+"/type/"+userType, nil)
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken("admin")
+		token, _ := userService.IssueToken("1", "admin")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1470,7 +1473,7 @@ func TestAddPushToken(t *testing.T) {
 		body := `{"token":"ExponentPushToken[**************]"}`
 		req, _ := http.NewRequest("POST", "/users/"+id+"/push-token", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken(id)
+		token, _ := userService.IssueToken(id, "alumno")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1493,7 +1496,7 @@ func TestAddPushToken(t *testing.T) {
 		body := `{"token":"ExponentPushToken[**************]"}`
 		req, _ := http.NewRequest("POST", "/users/"+invalidId+"/push-token", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken(invalidId)
+		token, _ := userService.IssueToken(invalidId, "alumno")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1518,7 +1521,7 @@ func TestAddPushToken(t *testing.T) {
 		emptyBody := "{}"
 		req, _ := http.NewRequest("POST", "/users/"+id+"/push-token", strings.NewReader(emptyBody))
 		req.Header.Set("Content-Type", "application/json")
-		token, _ := userService.IssueToken(id)
+		token, _ := userService.IssueToken(id, "alumno")
 		req.Header.Set("Authorization", "Bearer "+token)
 
 		router.ServeHTTP(w, req)
@@ -1534,7 +1537,7 @@ func TestAddPushToken(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		body := "{}"
 		request := NewRequest(
@@ -1558,7 +1561,7 @@ func TestAddPushToken(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		body := `{"token": "invalidExpoToken"}`
 		request := NewRequest(
@@ -1582,7 +1585,7 @@ func TestAddPushToken(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		body := `{"token": "ExponentPushToken[*************]"}`
 		request := NewRequest(
@@ -1636,7 +1639,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		body, _ := json.Marshal(studentNotificationSettings)
 		request := PutUserNotificationSettingsReq(id, string(body), token)
@@ -1652,7 +1655,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		body, _ := json.Marshal(teacherNotificationSettings) // use teacher notification settings
 		request := PutUserNotificationSettingsReq(id, string(body), token)
@@ -1668,7 +1671,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		body, _ := json.Marshal(studentNotificationSettings)
 		request := PutUserNotificationSettingsReq(id, string(body), token)
@@ -1684,7 +1687,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
 		body, _ := json.Marshal(teacherNotificationSettings)
 		request := PutUserNotificationSettingsReq(id, string(body), token)
@@ -1700,7 +1703,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
 		body, _ := json.Marshal(studentNotificationSettings)
 		request := PutUserNotificationSettingsReq(id, string(body), token)
@@ -1728,7 +1731,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", errors.New(service.UserNotFoundError))
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
 		body, _ := json.Marshal(studentNotificationSettings)
 		request := PutUserNotificationSettingsReq(id, string(body), token)
@@ -1742,7 +1745,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
 		body, _ := json.Marshal(studentNotificationSettings)
 		request := PutUserNotificationSettingsReq(id, string(body), token)
@@ -1786,7 +1789,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 
 		request := GetUserNotificationSettingsReq(id, "", token)
@@ -1802,7 +1805,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 
 		request := GetUserNotificationSettingsReq(id, "", token)
@@ -1830,7 +1833,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		invalidId := "abc"
 		request := GetUserNotificationSettingsReq(invalidId, "", token)
@@ -1844,7 +1847,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", errors.New(service.UserNotFoundError))
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		request := GetUserNotificationSettingsReq(id, "", token)
 		expectedStatusCode := http.StatusNotFound
@@ -1857,7 +1860,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		request := GetUserNotificationSettingsReq(id, "", token)
 		expectedStatusCode := http.StatusInternalServerError
@@ -1872,7 +1875,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		request := GetUserNotificationSettingsReq(id, "", token)
 		expectedStatusCode := http.StatusNotFound
@@ -1887,7 +1890,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		request := GetUserNotificationSettingsReq(id, "", token)
 		expectedStatusCode := http.StatusInternalServerError
@@ -1902,7 +1905,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		request := GetUserNotificationSettingsReq(id, "", token)
 		expectedStatusCode := http.StatusNotFound
@@ -1917,7 +1920,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		request := GetUserNotificationSettingsReq(id, "", token)
 		expectedStatusCode := http.StatusInternalServerError
@@ -1971,7 +1974,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.NewAssignment)
 		request := NotifyUserReq(id, requestBody, token)
@@ -1988,7 +1991,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.StudentFeedback)
 		request := NotifyUserReq(id, requestBody, token)
@@ -2002,7 +2005,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.StudentFeedback)
 		invalidId := "abc"
@@ -2017,7 +2020,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := "{}" // invalid body
 		request := NotifyUserReq(id, requestBody, token)
@@ -2031,7 +2034,7 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.StudentFeedback)
 		request := NotifyUserReq(id, requestBody, token)
@@ -2047,7 +2050,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.StudentFeedback)
 		request := NotifyUserReq(id, requestBody, token)
@@ -2063,7 +2066,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.StudentFeedback)
 		request := NotifyUserReq(id, requestBody, token)
@@ -2080,7 +2083,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.StudentFeedback)
 		request := NotifyUserReq(id, requestBody, token)
@@ -2097,7 +2100,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		invalidNotificationType := "abc"
 		requestBody := NotificationRequestBodyWithType(invalidNotificationType)
@@ -2115,7 +2118,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody := NotificationRequestBodyWithType(models.StudentFeedback)
 		request := NotifyUserReq(id, requestBody, token)
@@ -2132,7 +2135,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		invalidNotificationType := "abc"
 		requestBody := NotificationRequestBodyWithType(invalidNotificationType)
@@ -2151,7 +2154,7 @@ func TestNotifyUser(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		invalidNotificationType := "abc"
 		requestBody := NotificationRequestBodyWithType(invalidNotificationType)
@@ -2166,12 +2169,14 @@ func TestBiometricLogin(t *testing.T) {
 	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
 	config := config.Config{TokenDuration: 300, SecretKey: secretKey, RefreshTokenDuration: 300}
 	id := "1"
+	studentUserType := "alumno"
 
 	t.Run("Biometric login succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		refreshToken, err := userService.IssueRefreshToken(id)
 		assert.NoError(t, err)
@@ -2187,7 +2192,7 @@ func TestBiometricLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		invalidBody := "{}"
 		request := BiometricLoginReq(id, invalidBody, token)
@@ -2200,7 +2205,7 @@ func TestBiometricLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		body := `{"token": "invalid refresh token"}`
 		request := BiometricLoginReq(id, body, token)
@@ -2226,7 +2231,7 @@ func TestVerifyUserEmail(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
 		request := VerifyUserEmailReq(id, string(requestBody), token)
@@ -2240,7 +2245,7 @@ func TestVerifyUserEmail(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		invalidBody := "{}"
 		request := VerifyUserEmailReq(id, invalidBody, token)
@@ -2255,7 +2260,7 @@ func TestVerifyUserEmail(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
 		request := VerifyUserEmailReq(id, string(requestBody), token)
@@ -2272,7 +2277,7 @@ func TestVerifyUserEmail(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
 		request := VerifyUserEmailReq(id, string(requestBody), token)
@@ -2289,7 +2294,7 @@ func TestVerifyUserEmail(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
 		request := VerifyUserEmailReq(id, string(requestBody), token)
@@ -2306,7 +2311,7 @@ func TestVerifyUserEmail(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
 		request := VerifyUserEmailReq(id, string(requestBody), token)
@@ -2327,7 +2332,7 @@ func TestRequestNewPin(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.RequestNewVerificationPin{Email: utils.TEST_EMAIL})
 		request := RequestNewPinReq(id, string(requestBody), token)
@@ -2341,7 +2346,7 @@ func TestRequestNewPin(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		invalidBody := "{}"
 		request := RequestNewPinReq(id, invalidBody, token)
@@ -2355,7 +2360,7 @@ func TestRequestNewPin(t *testing.T) {
 
 		userService, err := service.NewService(userRepositoryMock, &config)
 		assert.NoError(t, err)
-		token, err := userService.IssueToken(id)
+		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.RequestNewVerificationPin{Email: utils.TEST_EMAIL})
 		request := RequestNewPinReq(id, string(requestBody), token)
