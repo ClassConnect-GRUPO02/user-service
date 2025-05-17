@@ -1,7 +1,6 @@
 services:
   api: &main_app
     image: ${IMAGE_URI}
-    restart: always
     labels:
       - traefik.enable=true
       - traefik.http.routers.user_service.rule=Host(`${PRODUCT_CATALOG_TRAEFIK_HOST:-user_service.localhost}`) || PathPrefix(`/user-service`)
