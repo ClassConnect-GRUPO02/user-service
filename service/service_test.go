@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 	"user_service/config"
 	"user_service/mocks"
 	"user_service/models"
@@ -542,5 +543,111 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 		invalidUserType := "abc"
 		_, _, _, err = userService.GetUserNotificationPreferences(userId, models.UserType(invalidUserType), notificationType)
 		assert.Error(t, err)
+	})
+}
+
+func TestServiceVerifyUserEmail(t *testing.T) {
+	config := config.Config{}
+	// userId := int64(1)
+	mockError := fmt.Errorf("mock error")
+	email := "john@example.com"
+	pin := 999999
+
+	t.Run("Verify user email suceeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := int(time.Now().Unix() + 300)
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(nil)
+		userRepositoryMock.On("ActivateUserEmail", mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(email, pin)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Verify user email fails due to pin not found error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(0, false, errors.New(repository.PinNotFoundError))
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(email, pin)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.InvalidPinError), err)
+	})
+
+	t.Run("Verify user email fails due to internal server error on repository.GetPin", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(0, false, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(email, pin)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.InternalServerError), err)
+	})
+
+	t.Run("Verify user email fails due to invalid pin", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := 0
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(email, pin)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.InvalidPinError), err)
+	})
+
+	t.Run("Verify user email fails due to expired pin", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := int(time.Now().Unix() - 300)
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(email, pin)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.ExpiredPinError), err)
+	})
+
+	t.Run("Verify user email fails due to internal server error on repository.SetPinAsConsumed", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := int(time.Now().Unix() + 300)
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(email, pin)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.InternalServerError), err)
+	})
+
+	t.Run("Verify user email fails due to internal server error on repository.ActivateUserEmail", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := int(time.Now().Unix() + 300)
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(nil)
+		userRepositoryMock.On("ActivateUserEmail", mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		err = userService.VerifyUserEmail(email, pin)
+		assert.Error(t, err)
+		assert.Equal(t, errors.New(service.InternalServerError), err)
 	})
 }
