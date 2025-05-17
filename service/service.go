@@ -157,8 +157,8 @@ func (s *Service) GetUser(id string) (*models.UserInfo, error) {
 	return user, nil
 }
 
-func (s *Service) IssueToken(id string) (string, error) {
-	token, err := s.authService.IssueToken(id)
+func (s *Service) IssueToken(id, userType string) (string, error) {
+	token, err := s.authService.IssueToken(id, userType)
 	if err != nil {
 		log.Printf("Failed to generate JWT token. Error: %s", err)
 		return "", models.InternalServerError()
