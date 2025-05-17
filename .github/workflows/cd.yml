@@ -94,5 +94,7 @@ jobs:
             export EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
             export SECRET_KEY=${{ secrets.SECRET_KEY }}
             
+            echo EMAIL = $EMAIL
+
             docker compose -f compose.prod.yml pull
             docker compose -f compose.prod.yml up -d --remove-orphans
