@@ -15,6 +15,7 @@ import (
 	"user_service/handlers"
 	"user_service/mocks"
 	"user_service/models"
+	"user_service/repository"
 	"user_service/router"
 	"user_service/service"
 	"user_service/utils"
@@ -2209,6 +2210,112 @@ func TestBiometricLogin(t *testing.T) {
 	})
 }
 
+func TestVerifyUserEmail(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey, RefreshTokenDuration: 300}
+	id := "1"
+	mockError := fmt.Errorf("mock error")
+
+	t.Run("Verify user email succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := int(time.Now().Unix() + 300)
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(nil)
+		userRepositoryMock.On("ActivateUserEmail", mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
+		request := VerifyUserEmailReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusOK
+		expectedBody := `{"description":"Email verified successfully","email":"test@email.com"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Verify user email fails due to invalid request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		invalidBody := "{}"
+		request := VerifyUserEmailReq(id, invalidBody, token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/verify"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Verify user fails due to pin not found", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(0, false, errors.New(repository.PinNotFoundError))
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
+		request := VerifyUserEmailReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Invalid PIN","status":401,"detail":"The verification PIN 99999 is invalid","instance":"/users/verify"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Verify user email fails due to pin already consumed", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := int(time.Now().Unix() + 300)
+		consumed := true // Pin consumed
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
+		request := VerifyUserEmailReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Invalid PIN","status":401,"detail":"The verification PIN 99999 is invalid","instance":"/users/verify"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Verify user email fails due to expired pin", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := 0
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
+		request := VerifyUserEmailReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Invalid PIN","status":401,"detail":"The verification PIN 99999 is invalid","instance":"/users/verify"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Verify user email fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		expirationTimestamp := 0
+		consumed := false
+		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.EmailVerificationRequest{Email: utils.TEST_EMAIL, Pin: 99999})
+		request := VerifyUserEmailReq(id, string(requestBody), token)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+}
+
 type Request struct {
 	Method  string
 	Path    string
@@ -2307,6 +2414,17 @@ func BiometricLoginReq(id, body, token string) Request {
 	request := NewRequest(
 		"POST",
 		"/biometric-login",
+		string(body),
+		Header("Content-Type", "application/json"),
+		Header("Authorization", "Bearer "+token),
+	)
+	return request
+}
+
+func VerifyUserEmailReq(id, body, token string) Request {
+	request := NewRequest(
+		"POST",
+		"/users/verify",
 		string(body),
 		Header("Content-Type", "application/json"),
 		Header("Authorization", "Bearer "+token),
