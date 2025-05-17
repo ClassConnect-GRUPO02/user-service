@@ -283,3 +283,23 @@ func TestServiceGetUserPushToken(t *testing.T) {
 		assert.Equal(t, "", pushToken)
 	})
 }
+
+func TestServiceSendEmail(t *testing.T) {
+	emailPassword, err := utils.GetEnvVar("EMAIL_PASSWORD")
+	assert.NoError(t, err)
+	config := config.Config{
+		Email:         "classconnect42@gmail.com",
+		EmailPassword: emailPassword,
+	}
+	t.Run("Send email succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		email := "john@example.com"
+		subject := "Running tests"
+		body := "Sorry to bother"
+		err = userService.SendEmail(email, subject, body)
+		assert.NoError(t, err)
+	})
+}
