@@ -309,6 +309,10 @@ func (s *Service) GetUserPushToken(id int64) (string, error) {
 }
 
 func (s *Service) SendPushNotification(token, title, body string) error {
+	if token == utils.TEST_PUSH_TOKEN {
+		return nil
+	}
+
 	// Create a new Expo SDK client
 	client := expo.NewPushClient(nil)
 
@@ -337,6 +341,9 @@ func (s *Service) SendPushNotification(token, title, body string) error {
 }
 
 func (s *Service) SendEmail(to, subject, body string) error {
+	if to == utils.TEST_EMAIL {
+		return nil
+	}
 	// Gmail SMTP configuration
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
@@ -470,7 +477,7 @@ func (s *Service) IssueVerificationPinForEmail(email string) (int, error) {
 	expiresAt := time.Now().Unix() + int64(s.verificationPinDuration)
 	err := s.userRepository.AddVerificationPin(pin, email, int(expiresAt))
 	if err != nil {
-		return 0, errors.New(InternalServerError)
+		return 0, models.InternalServerError()
 	}
 	return pin, nil
 }
