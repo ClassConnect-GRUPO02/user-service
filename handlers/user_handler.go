@@ -167,20 +167,22 @@ func (h *UserHandler) HandleBiometricLogin(c *gin.Context) {
 		return
 	}
 	userId := refreshToken.Id
-	id, err := strconv.ParseInt(userId, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(userId, c.Request.URL.Path))
+	user, err := h.service.GetUser(userId)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
 		return
 	}
-	userType, err := h.service.GetUserType(id)
-	if err != nil {
-		if err.Error() == service.UserNotFoundError {
-			c.JSON(http.StatusNotFound, models.UserNotFoundError(userId))
-		} else {
-			c.JSON(http.StatusInternalServerError, models.InternalServerError())
-		}
+	userIsBlocked, err := h.service.UserIsBlocked(user.Email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
 		return
 	}
+	if userIsBlocked {
+		c.JSON(http.StatusForbidden, models.UserBlockedError())
+		return
+	}
+
+	userType := user.UserType
 	token, err := h.service.IssueToken(userId, userType)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
