@@ -48,6 +48,7 @@ type RequestNewVerificationPin struct {
 type NotificationPreference = int
 
 const (
+	None         NotificationPreference = 0
 	Push         NotificationPreference = 1
 	Email        NotificationPreference = 2
 	PushAndEmail NotificationPreference = 3
