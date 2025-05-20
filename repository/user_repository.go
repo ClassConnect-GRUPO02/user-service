@@ -94,11 +94,10 @@ func (r *UserRepository) AddUserNotificationSettings(id int64, user models.User)
 	enableEmail := true
 	if userType == models.Student {
 		query = fmt.Sprintf(
-			"INSERT INTO students_notifications_settings VALUES (%d, %v, %v, %d, %d, %d, %d, %d);",
+			"INSERT INTO students_notifications_settings VALUES (%d, %v, %v, %d, %d, %d, %d);",
 			id,
 			enablePush,
 			enableEmail,
-			models.PushAndEmail,
 			models.PushAndEmail,
 			models.PushAndEmail,
 			models.PushAndEmail,
@@ -449,15 +448,13 @@ func (r *UserRepository) SetStudentNotificationSettings(id int64, notificationSe
 		new_assignment = $3,
 		deadline_reminder = $4,
 		course_enrollment = $5,
-		favorite_course_update = $6,
-		teacher_feedback = $7
-		WHERE id = $8`,
+		teacher_feedback = $6
+		WHERE id = $7`,
 		notificationSettings.PushEnabled,
 		notificationSettings.EmailEnabled,
 		notificationSettings.NewAssignment,
 		notificationSettings.DeadlineReminder,
 		notificationSettings.CourseEnrollment,
-		notificationSettings.FavoriteCourseUpdate,
 		notificationSettings.TeacherFeedback,
 		id,
 	)
@@ -492,7 +489,7 @@ func (r *UserRepository) SetTeacherNotificationSettings(id int64, notificationSe
 
 func (r *UserRepository) GetStudentNotificationSettings(id int64) (*models.StudentNotificationSettingsRequest, error) {
 	var pushEnabled, emailEnabled bool
-	var newAssignment, deadlineReminder, courseEnrollment, favoriteCourseUpdate, teacherFeedback models.NotificationPreference
+	var newAssignment, deadlineReminder, courseEnrollment, teacherFeedback models.NotificationPreference
 	err := r.db.QueryRow(
 		`SELECT 
 			push_enabled,
@@ -500,22 +497,20 @@ func (r *UserRepository) GetStudentNotificationSettings(id int64) (*models.Stude
 			new_assignment,
 			deadline_reminder,
 			course_enrollment,
-			favorite_course_update,
 			teacher_feedback 
 		FROM students_notifications_settings WHERE id=$1`, id,
-	).Scan(&pushEnabled, &emailEnabled, &newAssignment, &deadlineReminder, &courseEnrollment, &favoriteCourseUpdate, &teacherFeedback)
+	).Scan(&pushEnabled, &emailEnabled, &newAssignment, &deadlineReminder, &courseEnrollment, &teacherFeedback)
 	if err != nil {
 		log.Printf("failed to scan row. Error: %s", err)
 		return nil, err
 	}
 	notificationSettings := models.StudentNotificationSettingsRequest{
-		PushEnabled:          &pushEnabled,
-		EmailEnabled:         &emailEnabled,
-		NewAssignment:        &newAssignment,
-		DeadlineReminder:     &deadlineReminder,
-		CourseEnrollment:     &courseEnrollment,
-		FavoriteCourseUpdate: &favoriteCourseUpdate,
-		TeacherFeedback:      &teacherFeedback,
+		PushEnabled:      &pushEnabled,
+		EmailEnabled:     &emailEnabled,
+		NewAssignment:    &newAssignment,
+		DeadlineReminder: &deadlineReminder,
+		CourseEnrollment: &courseEnrollment,
+		TeacherFeedback:  &teacherFeedback,
 	}
 	return &notificationSettings, nil
 }
