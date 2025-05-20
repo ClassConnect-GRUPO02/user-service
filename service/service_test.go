@@ -673,3 +673,46 @@ func TestServiceIssueToken(t *testing.T) {
 		assert.Equal(t, userType, tokenClaims.UserType)
 	})
 }
+
+func TestServiceUserIsBlocked(t *testing.T) {
+	config := config.Config{BlockingDuration: 300}
+
+	t.Run("Service.UserIsBlocked returns false when blockedUntil is 0", func(t *testing.T) {
+		blockedUntil := int64(0)
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		userIsBlocked, err := userService.UserIsBlocked(utils.TEST_EMAIL)
+		assert.NoError(t, err)
+		assert.False(t, userIsBlocked)
+	})
+
+	t.Run("Service.UserIsBlocked returns true when blockedUntil is greater than timestamp no", func(t *testing.T) {
+		blockedUntil := int64(time.Now().Unix() + 300)
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		userIsBlocked, err := userService.UserIsBlocked(utils.TEST_EMAIL)
+		assert.NoError(t, err)
+		assert.True(t, userIsBlocked)
+	})
+
+	t.Run("Service.UserIsBlocked returns internal server error when repository.UserBlockedUntil returns error", func(t *testing.T) {
+		blockedUntil := int64(0)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+
+		_, err = userService.UserIsBlocked(utils.TEST_EMAIL)
+		assert.Error(t, err)
+	})
+}

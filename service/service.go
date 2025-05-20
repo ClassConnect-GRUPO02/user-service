@@ -128,6 +128,16 @@ func (s *Service) LoginUser(loginRequest models.LoginRequest) error {
 	return nil
 }
 
+func (s *Service) UserIsBlocked(email string) (bool, error) {
+	blockedUntil, err := s.userRepository.UserBlockedUntil(email)
+	if err != nil {
+		return false, models.InternalServerError()
+	}
+	timestampNow := time.Now().Unix()
+	userIsBlocked := blockedUntil > timestampNow
+	return userIsBlocked, nil
+}
+
 func (s *Service) GetUsersFullInfo() ([]models.UserFullInfo, error) {
 	users, err := s.userRepository.GetUsersFullInfo(s.blockingDuration)
 	if err != nil {
