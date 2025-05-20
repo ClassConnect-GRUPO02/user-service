@@ -305,6 +305,22 @@ func TestIntegration(t *testing.T) {
 		}
 	})
 
+	t.Run("set student notifications settings", func(t *testing.T) {
+		id := int64(1)
+		studentNotificationSettings, err := userService.GetStudentNotificationSettings(id)
+		assert.Nil(t, err)
+
+		// Set all settings to None
+		*studentNotificationSettings.CourseEnrollment = models.None
+		*studentNotificationSettings.DeadlineReminder = models.None
+		*studentNotificationSettings.NewAssignment = models.None
+		*studentNotificationSettings.TeacherFeedback = models.None
+
+		// Check the user type before updating it
+		err = userService.SetStudentNotificationSettings(id, *studentNotificationSettings)
+		assert.Nil(t, err)
+	})
+
 	t.Run("set user type succeeds", func(t *testing.T) {
 		// Check the user type before updating it
 		user, err := userService.GetUser("1")
@@ -322,4 +338,5 @@ func TestIntegration(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, user.UserType, userType)
 	})
+
 }

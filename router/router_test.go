@@ -1615,13 +1615,12 @@ func TestSetUserNotificationSettings(t *testing.T) {
 	// email := models.Email
 	pushAndEmail := models.PushAndEmail
 	studentNotificationSettings := models.StudentNotificationSettingsRequest{
-		PushEnabled:          &pushEnabled,
-		EmailEnabled:         &emailEnabled,
-		NewAssignment:        &pushAndEmail,
-		DeadlineReminder:     &pushAndEmail,
-		CourseEnrollment:     &pushAndEmail,
-		FavoriteCourseUpdate: &pushAndEmail,
-		TeacherFeedback:      &pushAndEmail,
+		PushEnabled:      &pushEnabled,
+		EmailEnabled:     &emailEnabled,
+		NewAssignment:    &pushAndEmail,
+		DeadlineReminder: &pushAndEmail,
+		CourseEnrollment: &pushAndEmail,
+		TeacherFeedback:  &pushAndEmail,
 	}
 	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
 		PushEnabled:          &pushEnabled,
@@ -1765,13 +1764,12 @@ func TestGetUserNotificationSettings(t *testing.T) {
 	pushAndEmail := models.PushAndEmail
 
 	studentNotificationSettings := models.StudentNotificationSettingsRequest{
-		PushEnabled:          &pushEnabled,
-		EmailEnabled:         &emailEnabled,
-		NewAssignment:        &pushAndEmail,
-		DeadlineReminder:     &pushAndEmail,
-		CourseEnrollment:     &pushAndEmail,
-		FavoriteCourseUpdate: &pushAndEmail,
-		TeacherFeedback:      &pushAndEmail,
+		PushEnabled:      &pushEnabled,
+		EmailEnabled:     &emailEnabled,
+		NewAssignment:    &pushAndEmail,
+		DeadlineReminder: &pushAndEmail,
+		CourseEnrollment: &pushAndEmail,
+		TeacherFeedback:  &pushAndEmail,
 	}
 	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
 		PushEnabled:          &pushEnabled,
@@ -1939,13 +1937,12 @@ func TestNotifyUser(t *testing.T) {
 	pushAndEmail := models.PushAndEmail
 
 	studentNotificationSettings := models.StudentNotificationSettingsRequest{
-		PushEnabled:          &pushEnabled,
-		EmailEnabled:         &emailEnabled,
-		NewAssignment:        &pushAndEmail,
-		DeadlineReminder:     &pushAndEmail,
-		CourseEnrollment:     &pushAndEmail,
-		FavoriteCourseUpdate: &pushAndEmail,
-		TeacherFeedback:      &pushAndEmail,
+		PushEnabled:      &pushEnabled,
+		EmailEnabled:     &emailEnabled,
+		NewAssignment:    &pushAndEmail,
+		DeadlineReminder: &pushAndEmail,
+		CourseEnrollment: &pushAndEmail,
+		TeacherFeedback:  &pushAndEmail,
 	}
 	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
 		PushEnabled:          &pushEnabled,

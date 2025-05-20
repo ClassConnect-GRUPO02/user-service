@@ -48,6 +48,7 @@ type RequestNewVerificationPin struct {
 type NotificationPreference = int
 
 const (
+	None         NotificationPreference = 0
 	Push         NotificationPreference = 1
 	Email        NotificationPreference = 2
 	PushAndEmail NotificationPreference = 3
@@ -61,13 +62,12 @@ type TeacherNotificationSettingsRequest struct {
 }
 
 type StudentNotificationSettingsRequest struct {
-	PushEnabled          *bool                   `json:"pushEnabled" binding:"required"`
-	EmailEnabled         *bool                   `json:"emailEnabled" binding:"required"`
-	NewAssignment        *NotificationPreference `json:"newAssignment" binding:"required"`
-	DeadlineReminder     *NotificationPreference `json:"deadlineReminder" binding:"required"`
-	CourseEnrollment     *NotificationPreference `json:"courseEnrollment" binding:"required"`
-	FavoriteCourseUpdate *NotificationPreference `json:"favoriteCourseUpdate" binding:"required"`
-	TeacherFeedback      *NotificationPreference `json:"teacherFeedback" binding:"required"`
+	PushEnabled      *bool                   `json:"pushEnabled" binding:"required"`
+	EmailEnabled     *bool                   `json:"emailEnabled" binding:"required"`
+	NewAssignment    *NotificationPreference `json:"newAssignment" binding:"required"`
+	DeadlineReminder *NotificationPreference `json:"deadlineReminder" binding:"required"`
+	CourseEnrollment *NotificationPreference `json:"courseEnrollment" binding:"required"`
+	TeacherFeedback  *NotificationPreference `json:"teacherFeedback" binding:"required"`
 }
 
 type NotificationType = string
@@ -77,11 +77,10 @@ const (
 	AssignmentSubmission NotificationType = "assignmentSubmission"
 	StudentFeedback      NotificationType = "studentFeedback"
 	// Student notification types
-	NewAssignment        NotificationType = "newAssignment"
-	DeadlineReminder     NotificationType = "deadlineReminder"
-	CourseEnrollment     NotificationType = "courseEnrollment"
-	FavoriteCourseUpdate NotificationType = "favoriteCourseUpdate"
-	TeacherFeedback      NotificationType = "teacherFeedback"
+	NewAssignment    NotificationType = "newAssignment"
+	DeadlineReminder NotificationType = "deadlineReminder"
+	CourseEnrollment NotificationType = "courseEnrollment"
+	TeacherFeedback  NotificationType = "teacherFeedback"
 )
 
 func (settings *TeacherNotificationSettingsRequest) GetNotificationTypePreference(
@@ -106,8 +105,6 @@ func (settings *StudentNotificationSettingsRequest) GetNotificationTypePreferenc
 		return *settings.DeadlineReminder, nil
 	case CourseEnrollment:
 		return *settings.CourseEnrollment, nil
-	case FavoriteCourseUpdate:
-		return *settings.FavoriteCourseUpdate, nil
 	case TeacherFeedback:
 		return *settings.TeacherFeedback, nil
 	}
