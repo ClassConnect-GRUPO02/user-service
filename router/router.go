@@ -21,6 +21,7 @@ func CreateUserRouter(handler *handlers.UserHandler) (*gin.Engine, error) {
 	router.POST("/users/:id/push-token", handler.AddPushToken)
 	router.POST("/users/:id/notifications", handler.NotifyUser)
 	router.PUT("/users/reset-password", handler.ResetPassword)
+	router.POST("/users/forgot-password", handler.ForgotPassword)
 	router.PUT("/users/:id/notification-settings", handler.SetUserNotificationSettings)
 	router.GET("/users/:id/notification-settings", handler.GetUserNotificationSettings)
 

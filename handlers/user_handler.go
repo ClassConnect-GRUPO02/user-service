@@ -7,6 +7,7 @@ import (
 	"strings"
 	"user_service/models"
 	"user_service/service"
+	"user_service/utils"
 
 	"github.com/gin-gonic/gin"
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
@@ -322,6 +323,39 @@ func (h *UserHandler) ResetPassword(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"description": "Password reset successfully",
+	})
+}
+
+func (h *UserHandler) ForgotPassword(c *gin.Context) {
+	forgotPasswordRequest := models.ForgotPasswordRequest{}
+	if err := c.ShouldBind(&forgotPasswordRequest); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	email := forgotPasswordRequest.Email
+	userId, err := h.service.GetUserIdByEmail(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	token, err := h.service.IssueToken(userId, "")
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	// TODO: set the right URL
+	resetPasswordUrl := token
+	tokenDuration := h.service.ResetPasswordTokenDurationInMinutes()
+	emailSubject := "ClassConnect - Recuperación de contraseña"
+	emailBody := utils.GetResetPasswordMessage(email, resetPasswordUrl, tokenDuration)
+	err = h.service.SendEmail(email, emailSubject, emailBody)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Email sent successfully",
 	})
 }
 

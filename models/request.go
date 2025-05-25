@@ -24,6 +24,10 @@ type ResetPasswordRequest struct {
 	NewPassword string `json:"newPassword" binding:"required"`
 }
 
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required"`
+}
+
 type CreateAdminRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Name     string `json:"name" binding:"required"`

@@ -2630,6 +2630,47 @@ func TestResetPassword(t *testing.T) {
 	})
 }
 
+func TestForgotPassword(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey, RefreshTokenDuration: 300, ResetPasswordTokenDuration: 60}
+	id := "1"
+	t.Run("Forgot password succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
+		request := ForgotPasswordReq(string(requestBody))
+		expectedStatusCode := http.StatusOK
+		expectedBody := `{"description":"Email sent successfully"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Forgot password fails due to bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		invalidBody := "{}"
+		request := ForgotPasswordReq(invalidBody)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/forgot-password"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Forgot password fails due to internal server error email", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
+		request := ForgotPasswordReq(string(requestBody))
+		expectedStatusCode := http.StatusInternalServerError
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+}
+
 type Request struct {
 	Method  string
 	Path    string
@@ -2764,6 +2805,16 @@ func ResetPasswordReq(body, token string) Request {
 		string(body),
 		Header("Content-Type", "application/json"),
 		Header("Authorization", "Bearer "+token),
+	)
+	return request
+}
+
+func ForgotPasswordReq(body string) Request {
+	request := NewRequest(
+		"POST",
+		"/users/forgot-password",
+		body,
+		Header("Content-Type", "application/json"),
 	)
 	return request
 }

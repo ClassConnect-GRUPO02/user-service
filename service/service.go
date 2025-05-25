@@ -455,6 +455,20 @@ func (s *Service) SendEmailVerificationPin(email string, pin int) error {
 	return nil
 }
 
+func (s *Service) SendEmailResetPassword(email string, pin int) error {
+	if isTestEmail(email) {
+		return nil
+	}
+	mailSubject := "ClassConnect - Recuperación de contraseña"
+	mailBody := utils.GetVerificationMessage(email, pin)
+	err := s.SendEmail(email, mailSubject, mailBody)
+	if err != nil {
+		log.Printf("Failed to send verification pin to %s. Error: %s", email, err)
+		return err
+	}
+	return nil
+}
+
 func (s *Service) VerifyUserEmail(email string, pin int) error {
 	expirationTimestamp, consumed, err := s.userRepository.GetPin(pin, email)
 	if err != nil {
@@ -500,6 +514,10 @@ func isTestEmail(email string) bool {
 
 func (s *Service) VerificationPinDurationInMinutes() int {
 	return int(s.verificationPinDuration) / 60
+}
+
+func (s *Service) ResetPasswordTokenDurationInMinutes() int {
+	return int(s.resetPasswordTokenDuration) / 60
 }
 
 func (s *Service) ResetPassword(id int64, password string) error {

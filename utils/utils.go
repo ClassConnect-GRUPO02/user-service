@@ -47,6 +47,23 @@ El equipo de ClassConnect`, email, pin)
 	return message
 }
 
+func GetResetPasswordMessage(email, url string, urlDuration int) string {
+	message := fmt.Sprintf(
+		`Hola, %s.
+
+Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en ClassConnect. Para continuar, haz clic en el siguiente enlace:
+
+%s
+
+Este enlace expirará en %d minutos.
+
+Si no solicitaste este cambio, ignora este mensaje.
+
+Gracias,
+El equipo de ClassConnect`, email, url, urlDuration)
+	return message
+}
+
 func GenerateRandomNumber() int {
 	min := 100000
 	max := 999999
