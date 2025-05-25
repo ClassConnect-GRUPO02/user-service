@@ -19,30 +19,32 @@ import (
 )
 
 type Service struct {
-	userRepository          repository.Repository
-	tokenDuration           uint64
-	refreshTokenDuration    uint64
-	verificationPinDuration uint64
-	blockingTimeWindow      int64
-	authService             *auth.Auth
-	blockingDuration        int64
-	loginAttemptsLimit      int64
-	email                   string
-	emailPassword           string
+	userRepository             repository.Repository
+	tokenDuration              uint64
+	refreshTokenDuration       uint64
+	verificationPinDuration    uint64
+	resetPasswordTokenDuration uint64
+	blockingTimeWindow         int64
+	authService                *auth.Auth
+	blockingDuration           int64
+	loginAttemptsLimit         int64
+	email                      string
+	emailPassword              string
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
-		userRepository:          repository,
-		tokenDuration:           config.TokenDuration,
-		refreshTokenDuration:    config.RefreshTokenDuration,
-		authService:             &auth.Auth{SecretKey: config.SecretKey},
-		blockingTimeWindow:      config.BlockingTimeWindow,
-		blockingDuration:        config.BlockingDuration,
-		loginAttemptsLimit:      config.LoginAttemptsLimit,
-		email:                   config.Email,
-		emailPassword:           config.EmailPassword,
-		verificationPinDuration: config.VerificationPinDuration,
+		userRepository:             repository,
+		tokenDuration:              config.TokenDuration,
+		refreshTokenDuration:       config.RefreshTokenDuration,
+		authService:                &auth.Auth{SecretKey: config.SecretKey},
+		blockingTimeWindow:         config.BlockingTimeWindow,
+		blockingDuration:           config.BlockingDuration,
+		loginAttemptsLimit:         config.LoginAttemptsLimit,
+		email:                      config.Email,
+		emailPassword:              config.EmailPassword,
+		verificationPinDuration:    config.VerificationPinDuration,
+		resetPasswordTokenDuration: config.ResetPasswordTokenDuration,
 	}
 	return &service, nil
 }

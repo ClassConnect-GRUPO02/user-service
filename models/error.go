@@ -165,3 +165,13 @@ func ExpiredPinError(pin int, instance string) error {
 		Instance: instance,
 	}
 }
+
+func ExpiredTokenError(instance string) error {
+	return &Error{
+		Type:     "about:blank", // TODO: consider setting the right type here
+		Title:    "Expired JWT Token",
+		Status:   http.StatusUnauthorized,
+		Detail:   "The JWT token has expired",
+		Instance: instance,
+	}
+}

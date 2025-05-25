@@ -31,6 +31,12 @@ func (s *Service) RefreshTokenHasExpired(issuedAtTimestamp uint64) bool {
 	return now >= tokenExpirationTimestamp
 }
 
+func (s *Service) ResetPasswordTokenHasExpired(issuedAtTimestamp uint64) bool {
+	now := time.Now().Unix()
+	tokenExpirationTimestamp := int64(issuedAtTimestamp) + int64(s.resetPasswordTokenDuration)
+	return now >= tokenExpirationTimestamp
+}
+
 func (s *Service) GetUserIdFromToken(token string) (string, error) {
 	tokenClaims, err := s.authService.ValidateToken(token)
 	if err != nil {

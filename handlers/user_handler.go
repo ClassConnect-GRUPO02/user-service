@@ -298,6 +298,10 @@ func (h *UserHandler) ResetPassword(c *gin.Context) {
 	if err != nil {
 		return
 	}
+	if h.service.ResetPasswordTokenHasExpired(token.IssuedAt) {
+		c.JSON(http.StatusBadRequest, models.ExpiredTokenError(c.Request.URL.Path))
+		return
+	}
 	resetPasswordRequest := models.ResetPasswordRequest{}
 	if err := c.ShouldBind(&resetPasswordRequest); err != nil {
 		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
