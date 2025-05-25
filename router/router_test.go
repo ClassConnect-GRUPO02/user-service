@@ -1625,6 +1625,30 @@ func TestAddPushToken(t *testing.T) {
 		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
 		assert.Equal(t, expectedBody, responseBody)
 	})
+
+	t.Run("Add push token fails when the JWT token does not match the user id", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken("3", "alumno")
+		assert.NoError(t, err)
+		body := `{"token": "ExponentPushToken[*************]"}`
+		request := NewRequest(
+			"POST",
+			"/users/"+id+"/push-token",
+			body,
+			Header("Content-Type", "application/json"),
+			Header("Authorization", "Bearer "+token),
+		)
+		statusCode, responseBody, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusUnauthorized, statusCode)
+		expectedBody := `{"type":"about:blank","title":"Invalid token","status":401,"detail":"The given JWT token is invalid","instance":""}`
+		assert.Equal(t, expectedBody, responseBody)
+	})
 }
 
 func TestSetUserNotificationSettings(t *testing.T) {
