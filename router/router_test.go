@@ -651,6 +651,29 @@ func TestEditUser(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Equal(t, expectedBody, w.Body.String())
 	})
+
+	t.Run("Edit user with a JWT token from other user returns error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		handler := handlers.NewUserHandler(userService)
+
+		router, err := router.CreateUserRouter(handler)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		token, _ := userService.IssueToken("1", "alumno")
+		req, _ := http.NewRequest("PUT", "/user/2", strings.NewReader(body))
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+		expectedBody := `{"type":"about:blank","title":"Invalid token","status":401,"detail":"The given JWT token is invalid","instance":""}`
+
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, expectedBody, w.Body.String())
+	})
 }
 
 func TestCheckEmailExists(t *testing.T) {
