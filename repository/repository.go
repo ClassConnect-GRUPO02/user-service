@@ -30,6 +30,7 @@ type Repository interface {
 	AddVerificationPin(pin int, email string, expiresAt int) error
 	GetPin(pin int, email string) (int, bool, error)
 	SetPinAsConsumed(pin int, email string) error
+	UpdateUserPassword(id int, password string) error
 
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)

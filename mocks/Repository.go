@@ -701,6 +701,24 @@ func (_m *Repository) UpdateUser(id int64, name string, email string) error {
 	return r0
 }
 
+// UpdateUserPassword provides a mock function with given fields: id, password
+func (_m *Repository) UpdateUserPassword(id int, password string) error {
+	ret := _m.Called(id, password)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUserPassword")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int, string) error); ok {
+		r0 = rf(id, password)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UserBlockedUntil provides a mock function with given fields: email
 func (_m *Repository) UserBlockedUntil(email string) (int64, error) {
 	ret := _m.Called(email)

@@ -499,3 +499,11 @@ func isTestEmail(email string) bool {
 func (s *Service) VerificationPinDurationInMinutes() int {
 	return int(s.verificationPinDuration) / 60
 }
+
+func (s *Service) ResetPassword(id int64, password string) error {
+	err := s.userRepository.UpdateUserPassword(int(id), password)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}

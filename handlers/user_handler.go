@@ -293,6 +293,34 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 	})
 }
 
+func (h *UserHandler) ResetPassword(c *gin.Context) {
+	token, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	resetPasswordRequest := models.ResetPasswordRequest{}
+	if err := c.ShouldBind(&resetPasswordRequest); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+
+	id, err := strconv.ParseInt(token.Id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(token.Id, c.Request.URL.Path))
+		return
+	}
+
+	err = h.service.ResetPassword(id, resetPasswordRequest.NewPassword)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Password reset successfully",
+	})
+}
+
 func (h *UserHandler) EmailExists(c *gin.Context) {
 	email := c.Param("email")
 	emailExists, err := h.service.IsEmailRegistered(email)

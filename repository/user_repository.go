@@ -581,3 +581,17 @@ func (r *UserRepository) SetPinAsConsumed(pin int, email string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) UpdateUserPassword(id int, password string) error {
+	// Hash the password before storing it
+	hasher := sha1.New()
+	hasher.Write([]byte(password))
+	passwordHash := hex.EncodeToString(hasher.Sum(nil))
+
+	_, err := r.db.Exec(`UPDATE users SET password_hash = $1 WHERE id=$2`, passwordHash, id)
+	if err != nil {
+		log.Printf("Failed to update user password. Error: %s", err)
+		return err
+	}
+	return nil
+}
