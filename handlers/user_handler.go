@@ -600,7 +600,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 }
 
 func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
-	_, err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
 		return
 	}
@@ -608,6 +608,10 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+	if token.Id != idString {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 

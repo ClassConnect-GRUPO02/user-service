@@ -1799,6 +1799,20 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
 	})
+
+	t.Run("Set user notification settings fails due to mismatching JWT token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken("3", "docente")
+		assert.NoError(t, err)
+		body, _ := json.Marshal(studentNotificationSettings)
+		request := PutUserNotificationSettingsReq(id, string(body), token)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Invalid token","status":401,"detail":"The given JWT token is invalid","instance":""}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
 }
 
 func TestGetUserNotificationSettings(t *testing.T) {
