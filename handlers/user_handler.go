@@ -239,12 +239,11 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	}
 	// Get the ID of the sender from the JWT token
 	idSender := token.Id
-	log.Printf("idSender = %s, id = %s", idSender, id)
+
 	// If the id of the sender is the same as the target, then
 	// the user is retrieving its own info, so we respond with
 	// the full information (public and private fields)
 	if idSender == id {
-		log.Printf("ID sender is the same as the ID target!")
 		c.JSON(http.StatusOK, gin.H{
 			"user": user,
 		})
@@ -263,7 +262,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 func (h *UserHandler) EditUser(c *gin.Context) {
-	_, err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
 		return
 	}
@@ -273,9 +272,15 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
+
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+	// Check the sender of the request is the actual user
+	if token.Id != idString {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 	err = h.service.EditUser(id, editUserRequest)
@@ -335,7 +340,6 @@ func (h *UserHandler) EmailExists(c *gin.Context) {
 func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
-		log.Print("POST /login Error: Bad request")
 		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
@@ -472,7 +476,7 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 }
 
 func (h *UserHandler) AddPushToken(c *gin.Context) {
-	_, err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
 		return
 	}
@@ -481,6 +485,11 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+
+	if token.Id != idString {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 
@@ -591,7 +600,7 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 }
 
 func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
-	_, err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
 		return
 	}
@@ -599,6 +608,10 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+	if token.Id != idString {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 
@@ -643,7 +656,7 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
-	_, err := h.ValidateToken(c)
+	token, err := h.ValidateToken(c)
 	if err != nil {
 		return
 	}
@@ -651,6 +664,10 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(idString, c.Request.URL.Path))
+		return
+	}
+	if token.Id != idString {
+		c.JSON(http.StatusUnauthorized, models.InvalidToken())
 		return
 	}
 	userType, err := h.service.GetUserType(id)
