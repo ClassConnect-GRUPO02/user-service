@@ -76,6 +76,15 @@ jobs:
           source: init.sql
           target: /opt/apps/${{ env.MICROSERVICE_NAME }}
 
+      - name: Upload schema/schema.sql file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_USERNAME }}
+          key: ${{ secrets.GCP_SSH_KEY }}
+          source: schema/schema.sql
+          target: /opt/apps/${{ env.MICROSERVICE_NAME }}
+
       # ----- REMOTE DEPLOY -----
       - name: SSH & deploy
         uses: appleboy/ssh-action@v1
@@ -93,8 +102,8 @@ jobs:
             export EMAIL=${{ secrets.EMAIL }}
             export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
             export SECRET_KEY=${{ secrets.SECRET_KEY }}
-            
-            echo EMAIL = $EMAIL
+
+            mv schema.sql schema/
 
             docker compose -f compose.prod.yml pull
             docker compose -f compose.prod.yml up -d --remove-orphans
