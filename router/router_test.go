@@ -2669,6 +2669,18 @@ func TestForgotPassword(t *testing.T) {
 		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
 	})
+
+	t.Run("Forgot password returns error 404 when the given email is not registered", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
+		request := ForgotPasswordReq(string(requestBody))
+		expectedStatusCode := http.StatusNotFound
+		expectedBody := `{"type":"about:blank","title":"The email test@email.com is not registered","status":404,"detail":"User not found","instance":""}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
 }
 
 type Request struct {
