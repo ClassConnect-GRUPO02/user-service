@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -344,8 +345,7 @@ func (h *UserHandler) ForgotPassword(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	// TODO: set the right URL
-	resetPasswordUrl := token
+	resetPasswordUrl := fmt.Sprintf("classconnect://reset-password?token=%s", token)
 	tokenDuration := h.service.ResetPasswordTokenDurationInMinutes()
 	emailSubject := "ClassConnect - Recuperación de contraseña"
 	emailBody := utils.GetResetPasswordMessage(email, resetPasswordUrl, tokenDuration)
