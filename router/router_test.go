@@ -2519,6 +2519,170 @@ func TestRequestNewPin(t *testing.T) {
 	})
 }
 
+func TestResetPassword(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey, RefreshTokenDuration: 300, ResetPasswordTokenDuration: 60}
+	id := "1"
+
+	t.Run("Reset password succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(nil)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id, "alumno")
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ResetPasswordRequest{NewPassword: "newpassword"})
+		request := ResetPasswordReq(string(requestBody), token)
+		expectedStatusCode := http.StatusOK
+		expectedBody := `{"description":"Password reset successfully"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Reset password fails due to bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id, "alumno")
+		assert.NoError(t, err)
+		invalidBody := "{}"
+		request := ResetPasswordReq(invalidBody, token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/reset-password"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Reset password fails due to invalid JWT token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		invalidToken := "invalid token"
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ResetPasswordRequest{NewPassword: "newpassword"})
+		request := ResetPasswordReq(string(requestBody), invalidToken)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Invalid token","status":401,"detail":"The given JWT token is invalid","instance":""}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Reset password fails due to invalid id", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		invalidId := "abc"
+		token, err := userService.IssueToken(invalidId, "alumno")
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ResetPasswordRequest{NewPassword: "newpassword"})
+		request := ResetPasswordReq(string(requestBody), token)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"Invalid id: abc","instance":"/users/reset-password"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Reset password fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id, "alumno")
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ResetPasswordRequest{NewPassword: "newpassword"})
+		request := ResetPasswordReq(string(requestBody), token)
+		expectedStatusCode := http.StatusInternalServerError
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Reset password fails due to internal server error", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(mockError)
+
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id, "alumno")
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ResetPasswordRequest{NewPassword: "newpassword"})
+		request := ResetPasswordReq(string(requestBody), token)
+		expectedStatusCode := http.StatusInternalServerError
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Reset password fails due to expired token", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(nil)
+		config.ResetPasswordTokenDuration = 0 // Set token duration to 0
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		token, err := userService.IssueToken(id, "alumno")
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ResetPasswordRequest{NewPassword: "newpassword"})
+		request := ResetPasswordReq(string(requestBody), token)
+		expectedStatusCode := http.StatusUnauthorized
+		expectedBody := `{"type":"about:blank","title":"Expired JWT Token","status":401,"detail":"The JWT token has expired","instance":"/users/reset-password"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+}
+
+func TestForgotPassword(t *testing.T) {
+	secretKey, _ := hex.DecodeString(TEST_SECRET_KEY)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey, RefreshTokenDuration: 300, ResetPasswordTokenDuration: 60}
+	id := "1"
+	t.Run("Forgot password succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
+		request := ForgotPasswordReq(string(requestBody))
+		expectedStatusCode := http.StatusOK
+		expectedBody := `{"description":"Email sent successfully"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Forgot password fails due to bad request", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		invalidBody := "{}"
+		request := ForgotPasswordReq(invalidBody)
+		expectedStatusCode := http.StatusBadRequest
+		expectedBody := `{"type":"about:blank","title":"Bad Request","status":400,"detail":"The request is missing fields","instance":"/users/forgot-password"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Forgot password fails due to internal server error email", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		mockError := fmt.Errorf("mock error")
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
+		request := ForgotPasswordReq(string(requestBody))
+		expectedStatusCode := http.StatusInternalServerError
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("Forgot password returns error 404 when the given email is not registered", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
+		request := ForgotPasswordReq(string(requestBody))
+		expectedStatusCode := http.StatusNotFound
+		expectedBody := `{"type":"about:blank","title":"The email test@email.com is not registered","status":404,"detail":"User not found","instance":""}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+}
+
 type Request struct {
 	Method  string
 	Path    string
@@ -2642,6 +2806,27 @@ func RequestNewPinReq(id, body, token string) Request {
 		string(body),
 		Header("Content-Type", "application/json"),
 		Header("Authorization", "Bearer "+token),
+	)
+	return request
+}
+
+func ResetPasswordReq(body, token string) Request {
+	request := NewRequest(
+		"PUT",
+		"/users/reset-password",
+		string(body),
+		Header("Content-Type", "application/json"),
+		Header("Authorization", "Bearer "+token),
+	)
+	return request
+}
+
+func ForgotPasswordReq(body string) Request {
+	request := NewRequest(
+		"POST",
+		"/users/forgot-password",
+		body,
+		Header("Content-Type", "application/json"),
 	)
 	return request
 }

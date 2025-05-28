@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"user_service/models"
 	"user_service/service"
+	"user_service/utils"
 
 	"github.com/gin-gonic/gin"
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
@@ -290,6 +292,70 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"description": "User updated successfully",
+	})
+}
+
+func (h *UserHandler) ResetPassword(c *gin.Context) {
+	token, err := h.ValidateToken(c)
+	if err != nil {
+		return
+	}
+	if h.service.ResetPasswordTokenHasExpired(token.IssuedAt) {
+		c.JSON(http.StatusUnauthorized, models.ExpiredTokenError(c.Request.URL.Path))
+		return
+	}
+	resetPasswordRequest := models.ResetPasswordRequest{}
+	if err := c.ShouldBind(&resetPasswordRequest); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+
+	id, err := strconv.ParseInt(token.Id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(token.Id, c.Request.URL.Path))
+		return
+	}
+
+	err = h.service.ResetPassword(id, resetPasswordRequest.NewPassword)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Password reset successfully",
+	})
+}
+
+func (h *UserHandler) ForgotPassword(c *gin.Context) {
+	forgotPasswordRequest := models.ForgotPasswordRequest{}
+	if err := c.ShouldBind(&forgotPasswordRequest); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	email := forgotPasswordRequest.Email
+	userId, err := h.service.GetUserIdByEmail(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	token, err := h.service.IssueToken(userId, "")
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	resetPasswordUrl := fmt.Sprintf("classconnect://reset-password?token=%s", token)
+	tokenDuration := h.service.ResetPasswordTokenDurationInMinutes()
+	emailSubject := "ClassConnect - Recuperación de contraseña"
+	emailBody := utils.GetResetPasswordMessage(email, resetPasswordUrl, tokenDuration)
+	err = h.service.SendEmail(email, emailSubject, emailBody)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"description": "Email sent successfully",
 	})
 }
 

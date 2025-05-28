@@ -339,4 +339,19 @@ func TestIntegration(t *testing.T) {
 		assert.Equal(t, user.UserType, userType)
 	})
 
+	t.Run("reset user password succeeds", func(t *testing.T) {
+		id := int64(1)
+		newPassword := "123"
+		err := userService.ResetPassword(id, newPassword)
+		assert.NoError(t, err)
+
+		// Check that old credentials dont work anymore
+		staleLoginData := models.LoginRequest{Email: "johnny@example.com", Password: "password"}
+		err = userService.LoginUser(staleLoginData)
+		assert.Error(t, err)
+
+		newLoginData := models.LoginRequest{Email: "johnny@example.com", Password: newPassword}
+		err = userService.LoginUser(newLoginData)
+		assert.NoError(t, err)
+	})
 }

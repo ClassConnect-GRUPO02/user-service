@@ -19,30 +19,32 @@ import (
 )
 
 type Service struct {
-	userRepository          repository.Repository
-	tokenDuration           uint64
-	refreshTokenDuration    uint64
-	verificationPinDuration uint64
-	blockingTimeWindow      int64
-	authService             *auth.Auth
-	blockingDuration        int64
-	loginAttemptsLimit      int64
-	email                   string
-	emailPassword           string
+	userRepository             repository.Repository
+	tokenDuration              uint64
+	refreshTokenDuration       uint64
+	verificationPinDuration    uint64
+	resetPasswordTokenDuration uint64
+	blockingTimeWindow         int64
+	authService                *auth.Auth
+	blockingDuration           int64
+	loginAttemptsLimit         int64
+	email                      string
+	emailPassword              string
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
 	service := Service{
-		userRepository:          repository,
-		tokenDuration:           config.TokenDuration,
-		refreshTokenDuration:    config.RefreshTokenDuration,
-		authService:             &auth.Auth{SecretKey: config.SecretKey},
-		blockingTimeWindow:      config.BlockingTimeWindow,
-		blockingDuration:        config.BlockingDuration,
-		loginAttemptsLimit:      config.LoginAttemptsLimit,
-		email:                   config.Email,
-		emailPassword:           config.EmailPassword,
-		verificationPinDuration: config.VerificationPinDuration,
+		userRepository:             repository,
+		tokenDuration:              config.TokenDuration,
+		refreshTokenDuration:       config.RefreshTokenDuration,
+		authService:                &auth.Auth{SecretKey: config.SecretKey},
+		blockingTimeWindow:         config.BlockingTimeWindow,
+		blockingDuration:           config.BlockingDuration,
+		loginAttemptsLimit:         config.LoginAttemptsLimit,
+		email:                      config.Email,
+		emailPassword:              config.EmailPassword,
+		verificationPinDuration:    config.VerificationPinDuration,
+		resetPasswordTokenDuration: config.ResetPasswordTokenDuration,
 	}
 	return &service, nil
 }
@@ -189,6 +191,9 @@ func (s *Service) GetUserIdByEmail(email string) (string, error) {
 	userId, err := s.userRepository.GetUserIdByEmail(email)
 	if err != nil {
 		return "", models.InternalServerError()
+	}
+	if userId == "" {
+		return "", models.EmailNotFoundError(email)
 	}
 	return userId, nil
 }
@@ -453,6 +458,20 @@ func (s *Service) SendEmailVerificationPin(email string, pin int) error {
 	return nil
 }
 
+func (s *Service) SendEmailResetPassword(email string, pin int) error {
+	if isTestEmail(email) {
+		return nil
+	}
+	mailSubject := "ClassConnect - Recuperación de contraseña"
+	mailBody := utils.GetVerificationMessage(email, pin)
+	err := s.SendEmail(email, mailSubject, mailBody)
+	if err != nil {
+		log.Printf("Failed to send verification pin to %s. Error: %s", email, err)
+		return err
+	}
+	return nil
+}
+
 func (s *Service) VerifyUserEmail(email string, pin int) error {
 	expirationTimestamp, consumed, err := s.userRepository.GetPin(pin, email)
 	if err != nil {
@@ -498,4 +517,16 @@ func isTestEmail(email string) bool {
 
 func (s *Service) VerificationPinDurationInMinutes() int {
 	return int(s.verificationPinDuration) / 60
+}
+
+func (s *Service) ResetPasswordTokenDurationInMinutes() int {
+	return int(s.resetPasswordTokenDuration) / 60
+}
+
+func (s *Service) ResetPassword(id int64, password string) error {
+	err := s.userRepository.UpdateUserPassword(int(id), password)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
 }

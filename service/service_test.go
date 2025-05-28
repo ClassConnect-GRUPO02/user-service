@@ -713,3 +713,22 @@ func TestServiceUserIsBlocked(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestServiceGetUserIdByEmail(t *testing.T) {
+	secretKey, err := hex.DecodeString(SECRET_KEY)
+	assert.NoError(t, err)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+
+	t.Run("Get user id by email returns error when the email is not registered", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", nil)
+		userService, err := service.NewService(userRepositoryMock, &config)
+		assert.NoError(t, err)
+		email := "john@example.com"
+		userId, err := userService.GetUserIdByEmail(email)
+		assert.Equal(t, "", userId)
+		assert.Error(t, err)
+		expectedError := models.EmailNotFoundError(email)
+		assert.Equal(t, expectedError, err)
+	})
+}
