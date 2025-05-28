@@ -175,3 +175,12 @@ func ExpiredTokenError(instance string) error {
 		Instance: instance,
 	}
 }
+
+func EmailNotFoundError(email string) error {
+	return &Error{
+		Type:   "about:blank", // TODO: consider setting the right type here
+		Title:  fmt.Sprintf("The email %s is not registered", email),
+		Status: http.StatusNotFound,
+		Detail: "User not found",
+	}
+}

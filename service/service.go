@@ -192,6 +192,9 @@ func (s *Service) GetUserIdByEmail(email string) (string, error) {
 	if err != nil {
 		return "", models.InternalServerError()
 	}
+	if userId == "" {
+		return "", models.EmailNotFoundError(email)
+	}
 	return userId, nil
 }
 
