@@ -33,6 +33,7 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: password
       DATABASE_NAME: users_db
+      RESET_PASSWORD_TOKEN_DURATION_IN_SECONDS: 300
 
   db:
     image: postgres:latest
