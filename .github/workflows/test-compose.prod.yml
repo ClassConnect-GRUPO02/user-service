@@ -19,7 +19,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -f Dockerfile -t user-service  .
-          echo "IMAGE_URI=courses-service" > .env
+          echo "IMAGE_URI=user-service" > .env
 
       - name: Run docker compose up
         run: |
