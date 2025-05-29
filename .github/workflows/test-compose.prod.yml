@@ -1,0 +1,34 @@
+name: Test compose.prod.yml
+
+on:
+  pull_request:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up environment variables
+        run: |
+          export EMAIL=${{ secrets.EMAIL }}
+          export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
+          export SECRET_KEY=${{ secrets.SECRET_KEY }}
+
+      - name: Build Docker image
+        run: |
+          docker build -f Dockerfile -t user-service  .
+          export IMAGE_URI=user-service
+
+      - name: Run docker compose up
+        run: |
+          set -e
+          docker create network traefik-shared
+
+          docker compose -f compose.prod.yml pull
+          docker compose -f compose.prod.yml up -d
+
+          sleep 5
+          # Check if the service is still running
+          docker ps | grep user-service-api-1
