@@ -26,7 +26,6 @@ jobs:
           set -e
           docker network create traefik-shared
 
-          docker compose -f compose.prod.yml pull
           docker compose -f compose.prod.yml up -d
 
           sleep 5
