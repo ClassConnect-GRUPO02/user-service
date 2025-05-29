@@ -23,11 +23,13 @@ jobs:
 
       - name: Run docker compose up
         run: |
-          set -e
           docker network create traefik-shared
-
           docker compose -f compose.prod.yml up -d
 
+      - name: Check if the service is still running
+        run: |
+          set -e
           sleep 5
-          # Check if the service is still running
+          # For debugging
+          docker ps
           docker ps | grep user-service-api-1
