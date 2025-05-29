@@ -24,7 +24,7 @@ jobs:
       - name: Run docker compose up
         run: |
           set -e
-          docker create network traefik-shared
+          docker network create traefik-shared
 
           docker compose -f compose.prod.yml pull
           docker compose -f compose.prod.yml up -d
