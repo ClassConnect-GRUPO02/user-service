@@ -128,4 +128,4 @@ jobs:
 
             sleep 5
             # Check if the service is still running
-            docker ps 1 | grep user-service-api-1
+            docker ps | grep user-service-api-1
