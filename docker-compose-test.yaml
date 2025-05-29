@@ -22,3 +22,4 @@ services:
 
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./schema/schema.sql:/docker-entrypoint-initdb.d/schema.sql

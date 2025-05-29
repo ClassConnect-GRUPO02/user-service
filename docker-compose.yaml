@@ -13,6 +13,8 @@ services:
   database:
     image: postgres:latest
     env_file: .env
+    ports:
+    - ${PGPORT}:${PGPORT}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 1s
@@ -21,6 +23,7 @@ services:
 
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./schema/schema.sql:/docker-entrypoint-initdb.d/schema.sql
       - pgdata:/var/lib/postgresql/data 
 
 volumes:
