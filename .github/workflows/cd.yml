@@ -124,4 +124,4 @@ jobs:
             cp schema.sql schema/schema.sql
             
             docker compose -f compose.prod.yml pull
-            docker compose -f compose.prod.yml up -d --remove-orphans --abort-on-container-failure
+            docker compose -f compose.prod.yml up -d --remove-orphans
