@@ -32,4 +32,5 @@ jobs:
           sleep 5
           # For debugging
           docker ps
+          docker logs user-service-api-1
           docker ps | grep user-service-api-1
