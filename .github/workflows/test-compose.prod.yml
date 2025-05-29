@@ -10,16 +10,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up environment variables
-        run: |
-          export EMAIL=${{ secrets.EMAIL }}
-          export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
-          export SECRET_KEY=${{ secrets.SECRET_KEY }}
-
       - name: Build Docker image
         run: |
           docker build -f Dockerfile -t user-service  .
-          echo "IMAGE_URI=user-service" > .env
+
+      - name: Set up environment variables
+        run: |
+          # Export the variables
+          export EMAIL=${{ secrets.EMAIL }}
+          export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
+          export SECRET_KEY=${{ secrets.SECRET_KEY }}
+          
+          # Save them to .env
+          echo "IMAGE_URI=user-service" >> .env
+          echo "EMAIL=$EMAIL" >> .env
+          echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> .env
+          echo "SECRET_KEY=$SECRET_KEY" >> .env
 
       - name: Run docker compose up
         run: |
