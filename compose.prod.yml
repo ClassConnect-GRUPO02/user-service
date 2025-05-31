@@ -34,7 +34,7 @@ services:
       DATABASE_PASSWORD: password
       DATABASE_NAME: users_db
       RESET_PASSWORD_TOKEN_DURATION_IN_SECONDS: 300
-      DD_HOSTNAME: datadog
+      DD_AGENT_HOST: datadog
       DD_SERVICE: user-service
       DD_ENV: prod
 
