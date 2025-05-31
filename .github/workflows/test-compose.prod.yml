@@ -12,7 +12,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -f Dockerfile -t user-service  .
+          docker build -f Dockerfile.prod -t user-service  .
 
       - name: Set up environment variables
         run: |

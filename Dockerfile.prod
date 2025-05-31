@@ -1,0 +1,12 @@
+FROM golang:1.23 as golang
+
+WORKDIR /usr/src/app
+
+RUN go install github.com/DataDog/orchestrion@latest
+
+COPY . .
+RUN go mod download
+
+RUN orchestrion go build -v -o /usr/local/bin/app .
+
+CMD ["app"]
