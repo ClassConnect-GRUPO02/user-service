@@ -36,7 +36,7 @@ services:
       RESET_PASSWORD_TOKEN_DURATION_IN_SECONDS: 300
       DD_HOSTNAME: datadog
       DD_SERVICE: user-service
-      DD_ENV: dev
+      DD_ENV: prod
 
   db:
     image: postgres:latest
