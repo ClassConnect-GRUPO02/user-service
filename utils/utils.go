@@ -38,11 +38,15 @@ func GetDate() string {
 
 func GetVerificationMessage(email string, pin int) string {
 	message := fmt.Sprintf(
-		`Hola, %s.
-Gracias por registrarte en ClassConnect. Para verificar tu correo, utiliza el siguiente código:  %d
-Si no solicitaste este código, por favor ignora este mensaje.
+		`<html><body>
+Hola, %s. <br>
+Gracias por registrarte en ClassConnect. Para verificar tu correo, utiliza el siguiente código:
+<br><br>
+%d
+<br><br>
+Si no solicitaste este código, por favor ignora este mensaje.<br><br>
 
-¡Bienvenido/a!
+¡Bienvenido/a!<br>
 El equipo de ClassConnect`, email, pin)
 	return message
 }
