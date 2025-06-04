@@ -1832,6 +1832,7 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		DeadlineReminder: &pushAndEmail,
 		CourseEnrollment: &pushAndEmail,
 		TeacherFeedback:  &pushAndEmail,
+		GradingAvailable: &pushAndEmail,
 	}
 	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
 		PushEnabled:          &pushEnabled,
@@ -2018,6 +2019,7 @@ func TestNotifyUser(t *testing.T) {
 		DeadlineReminder: &pushAndEmail,
 		CourseEnrollment: &pushAndEmail,
 		TeacherFeedback:  &pushAndEmail,
+		GradingAvailable: &pushAndEmail,
 	}
 	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
 		PushEnabled:          &pushEnabled,
