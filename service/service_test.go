@@ -333,6 +333,7 @@ func TestServiceSetStudentNotificationSettings(t *testing.T) {
 		DeadlineReminder: &pushAndEmail,
 		CourseEnrollment: &pushAndEmail,
 		TeacherFeedback:  &pushAndEmail,
+		GradingAvailable: &pushAndEmail,
 	}
 
 	t.Run("set student notification settings succeeds", func(t *testing.T) {
@@ -411,6 +412,7 @@ func TestServiceGetUserNotificationSettings(t *testing.T) {
 		DeadlineReminder: &pushAndEmail,
 		CourseEnrollment: &pushAndEmail,
 		TeacherFeedback:  &pushAndEmail,
+		GradingAvailable: &pushAndEmail,
 	}
 
 	t.Run("get student notification settings", func(t *testing.T) {
@@ -458,6 +460,7 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 		DeadlineReminder: &email,
 		CourseEnrollment: &pushAndEmail,
 		TeacherFeedback:  &pushAndEmail,
+		GradingAvailable: &pushAndEmail,
 	}
 	student := models.Student
 	teacher := models.Teacher
@@ -483,6 +486,13 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 		assert.Equal(t, models.Email, notificationPreference)
 
 		notificationType = models.CourseEnrollment
+		pushEnabled, emailEnabled, notificationPreference, err = userService.GetUserNotificationPreferences(userId, student, notificationType)
+		assert.NoError(t, err)
+		assert.Equal(t, true, pushEnabled)
+		assert.Equal(t, true, emailEnabled)
+		assert.Equal(t, models.PushAndEmail, notificationPreference)
+
+		notificationType = models.GradingAvailable
 		pushEnabled, emailEnabled, notificationPreference, err = userService.GetUserNotificationPreferences(userId, student, notificationType)
 		assert.NoError(t, err)
 		assert.Equal(t, true, pushEnabled)

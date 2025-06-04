@@ -76,6 +76,7 @@ type StudentNotificationSettingsRequest struct {
 	DeadlineReminder *NotificationPreference `json:"deadlineReminder" binding:"required"`
 	CourseEnrollment *NotificationPreference `json:"courseEnrollment" binding:"required"`
 	TeacherFeedback  *NotificationPreference `json:"teacherFeedback" binding:"required"`
+	GradingAvailable *NotificationPreference `json:"gradingAvailable" binding:"required"`
 }
 
 type NotificationType = string
@@ -89,6 +90,7 @@ const (
 	DeadlineReminder NotificationType = "deadlineReminder"
 	CourseEnrollment NotificationType = "courseEnrollment"
 	TeacherFeedback  NotificationType = "teacherFeedback"
+	GradingAvailable NotificationType = "gradingAvailable"
 )
 
 func (settings *TeacherNotificationSettingsRequest) GetNotificationTypePreference(
@@ -115,6 +117,8 @@ func (settings *StudentNotificationSettingsRequest) GetNotificationTypePreferenc
 		return *settings.CourseEnrollment, nil
 	case TeacherFeedback:
 		return *settings.TeacherFeedback, nil
+	case GradingAvailable:
+		return *settings.GradingAvailable, nil
 	}
 	return 0, errors.New("invalid notification type")
 }
