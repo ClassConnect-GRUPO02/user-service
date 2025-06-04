@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/smtp"
 	"strconv"
 	"time"
 	"user_service/auth"
@@ -13,8 +14,6 @@ import (
 	"user_service/models"
 	"user_service/repository"
 	"user_service/utils"
-
-	"gopkg.in/gomail.v2"
 
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
@@ -360,21 +359,28 @@ func (s *Service) SendEmail(to, subject, body string) error {
 	if to == utils.TEST_EMAIL {
 		return nil
 	}
+	// Gmail SMTP configuration
 	smtpHost := "smtp.gmail.com"
-	smtpPort := 587
-	msg := gomail.NewMessage()
-	msg.SetHeader("From", s.email)
-	msg.SetHeader("To", to)
-	msg.SetHeader("Subject", subject)
-	msg.SetBody("text/html", body)
+	smtpPort := "587"
+	from := s.email
+	password := s.emailPassword
 
-	dialer := gomail.NewDialer(smtpHost, smtpPort, s.email, s.emailPassword)
+	// Authentication
+	auth := smtp.PlainAuth("", from, password, smtpHost)
 
-	err := dialer.DialAndSend(msg)
+	// Email headers and body
+
+	msg := "From: \"ClassConnect\" <" + from + ">\n" +
+		"To: " + to + "\n" +
+		"Subject: " + subject + "\n\n" +
+		body
+
+	// Sending email
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, []byte(msg))
 	if err != nil {
-		return fmt.Errorf("error sending email: %s", err)
+		return fmt.Errorf("error sending email: %v", err)
 	}
-	fmt.Println("Email sent successfully")
+
 	return nil
 }
 

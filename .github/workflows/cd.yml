@@ -133,3 +133,5 @@ jobs:
             sleep 5
             # Check if the service is still running
             docker ps | grep user-service-api-1
+
+            docker system prune -f -a
