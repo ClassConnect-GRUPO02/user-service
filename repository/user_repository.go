@@ -94,10 +94,11 @@ func (r *UserRepository) AddUserNotificationSettings(id int64, user models.User)
 	enableEmail := true
 	if userType == models.Student {
 		query = fmt.Sprintf(
-			"INSERT INTO students_notifications_settings VALUES (%d, %v, %v, %d, %d, %d, %d);",
+			"INSERT INTO students_notifications_settings VALUES (%d, %v, %v, %d, %d, %d, %d, %d);",
 			id,
 			enablePush,
 			enableEmail,
+			models.PushAndEmail,
 			models.PushAndEmail,
 			models.PushAndEmail,
 			models.PushAndEmail,
@@ -448,14 +449,16 @@ func (r *UserRepository) SetStudentNotificationSettings(id int64, notificationSe
 		new_assignment = $3,
 		deadline_reminder = $4,
 		course_enrollment = $5,
-		teacher_feedback = $6
-		WHERE id = $7`,
+		teacher_feedback = $6,
+		grading_available = $7
+		WHERE id = $8`,
 		notificationSettings.PushEnabled,
 		notificationSettings.EmailEnabled,
 		notificationSettings.NewAssignment,
 		notificationSettings.DeadlineReminder,
 		notificationSettings.CourseEnrollment,
 		notificationSettings.TeacherFeedback,
+		notificationSettings.GradingAvailable,
 		id,
 	)
 	if err != nil {
