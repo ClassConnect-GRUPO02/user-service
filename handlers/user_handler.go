@@ -345,7 +345,7 @@ func (h *UserHandler) ForgotPassword(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	resetPasswordUrl := fmt.Sprintf("myapp://resetpassword?token=%s", token)
+	resetPasswordUrl := fmt.Sprintf("classconnect://reset-password?token=%s", token)
 	tokenDuration := h.service.ResetPasswordTokenDurationInMinutes()
 	emailSubject := "ClassConnect - Recuperación de contraseña"
 	emailBody := utils.GetResetPasswordMessage(email, resetPasswordUrl, tokenDuration)
