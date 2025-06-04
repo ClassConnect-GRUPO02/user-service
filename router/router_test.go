@@ -1668,6 +1668,7 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		DeadlineReminder: &pushAndEmail,
 		CourseEnrollment: &pushAndEmail,
 		TeacherFeedback:  &pushAndEmail,
+		GradingAvailable: &pushAndEmail,
 	}
 	teacherNotificationSettings := models.TeacherNotificationSettingsRequest{
 		PushEnabled:          &pushEnabled,
