@@ -17,6 +17,7 @@ jobs:
         run: |
           cp .env.example .env
           echo EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }} >> .env
+          echo GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }} >> .env
 
       - name: Run tests
         run: docker compose -f docker-compose-test.yaml up --abort-on-container-exit
