@@ -202,3 +202,12 @@ func GoogleEmailNotLinked(email string) error {
 		Detail: fmt.Sprintf("The Google email %s is not linked to any existing account", email),
 	}
 }
+
+func GoogleEmailAlreadyLinked(email string) error {
+	return &Error{
+		Type:   "about:blank", // TODO: consider setting the right type here
+		Title:  "Google email is already linked to existing account",
+		Status: http.StatusUnauthorized,
+		Detail: fmt.Sprintf("The Google email %s is already linked to an existing account", email),
+	}
+}

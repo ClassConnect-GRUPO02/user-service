@@ -851,6 +851,17 @@ func (h *UserHandler) LinkGoogleEmail(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, models.EmailNotFoundError(email))
 		return
 	}
+	isEmailLinkedToGoogleAccount, err := h.service.IsEmailLinkedToGoogleAccount(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	if isEmailLinkedToGoogleAccount {
+		c.JSON(http.StatusConflict, models.GoogleEmailAlreadyLinked(email))
+		return
+	}
+
 	err = h.service.LinkGoogleEmail(email)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
