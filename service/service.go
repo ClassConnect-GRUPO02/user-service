@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -15,6 +16,8 @@ import (
 	"user_service/repository"
 	"user_service/utils"
 
+	firebase "firebase.google.com/go/v4"
+	firebaseAuth "firebase.google.com/go/v4/auth"
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
@@ -30,9 +33,21 @@ type Service struct {
 	loginAttemptsLimit         int64
 	email                      string
 	emailPassword              string
+	firebaseClient             *firebaseAuth.Client
 }
 
 func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
+	app, err := firebase.NewApp(context.Background(), nil)
+	if err != nil {
+		log.Fatalf("error initializing app: %v\n", err)
+	}
+
+	// Access auth service from the default app
+	firebaseClient, err := app.Auth(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to initialize Firebase authentication client. Error: %s", err)
+	}
+
 	service := Service{
 		userRepository:             repository,
 		tokenDuration:              config.TokenDuration,
@@ -45,6 +60,7 @@ func NewService(repository repository.Repository, config *config.Config) (*Servi
 		emailPassword:              config.EmailPassword,
 		verificationPinDuration:    config.VerificationPinDuration,
 		resetPasswordTokenDuration: config.ResetPasswordTokenDuration,
+		firebaseClient:             firebaseClient,
 	}
 	return &service, nil
 }
@@ -529,4 +545,33 @@ func (s *Service) ResetPassword(id int64, password string) error {
 		return models.InternalServerError()
 	}
 	return nil
+}
+
+func (s *Service) VerifyFirebaseIdTokenAndGetEmail(idToken string) (string, error) {
+	token, err := s.firebaseClient.VerifyIDToken(context.Background(), idToken)
+	if err != nil {
+		return "", err
+	}
+	tokenEmail, ok := token.Claims["email"]
+	if !ok {
+		return "", fmt.Errorf("missing email on idToken")
+	}
+	email := fmt.Sprint(tokenEmail)
+	return email, nil
+}
+
+func (s *Service) LinkGoogleEmail(email string) error {
+	err := s.userRepository.LinkGoogleEmail(email)
+	if err != nil {
+		return models.InternalServerError()
+	}
+	return nil
+}
+
+func (s *Service) IsEmailLinkedToGoogleAccount(email string) (bool, error) {
+	IsEmailLinkedToGoogleAccount, err := s.userRepository.IsEmailLinkedToGoogleAccount(email)
+	if err != nil {
+		return false, models.InternalServerError()
+	}
+	return IsEmailLinkedToGoogleAccount, nil
 }

@@ -56,3 +56,7 @@ CREATE TABLE IF NOT EXISTS verification_pins (
     expires_at BIGINT,
     consumed BOOLEAN
 );
+
+CREATE TABLE IF NOT EXISTS google_linked_emails (
+    email VARCHAR(255) PRIMARY KEY
+);

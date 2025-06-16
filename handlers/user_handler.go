@@ -769,3 +769,92 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 		c.JSON(http.StatusOK, notificationSettings)
 	}
 }
+
+func (h *UserHandler) HandleGoogleAuth(c *gin.Context) {
+	request := models.GoogleAuthRequest{}
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	email, err := h.service.VerifyFirebaseIdTokenAndGetEmail(request.IdToken)
+	if err != nil {
+		log.Printf("failed to verify Firebase id token. Error: %s", err)
+		c.JSON(http.StatusBadRequest, models.FailedToVerifyFirebaseToken(c.Request.URL.Path, err.Error()))
+		return
+	}
+	isEmailLinkedToGoogleAccount, err := h.service.IsEmailLinkedToGoogleAccount(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	if !isEmailLinkedToGoogleAccount {
+		c.JSON(http.StatusUnauthorized, models.GoogleEmailNotLinked(email))
+		return
+	}
+
+	userId, err := h.service.GetUserIdByEmail(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	id, err := strconv.ParseInt(userId, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestInvalidId(userId, c.Request.URL.Path))
+		return
+	}
+	userType, err := h.service.GetUserType(id)
+	if err != nil {
+		if err.Error() == service.UserNotFoundError {
+			c.JSON(http.StatusNotFound, models.UserNotFoundError(userId))
+		} else {
+			c.JSON(http.StatusInternalServerError, models.InternalServerError())
+		}
+		return
+	}
+	token, err := h.service.IssueToken(userId, userType)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	refreshToken, err := h.service.IssueRefreshToken(userId)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{
+		"description":  "User logged in successfully",
+		"id":           userId,
+		"token":        token,
+		"refreshToken": refreshToken,
+	})
+}
+
+func (h *UserHandler) LinkGoogleEmail(c *gin.Context) {
+	request := models.GoogleAuthRequest{}
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
+		return
+	}
+	email, err := h.service.VerifyFirebaseIdTokenAndGetEmail(request.IdToken)
+	if err != nil {
+		log.Printf("failed to verify Firebase id token. Error: %s", err)
+		c.JSON(http.StatusBadRequest, models.FailedToVerifyFirebaseToken(c.Request.URL.Path, err.Error()))
+		return
+	}
+	isEmailRegistered, err := h.service.IsEmailRegistered(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	if !isEmailRegistered {
+		c.JSON(http.StatusUnauthorized, models.EmailNotFoundError(email))
+		return
+	}
+	err = h.service.LinkGoogleEmail(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"description": "Google email linked to account successfully"})
+}

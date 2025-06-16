@@ -31,6 +31,8 @@ type Repository interface {
 	GetPin(pin int, email string) (int, bool, error)
 	SetPinAsConsumed(pin int, email string) error
 	UpdateUserPassword(id int, password string) error
+	LinkGoogleEmail(email string) error
+	IsEmailLinkedToGoogleAccount(email string) (bool, error)
 
 	// Admin methods
 	IsAdminEmailRegistered(email string) (bool, error)

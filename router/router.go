@@ -24,6 +24,8 @@ func CreateUserRouter(handler *handlers.UserHandler) (*gin.Engine, error) {
 	router.POST("/users/forgot-password", handler.ForgotPassword)
 	router.PUT("/users/:id/notification-settings", handler.SetUserNotificationSettings)
 	router.GET("/users/:id/notification-settings", handler.GetUserNotificationSettings)
+	router.POST("/auth/google", handler.HandleGoogleAuth)
+	router.POST("/auth/link-gmail", handler.LinkGoogleEmail)
 
 	router.POST("/admin-login", handler.HandleAdminLogin)
 	router.POST("/admins", handler.CreateAdmin)
