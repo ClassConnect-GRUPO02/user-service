@@ -10,6 +10,8 @@ services:
       database:
         condition: service_healthy
         restart: true
+    volumes:
+     - ./firebase_private_key.json:/usr/src/app/firebase_private_key.json
 
   database:
     image: postgres:latest
