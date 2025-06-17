@@ -16,8 +16,6 @@ import (
 	"user_service/repository"
 	"user_service/utils"
 
-	firebase "firebase.google.com/go/v4"
-	firebaseAuth "firebase.google.com/go/v4/auth"
 	expo "github.com/oliveroneill/exponent-server-sdk-golang/sdk"
 )
 
@@ -33,21 +31,10 @@ type Service struct {
 	loginAttemptsLimit         int64
 	email                      string
 	emailPassword              string
-	firebaseClient             *firebaseAuth.Client
+	firebaseClient             auth.FirebaseClient
 }
 
-func NewService(repository repository.Repository, config *config.Config) (*Service, error) {
-	app, err := firebase.NewApp(context.Background(), nil)
-	if err != nil {
-		log.Fatalf("error initializing app: %v\n", err)
-	}
-
-	// Access auth service from the default app
-	firebaseClient, err := app.Auth(context.Background())
-	if err != nil {
-		log.Fatalf("Failed to initialize Firebase authentication client. Error: %s", err)
-	}
-
+func NewService(repository repository.Repository, config *config.Config, firebaseClient auth.FirebaseClient) (*Service, error) {
 	service := Service{
 		userRepository:             repository,
 		tokenDuration:              config.TokenDuration,
