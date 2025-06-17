@@ -37,6 +37,7 @@ services:
       DD_AGENT_HOST: datadog
       DD_SERVICE: user-service
       DD_ENV: prod
+      GOOGLE_APPLICATION_CREDENTIALS: firebase_private_key.json
     volumes:
      - ./firebase_private_key.json:/usr/src/app/firebase_private_key.json
 
