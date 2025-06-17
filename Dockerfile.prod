@@ -1,12 +1,26 @@
-FROM golang:1.23 as golang
+FROM golang:1.23-alpine AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
 
 RUN go install github.com/DataDog/orchestrion@latest
 
 COPY . .
-RUN go mod download
 
-RUN orchestrion go build -v -o /usr/local/bin/app .
+RUN orchestrion go build -v -ldflags="-s -w" -o /app/app .
 
-CMD ["app"]
+FROM alpine:latest
+
+WORKDIR /app
+
+COPY --from=builder /app/app ./app
+
+RUN chmod +x /app/app
+
+# Install ca-certificates required for TLS communication.
+RUN apk add --no-cache ca-certificates
+
+CMD ["/app/app"]
