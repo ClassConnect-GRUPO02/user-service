@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"user_service/auth"
 	"user_service/config"
 	"user_service/mocks"
 	"user_service/models"
@@ -740,5 +741,59 @@ func TestServiceGetUserIdByEmail(t *testing.T) {
 		assert.Error(t, err)
 		expectedError := models.EmailNotFoundError(email)
 		assert.Equal(t, expectedError, err)
+	})
+}
+
+func TestServiceGoogleAuthentication(t *testing.T) {
+	secretKey, err := hex.DecodeString(SECRET_KEY)
+	assert.NoError(t, err)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+	mockFirebaseClient := auth.MockFirebaseClient{}
+	idToken := utils.TEST_EMAIL
+	email := utils.TEST_EMAIL
+	mockError := fmt.Errorf("mock error")
+	t.Run("firebase id token verification succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		_, err = userService.VerifyFirebaseIdTokenAndGetEmail(idToken)
+		assert.NoError(t, err)
+	})
+
+	t.Run("google account linking succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(nil)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		err = userService.LinkGoogleEmail(email)
+		assert.NoError(t, err)
+	})
+
+	t.Run("google account linking returns error when the database query fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(mockError)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		err = userService.LinkGoogleEmail(email)
+		assert.Error(t, err)
+	})
+
+	t.Run("IsEmailLinkedToGoogleAccount works as expected", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		isEmailLinked, err := userService.IsEmailLinkedToGoogleAccount(email)
+		assert.NoError(t, err)
+		assert.True(t, isEmailLinked)
+	})
+
+	t.Run("IsEmailLinkedToGoogleAccount returns error when the database query fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, mockError)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		_, err = userService.IsEmailLinkedToGoogleAccount(email)
+		assert.Error(t, err)
 	})
 }
