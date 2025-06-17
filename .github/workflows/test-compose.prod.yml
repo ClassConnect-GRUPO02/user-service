@@ -26,6 +26,8 @@ jobs:
           echo "EMAIL=$EMAIL" >> .env
           echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> .env
           echo "SECRET_KEY=$SECRET_KEY" >> .env
+          touch firebase_private_key.json
+          echo ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }} | base64 --decode > firebase_private_key.json
 
       - name: Run docker compose up
         run: |

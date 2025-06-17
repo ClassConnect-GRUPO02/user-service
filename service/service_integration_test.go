@@ -35,7 +35,7 @@ func TestIntegration(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Failed to create user repository. Error: %s", err)
 	}
-	userService, err := service.NewService(userRepository, config)
+	userService, err := service.NewService(userRepository, config, nil)
 	if err != nil {
 		log.Fatalf("Failed to create user service. Error: %s", err)
 	}

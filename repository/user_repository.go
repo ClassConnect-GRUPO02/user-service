@@ -600,3 +600,25 @@ func (r *UserRepository) UpdateUserPassword(id int, password string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) LinkGoogleEmail(email string) error {
+	query := fmt.Sprintf("INSERT INTO google_linked_emails VALUES ('%s');", email)
+	_, err := r.db.Exec(query)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepository) IsEmailLinkedToGoogleAccount(email string) (bool, error) {
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM google_linked_emails WHERE email='%s');", email)
+	var emailLinked bool
+	err := r.db.QueryRow(query).Scan(&emailLinked)
+	if err != nil {
+		log.Printf("Failed to query %s. Error: %s", query, err)
+		return false, err
+	}
+	log.Printf("email linked to google account: %v", emailLinked)
+	return emailLinked, nil
+}

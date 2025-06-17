@@ -519,6 +519,34 @@ func (_m *Repository) IsAdminEmailRegistered(email string) (bool, error) {
 	return r0, r1
 }
 
+// IsEmailLinkedToGoogleAccount provides a mock function with given fields: email
+func (_m *Repository) IsEmailLinkedToGoogleAccount(email string) (bool, error) {
+	ret := _m.Called(email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsEmailLinkedToGoogleAccount")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (bool, error)); ok {
+		return rf(email)
+	}
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // IsEmailRegistered provides a mock function with given fields: email
 func (_m *Repository) IsEmailRegistered(email string) (bool, error) {
 	ret := _m.Called(email)
@@ -545,6 +573,24 @@ func (_m *Repository) IsEmailRegistered(email string) (bool, error) {
 	}
 
 	return r0, r1
+}
+
+// LinkGoogleEmail provides a mock function with given fields: email
+func (_m *Repository) LinkGoogleEmail(email string) error {
+	ret := _m.Called(email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LinkGoogleEmail")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // PasswordMatches provides a mock function with given fields: email, password

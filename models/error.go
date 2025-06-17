@@ -184,3 +184,30 @@ func EmailNotFoundError(email string) error {
 		Detail: "User not found",
 	}
 }
+
+func FailedToVerifyFirebaseToken(instance string, err string) error {
+	return &Error{
+		Type:   "about:blank", // TODO: consider setting the right type here
+		Title:  "Failed to verify the Firebase token",
+		Status: http.StatusNotFound,
+		Detail: err,
+	}
+}
+
+func GoogleEmailNotLinked(email string) error {
+	return &Error{
+		Type:   "about:blank", // TODO: consider setting the right type here
+		Title:  "Google email not linked to existing account",
+		Status: http.StatusUnauthorized,
+		Detail: fmt.Sprintf("The Google email %s is not linked to any existing account", email),
+	}
+}
+
+func GoogleEmailAlreadyLinked(email string) error {
+	return &Error{
+		Type:   "about:blank", // TODO: consider setting the right type here
+		Title:  "Google email is already linked to existing account",
+		Status: http.StatusUnauthorized,
+		Detail: fmt.Sprintf("The Google email %s is already linked to an existing account", email),
+	}
+}

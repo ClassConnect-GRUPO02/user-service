@@ -53,6 +53,10 @@ type RequestNewVerificationPin struct {
 	Email string `json:"email" binding:"required"`
 }
 
+type GoogleAuthRequest struct {
+	IdToken string `json:"idToken" binding:"required"`
+}
+
 type NotificationPreference = int
 
 const (

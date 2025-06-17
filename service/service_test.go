@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"user_service/auth"
 	"user_service/config"
 	"user_service/mocks"
 	"user_service/models"
@@ -31,7 +32,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.LoginUser(loginRequest)
@@ -44,7 +45,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), mockError)
 		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.LoginUser(loginRequest)
@@ -58,7 +59,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, mockError)
 		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.LoginUser(loginRequest)
@@ -73,7 +74,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("IncrementFailedLoginAttempts", mock.Anything, mock.Anything).Return(int64(0), mockError)
 		userRepositoryMock.On("UserIsActivated", mock.Anything).Return(true, nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.LoginUser(loginRequest)
@@ -90,7 +91,7 @@ func TestServiceLoginWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.LoginUser(loginRequest)
@@ -106,7 +107,7 @@ func TestServiceRegisterWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.CreateUser(user)
@@ -118,7 +119,7 @@ func TestServiceRegisterWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("AddUser", mock.Anything).Return(mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.CreateUser(user)
@@ -133,7 +134,7 @@ func TestServiceGetUserWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		_, err = userService.GetUser("1")
@@ -144,7 +145,7 @@ func TestServiceGetUserWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUsers").Return(nil, mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		_, err = userService.GetUsers()
@@ -161,7 +162,7 @@ func TestServiceEditUserWithRepositoryErrors(t *testing.T) {
 		userRepositoryMock.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
 
 		editUserRequest := models.EditUserRequest{Name: "Johnny", Email: "johnny@example.com"}
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.EditUser(1, editUserRequest)
@@ -177,7 +178,7 @@ func TestServiceIsEmailRegisteredWithRepositoryErrors(t *testing.T) {
 	t.Run("IsEmailRegistered returns internal server error when repository.IsEmailRegistered returns an error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		_, err = userService.IsEmailRegistered("john@example.com")
@@ -193,7 +194,7 @@ func TestServiceGetUserType(t *testing.T) {
 	t.Run("Get user type succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(string(models.Student), nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		userType, err := userService.GetUserType(userId)
@@ -205,7 +206,7 @@ func TestServiceGetUserType(t *testing.T) {
 	t.Run("Get user type due to user not found error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(string(models.Student), errors.New(service.UserNotFoundError))
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		userType, err := userService.GetUserType(userId)
@@ -216,7 +217,7 @@ func TestServiceGetUserType(t *testing.T) {
 	t.Run("Get user type fails", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(string(models.Student), mockError)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		userType, err := userService.GetUserType(userId)
@@ -232,7 +233,7 @@ func TestServiceSetUserPushToken(t *testing.T) {
 	t.Run("Set user push token succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.SetUserPushToken(userId, utils.TEST_PUSH_TOKEN)
@@ -242,7 +243,7 @@ func TestServiceSetUserPushToken(t *testing.T) {
 	t.Run("Set user push token fails", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(mockError)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.SetUserPushToken(userId, utils.TEST_PUSH_TOKEN)
@@ -257,7 +258,7 @@ func TestServiceGetUserPushToken(t *testing.T) {
 	t.Run("Get user push token succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		pushToken, err := userService.GetUserPushToken(userId)
@@ -268,7 +269,7 @@ func TestServiceGetUserPushToken(t *testing.T) {
 	t.Run("get user push token fails due to push token not found", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return("", sql.ErrNoRows)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		pushToken, err := userService.GetUserPushToken(userId)
@@ -280,7 +281,7 @@ func TestServiceGetUserPushToken(t *testing.T) {
 	t.Run("get user push token fails due to internal server error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return("", mockError)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		pushToken, err := userService.GetUserPushToken(userId)
@@ -298,7 +299,7 @@ func TestServiceSendEmail(t *testing.T) {
 	}
 	t.Run("Send email succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		email := "john@example.com"
@@ -310,7 +311,7 @@ func TestServiceSendEmail(t *testing.T) {
 
 	t.Run("Send email verification pin succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		email := "john@example.com"
@@ -339,7 +340,7 @@ func TestServiceSetStudentNotificationSettings(t *testing.T) {
 	t.Run("set student notification settings succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.SetStudentNotificationSettings(userId, studentNotificationSettings)
@@ -349,7 +350,7 @@ func TestServiceSetStudentNotificationSettings(t *testing.T) {
 	t.Run("set student notification settings fails due to user not found", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(errors.New(repository.UserNotFoundError))
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.SetStudentNotificationSettings(userId, studentNotificationSettings)
@@ -374,7 +375,7 @@ func TestServiceSetTeacherNotificationSettings(t *testing.T) {
 	t.Run("set teacher notification settings succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.SetTeacherNotificationSettings(userId, teacherNotificationSettings)
@@ -384,7 +385,7 @@ func TestServiceSetTeacherNotificationSettings(t *testing.T) {
 	t.Run("set teacher notification settings fails due to user not found", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(errors.New(repository.UserNotFoundError))
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.SetTeacherNotificationSettings(userId, teacherNotificationSettings)
@@ -418,7 +419,7 @@ func TestServiceGetUserNotificationSettings(t *testing.T) {
 	t.Run("get student notification settings", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything, mock.Anything).Return(&studentNotificationSettings, nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		notificationSettings, err := userService.GetStudentNotificationSettings(userId)
@@ -429,7 +430,7 @@ func TestServiceGetUserNotificationSettings(t *testing.T) {
 	t.Run("get teacher notification settings", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(&teacherNotificationSettings, nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		notificationSettings, err := userService.GetTeacherNotificationSettings(userId)
@@ -468,7 +469,7 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 	t.Run("get student notification settings", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything, mock.Anything).Return(&studentNotificationSettings, nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		notificationType := models.NewAssignment
@@ -503,7 +504,7 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 	t.Run("get student notification fails due to internal server error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil, mockError)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		notificationType := models.NewAssignment
@@ -514,7 +515,7 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 	t.Run("get teacher notification settings", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(&teacherNotificationSettings, nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		notificationType := models.AssignmentSubmission
@@ -535,7 +536,7 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 	t.Run("get teacher notification fails due to internal server error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil, mockError)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		notificationType := models.NewAssignment
@@ -546,7 +547,7 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 	t.Run("get user notification preferences fails due to invalid user type", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil, mockError)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		notificationType := models.NewAssignment
@@ -571,7 +572,7 @@ func TestServiceVerifyUserEmail(t *testing.T) {
 		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(nil)
 		userRepositoryMock.On("ActivateUserEmail", mock.Anything).Return(nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.VerifyUserEmail(email, pin)
@@ -582,7 +583,7 @@ func TestServiceVerifyUserEmail(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(0, false, errors.New(repository.PinNotFoundError))
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.VerifyUserEmail(email, pin)
@@ -594,7 +595,7 @@ func TestServiceVerifyUserEmail(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(0, false, mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.VerifyUserEmail(email, pin)
@@ -608,7 +609,7 @@ func TestServiceVerifyUserEmail(t *testing.T) {
 		consumed := false
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.VerifyUserEmail(email, pin)
@@ -622,7 +623,7 @@ func TestServiceVerifyUserEmail(t *testing.T) {
 		consumed := false
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.VerifyUserEmail(email, pin)
@@ -637,7 +638,7 @@ func TestServiceVerifyUserEmail(t *testing.T) {
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
 		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.VerifyUserEmail(email, pin)
@@ -653,7 +654,7 @@ func TestServiceVerifyUserEmail(t *testing.T) {
 		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(nil)
 		userRepositoryMock.On("ActivateUserEmail", mock.Anything).Return(mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		err = userService.VerifyUserEmail(email, pin)
@@ -668,7 +669,7 @@ func TestServiceIssueToken(t *testing.T) {
 	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
 
 	userRepositoryMock := new(mocks.Repository)
-	userService, err := service.NewService(userRepositoryMock, &config)
+	userService, err := service.NewService(userRepositoryMock, &config, nil)
 	assert.NoError(t, err)
 	t.Run("Issue token includes user type", func(t *testing.T) {
 		id := "1"
@@ -689,7 +690,7 @@ func TestServiceUserIsBlocked(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		userIsBlocked, err := userService.UserIsBlocked(utils.TEST_EMAIL)
@@ -702,7 +703,7 @@ func TestServiceUserIsBlocked(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		userIsBlocked, err := userService.UserIsBlocked(utils.TEST_EMAIL)
@@ -716,7 +717,7 @@ func TestServiceUserIsBlocked(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, mockError)
 
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 
 		_, err = userService.UserIsBlocked(utils.TEST_EMAIL)
@@ -732,7 +733,7 @@ func TestServiceGetUserIdByEmail(t *testing.T) {
 	t.Run("Get user id by email returns error when the email is not registered", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", nil)
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 		email := "john@example.com"
 		userId, err := userService.GetUserIdByEmail(email)
@@ -740,5 +741,59 @@ func TestServiceGetUserIdByEmail(t *testing.T) {
 		assert.Error(t, err)
 		expectedError := models.EmailNotFoundError(email)
 		assert.Equal(t, expectedError, err)
+	})
+}
+
+func TestServiceGoogleAuthentication(t *testing.T) {
+	secretKey, err := hex.DecodeString(SECRET_KEY)
+	assert.NoError(t, err)
+	config := config.Config{TokenDuration: 300, SecretKey: secretKey}
+	mockFirebaseClient := auth.MockFirebaseClient{}
+	idToken := utils.TEST_EMAIL
+	email := utils.TEST_EMAIL
+	mockError := fmt.Errorf("mock error")
+	t.Run("firebase id token verification succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		_, err = userService.VerifyFirebaseIdTokenAndGetEmail(idToken)
+		assert.NoError(t, err)
+	})
+
+	t.Run("google account linking succeeds", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(nil)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		err = userService.LinkGoogleEmail(email)
+		assert.NoError(t, err)
+	})
+
+	t.Run("google account linking returns error when the database query fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(mockError)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		err = userService.LinkGoogleEmail(email)
+		assert.Error(t, err)
+	})
+
+	t.Run("IsEmailLinkedToGoogleAccount works as expected", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		isEmailLinked, err := userService.IsEmailLinkedToGoogleAccount(email)
+		assert.NoError(t, err)
+		assert.True(t, isEmailLinked)
+	})
+
+	t.Run("IsEmailLinkedToGoogleAccount returns error when the database query fails", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, mockError)
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		_, err = userService.IsEmailLinkedToGoogleAccount(email)
+		assert.Error(t, err)
 	})
 }
