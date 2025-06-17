@@ -24,7 +24,7 @@ func TestTokenValidation(t *testing.T) {
 
 	t.Run("validate valid token", func(t *testing.T) {
 		config := config.Config{SecretKey: secretKey, TokenDuration: 300}
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 		_, err = userService.ValidateToken(token)
 		assert.NoError(t, err)
@@ -33,7 +33,7 @@ func TestTokenValidation(t *testing.T) {
 	t.Run("validate expired token returns an error", func(t *testing.T) {
 		// Set token duration to 0
 		config := config.Config{SecretKey: secretKey, TokenDuration: 0}
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 		_, err = userService.ValidateToken(token)
 		// The error should be session expired
@@ -43,7 +43,7 @@ func TestTokenValidation(t *testing.T) {
 
 	t.Run("validate invalid token returns an error", func(t *testing.T) {
 		config := config.Config{SecretKey: secretKey, TokenDuration: 300}
-		userService, err := service.NewService(userRepositoryMock, &config)
+		userService, err := service.NewService(userRepositoryMock, &config, nil)
 		assert.NoError(t, err)
 		invalidToken := "invalid token"
 		_, err = userService.ValidateToken(invalidToken)
