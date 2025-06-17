@@ -37,6 +37,8 @@ services:
       DD_AGENT_HOST: datadog
       DD_SERVICE: user-service
       DD_ENV: prod
+    volumes:
+     - ./firebase_private_key.json:/usr/src/app/firebase_private_key.json
 
   db:
     image: postgres:latest

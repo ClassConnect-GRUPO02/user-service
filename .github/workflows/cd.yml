@@ -124,6 +124,8 @@ jobs:
             export EMAIL=${{ secrets.EMAIL }}
             export EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}"
             export SECRET_KEY=${{ secrets.SECRET_KEY }}
+            touch firebase_private_key.json
+            echo ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }} | base64 --decode > firebase_private_key.json
 
             cp schema.sql schema/schema.sql
             
