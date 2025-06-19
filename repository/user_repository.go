@@ -106,10 +106,12 @@ func (r *UserRepository) AddUserNotificationSettings(id int64, user models.User)
 		)
 	} else if userType == models.Teacher {
 		query = fmt.Sprintf(
-			"INSERT INTO teachers_notifications_settings VALUES (%d, %v, %v, %d, %d);",
+			"INSERT INTO teachers_notifications_settings VALUES (%d, %v, %v, %d, %d, %d, %d);",
 			id,
 			enablePush,
 			enableEmail,
+			models.PushAndEmail,
+			models.PushAndEmail,
 			models.PushAndEmail,
 			models.PushAndEmail,
 		)
@@ -475,12 +477,16 @@ func (r *UserRepository) SetTeacherNotificationSettings(id int64, notificationSe
 		push_enabled = $1,
 		email_enabled = $2,
 		assignment_submission = $3,
-		student_feedback = $4
-		WHERE id = $5`,
+		student_feedback = $4,
+		course_assigned = $5,
+		course_revoked = $6
+		WHERE id = $7`,
 		notificationSettings.PushEnabled,
 		notificationSettings.EmailEnabled,
 		notificationSettings.AssignmentSubmission,
 		notificationSettings.StudentFeedback,
+		notificationSettings.CourseAssigned,
+		notificationSettings.CourseRevoked,
 		id,
 	)
 	if err != nil {
@@ -522,15 +528,17 @@ func (r *UserRepository) GetStudentNotificationSettings(id int64) (*models.Stude
 
 func (r *UserRepository) GetTeacherNotificationSettings(id int64) (*models.TeacherNotificationSettingsRequest, error) {
 	var pushEnabled, emailEnabled bool
-	var assignmentSubmission, studentFeedback models.NotificationPreference
+	var assignmentSubmission, studentFeedback, courseAssigned, courseRevoked models.NotificationPreference
 	err := r.db.QueryRow(
 		`SELECT 
 			push_enabled,
 			email_enabled,
 			assignment_submission,
-			student_feedback
+			student_feedback,
+			course_assigned,
+			course_revoked
 		FROM teachers_notifications_settings WHERE id=$1`, id,
-	).Scan(&pushEnabled, &emailEnabled, &assignmentSubmission, &studentFeedback)
+	).Scan(&pushEnabled, &emailEnabled, &assignmentSubmission, &studentFeedback, &courseAssigned, &courseRevoked)
 	if err != nil {
 		log.Printf("failed to scan row. Error: %s", err)
 		return nil, err
@@ -540,6 +548,8 @@ func (r *UserRepository) GetTeacherNotificationSettings(id int64) (*models.Teach
 		EmailEnabled:         &emailEnabled,
 		AssignmentSubmission: &assignmentSubmission,
 		StudentFeedback:      &studentFeedback,
+		CourseAssigned:       &courseAssigned,
+		CourseRevoked:        &courseRevoked,
 	}
 	return &notificationSettings, nil
 }
