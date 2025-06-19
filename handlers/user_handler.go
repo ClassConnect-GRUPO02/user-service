@@ -782,6 +782,15 @@ func (h *UserHandler) HandleGoogleAuth(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.FailedToVerifyFirebaseToken(c.Request.URL.Path, err.Error()))
 		return
 	}
+	isEmailRegistered, err := h.service.IsEmailRegistered(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	if !isEmailRegistered {
+		c.JSON(http.StatusNotFound, models.EmailNotFoundError(email))
+		return
+	}
 	isEmailLinkedToGoogleAccount, err := h.service.IsEmailLinkedToGoogleAccount(email)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
