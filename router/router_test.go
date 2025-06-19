@@ -2832,6 +2832,7 @@ func TestGoogleAuth(t *testing.T) {
 	mockError := fmt.Errorf("mock error")
 	t.Run("google authentication succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentType, nil)
@@ -2849,6 +2850,7 @@ func TestGoogleAuth(t *testing.T) {
 
 	t.Run("google authentication fails due to email not linked", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, nil)
 
 		mockFirebaseClient := auth.MockFirebaseClient{}
@@ -2862,8 +2864,38 @@ func TestGoogleAuth(t *testing.T) {
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
 	})
 
+	t.Run("google authentication fails due to email not registered", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
+
+		mockFirebaseClient := auth.MockFirebaseClient{}
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
+		request := GoogleAuthRequest(string(requestBody))
+
+		expectedStatusCode := http.StatusNotFound
+		expectedBody := `{"type":"about:blank","title":"The email john@example.com is not registered","status":404,"detail":"User not found","instance":""}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("google authentication fails due to internal server error on repostiory.IsEmailRegistered", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, mockError)
+
+		mockFirebaseClient := auth.MockFirebaseClient{}
+		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
+		request := GoogleAuthRequest(string(requestBody))
+		expectedStatusCode := http.StatusInternalServerError
+		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
+		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
 	t.Run("google authentication fails due to internal server error on repostiory.IsEmailLinkedToGoogleAccount", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, mockError)
 
 		mockFirebaseClient := auth.MockFirebaseClient{}
@@ -2878,6 +2910,7 @@ func TestGoogleAuth(t *testing.T) {
 
 	t.Run("google authentication fails due to internal server error on repostiory.GetUserIdByEmail", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, mockError)
 
@@ -2893,6 +2926,7 @@ func TestGoogleAuth(t *testing.T) {
 
 	t.Run("google authentication fails due to internal server error on repostiory.GetUserType", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
@@ -2939,6 +2973,7 @@ func TestGoogleAuth(t *testing.T) {
 
 	t.Run("linking google account fails due to email already linked", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
 
