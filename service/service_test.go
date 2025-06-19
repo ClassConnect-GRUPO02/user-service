@@ -370,6 +370,8 @@ func TestServiceSetTeacherNotificationSettings(t *testing.T) {
 		EmailEnabled:         &emailEnabled,
 		AssignmentSubmission: &pushAndEmail,
 		StudentFeedback:      &pushAndEmail,
+		CourseAssigned:       &pushAndEmail,
+		CourseRevoked:        &pushAndEmail,
 	}
 
 	t.Run("set teacher notification settings succeeds", func(t *testing.T) {
@@ -405,6 +407,8 @@ func TestServiceGetUserNotificationSettings(t *testing.T) {
 		EmailEnabled:         &emailEnabled,
 		AssignmentSubmission: &pushAndEmail,
 		StudentFeedback:      &pushAndEmail,
+		CourseAssigned:       &pushAndEmail,
+		CourseRevoked:        &pushAndEmail,
 	}
 	studentNotificationSettings := models.StudentNotificationSettingsRequest{
 		PushEnabled:      &pushEnabled,
@@ -453,6 +457,8 @@ func TestServiceGetUserNotificationPreferences(t *testing.T) {
 		EmailEnabled:         &emailEnabled,
 		AssignmentSubmission: &push,
 		StudentFeedback:      &email,
+		CourseAssigned:       &pushAndEmail,
+		CourseRevoked:        &pushAndEmail,
 	}
 	studentNotificationSettings := models.StudentNotificationSettingsRequest{
 		PushEnabled:      &pushEnabled,

@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS teachers_notifications_settings (
     push_enabled BOOLEAN,
     email_enabled BOOLEAN,
     assignment_submission SMALLINT,
-    student_feedback SMALLINT
+    student_feedback SMALLINT,
+    course_assigned SMALLINT,
+    course_revoked SMALLINT
 );
 
 CREATE TABLE IF NOT EXISTS verification_pins (

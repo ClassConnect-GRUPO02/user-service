@@ -1745,6 +1745,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		EmailEnabled:         &emailEnabled,
 		AssignmentSubmission: &pushAndEmail,
 		StudentFeedback:      &pushAndEmail,
+		CourseAssigned:       &pushAndEmail,
+		CourseRevoked:        &pushAndEmail,
 	}
 	studentUserType := "alumno"
 	teacherUserType := "docente"
@@ -1918,6 +1920,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		EmailEnabled:         &emailEnabled,
 		AssignmentSubmission: &pushAndEmail,
 		StudentFeedback:      &pushAndEmail,
+		CourseAssigned:       &pushAndEmail,
+		CourseRevoked:        &pushAndEmail,
 	}
 	studentUserType := "alumno"
 	teacherUserType := "docente"
@@ -2116,6 +2120,8 @@ func TestNotifyUser(t *testing.T) {
 		EmailEnabled:         &emailEnabled,
 		AssignmentSubmission: &pushAndEmail,
 		StudentFeedback:      &pushAndEmail,
+		CourseAssigned:       &pushAndEmail,
+		CourseRevoked:        &pushAndEmail,
 	}
 	studentUserType := "alumno"
 	teacherUserType := "docente"
