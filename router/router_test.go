@@ -37,8 +37,8 @@ func TestUserCreation(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("AddUser", mock.Anything).Return(nil)
 		userRepositoryMock.On("AddVerificationPin", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -56,8 +56,8 @@ func TestUserCreation(t *testing.T) {
 	t.Run("User creation fails due to email already registered ", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -76,8 +76,8 @@ func TestUserCreation(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -94,8 +94,8 @@ func TestUserCreation(t *testing.T) {
 
 	t.Run("Request with missing parameters returns bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -127,8 +127,8 @@ func TestUserLogin(t *testing.T) {
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("1", nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -147,8 +147,8 @@ func TestUserLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -171,8 +171,8 @@ func TestUserLogin(t *testing.T) {
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
 		userRepositoryMock.On("IncrementFailedLoginAttempts", mock.Anything, mock.Anything).Return(int64(1), nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -194,8 +194,8 @@ func TestUserLogin(t *testing.T) {
 		blockedUntil := time.Now().Unix() + config.BlockingDuration
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -219,8 +219,8 @@ func TestUserLogin(t *testing.T) {
 		userRepositoryMock.On("PasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -238,8 +238,8 @@ func TestUserLogin(t *testing.T) {
 	t.Run("Request with missing parameters returns bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -266,8 +266,8 @@ func TestGetUsers(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUsers").Return(expectedUsers, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -291,8 +291,8 @@ func TestGetUsers(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUsers").Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -314,8 +314,8 @@ func TestGetUsers(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUsers").Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -335,8 +335,8 @@ func TestGetUsers(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUsers").Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -357,8 +357,8 @@ func TestGetUsers(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUsers").Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -379,8 +379,8 @@ func TestGetUsers(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUsers").Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -412,8 +412,8 @@ func TestGetUsers(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUsersFullInfo", mock.Anything).Return(usersFullInfo, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -437,8 +437,8 @@ func TestGetUsers(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUsersFullInfo", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -465,8 +465,8 @@ func TestGetUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(&userInfo, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -489,8 +489,8 @@ func TestGetUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(&userInfo, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -514,8 +514,8 @@ func TestGetUser(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -537,8 +537,8 @@ func TestGetUser(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -562,8 +562,8 @@ func TestEditUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -586,8 +586,8 @@ func TestEditUser(t *testing.T) {
 	t.Run("Edit user without JWT token returns BadRequest error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -606,8 +606,8 @@ func TestEditUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -632,8 +632,8 @@ func TestEditUser(t *testing.T) {
 		mockError := fmt.Errorf("Mock error")
 		userRepositoryMock.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -659,8 +659,8 @@ func TestEditUser(t *testing.T) {
 		mockError := fmt.Errorf("Mock error")
 		userRepositoryMock.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -683,8 +683,8 @@ func TestEditUser(t *testing.T) {
 	t.Run("Edit user with a JWT token from other user returns error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -717,8 +717,8 @@ func TestCheckEmailExists(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -745,8 +745,8 @@ func TestCheckEmailExists(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -774,8 +774,8 @@ func TestCheckEmailExists(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -795,8 +795,8 @@ func TestCheckEmailExists(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -822,8 +822,8 @@ func TestAdminLogin(t *testing.T) {
 		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetAdminIdByEmail", mock.Anything).Return("1", nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -842,8 +842,8 @@ func TestAdminLogin(t *testing.T) {
 	t.Run("Admin login fails with bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -863,8 +863,8 @@ func TestAdminLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -885,8 +885,8 @@ func TestAdminLogin(t *testing.T) {
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(false, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -907,8 +907,8 @@ func TestAdminLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -930,8 +930,8 @@ func TestAdminLogin(t *testing.T) {
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(false, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -954,8 +954,8 @@ func TestAdminLogin(t *testing.T) {
 		userRepositoryMock.On("AdminPasswordMatches", mock.Anything, mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetAdminIdByEmail", mock.Anything).Return("", mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -981,8 +981,8 @@ func TestAdminRegister(t *testing.T) {
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("AddAdmin", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1002,8 +1002,8 @@ func TestAdminRegister(t *testing.T) {
 
 	t.Run("Admin register fails with bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1025,8 +1025,8 @@ func TestAdminRegister(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1048,8 +1048,8 @@ func TestAdminRegister(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1069,8 +1069,8 @@ func TestAdminRegister(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(true, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1093,8 +1093,8 @@ func TestAdminRegister(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1117,8 +1117,8 @@ func TestAdminRegister(t *testing.T) {
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("AddAdmin", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1141,8 +1141,8 @@ func TestAdminRegister(t *testing.T) {
 		userRepositoryMock.On("IsAdminEmailRegistered", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("AddAdmin", mock.Anything, mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1170,8 +1170,8 @@ func TestBlockUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1196,8 +1196,8 @@ func TestBlockUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1220,8 +1220,8 @@ func TestBlockUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1242,8 +1242,8 @@ func TestBlockUser(t *testing.T) {
 	t.Run("Block user fails with BadRequest when the id is invalid", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1265,8 +1265,8 @@ func TestBlockUser(t *testing.T) {
 	t.Run("Block user fails with InvalidToken when the token is invalid", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1293,8 +1293,8 @@ func TestUnblockUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1319,8 +1319,8 @@ func TestUnblockUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1341,8 +1341,8 @@ func TestUnblockUser(t *testing.T) {
 	t.Run("Unblock user with bad request when the id is invalid", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1365,8 +1365,8 @@ func TestUnblockUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1388,8 +1388,8 @@ func TestUnblockUser(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserBlockedUntil", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1417,8 +1417,8 @@ func TestSetUserType(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserType", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1444,8 +1444,8 @@ func TestSetUserType(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserType", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1468,8 +1468,8 @@ func TestSetUserType(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserType", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1492,8 +1492,8 @@ func TestSetUserType(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserType", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1518,8 +1518,8 @@ func TestSetUserType(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("SetUserType", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1548,8 +1548,8 @@ func TestAddPushToken(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1572,8 +1572,8 @@ func TestAddPushToken(t *testing.T) {
 		invalidId := "abc"
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1598,8 +1598,8 @@ func TestAddPushToken(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		handler := handlers.NewUserHandler(userService)
 
@@ -1624,8 +1624,8 @@ func TestAddPushToken(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1649,8 +1649,8 @@ func TestAddPushToken(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1674,8 +1674,8 @@ func TestAddPushToken(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1699,8 +1699,8 @@ func TestAddPushToken(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddUserPushToken", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken("3", "alumno")
 		assert.NoError(t, err)
@@ -1756,8 +1756,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1773,8 +1773,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1790,8 +1790,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userRepositoryMock.On("SetStudentNotificationSettings", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1807,8 +1807,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(teacherUserType, nil)
 		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
@@ -1824,8 +1824,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(teacherUserType, nil)
 		userRepositoryMock.On("SetTeacherNotificationSettings", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
@@ -1839,8 +1839,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 	t.Run("Set user notification settings fails due invalid jwt token", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		invalidToken := "invalid token"
 		assert.NoError(t, err)
@@ -1854,8 +1854,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 	t.Run("Set user notification settings fails due to user not found", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", errors.New(service.UserNotFoundError))
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
@@ -1869,8 +1869,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 	t.Run("Set user notification settings fails due to internal server error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "docente")
 		assert.NoError(t, err)
@@ -1884,8 +1884,8 @@ func TestSetUserNotificationSettings(t *testing.T) {
 	t.Run("Set user notification settings fails due to mismatching JWT token", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken("3", "docente")
 		assert.NoError(t, err)
@@ -1931,8 +1931,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything).Return(&studentNotificationSettings, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1948,8 +1948,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(teacherUserType, nil)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything).Return(&teacherNotificationSettings, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1963,8 +1963,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 	t.Run("Get user notification settings fails due to invalid token", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		invalidToken := "invalid token"
 		assert.NoError(t, err)
@@ -1978,8 +1978,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 	t.Run("Get user notification settings fails due to invalid id", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -1993,8 +1993,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 	t.Run("Get user notification settings fails due to user not found", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", errors.New(service.UserNotFoundError))
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2007,8 +2007,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 	t.Run("Get user notification settings fails due to internal server error", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2023,8 +2023,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything).Return(nil, errors.New(service.UserNotFoundError))
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2039,8 +2039,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentUserType, nil)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2055,8 +2055,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(teacherUserType, nil)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything).Return(nil, errors.New(service.UserNotFoundError))
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2071,8 +2071,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(teacherUserType, nil)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2085,8 +2085,8 @@ func TestGetUserNotificationSettings(t *testing.T) {
 	t.Run("Get user notification settings fails due to mismatching JWT token", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", errors.New(service.UserNotFoundError))
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken("3", "alumno") // use token of other user
 		assert.NoError(t, err)
@@ -2142,8 +2142,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything).Return(&studentNotificationSettings, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2160,8 +2160,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything).Return(&teacherNotificationSettings, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2175,8 +2175,8 @@ func TestNotifyUser(t *testing.T) {
 	t.Run("Notify user fails due to invalid id", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2191,8 +2191,8 @@ func TestNotifyUser(t *testing.T) {
 	t.Run("Notify user fails due to bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2206,8 +2206,8 @@ func TestNotifyUser(t *testing.T) {
 	t.Run("Notify user fails due to internal server error on repository.GetUser", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2223,8 +2223,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUser", mock.Anything).Return(&student, nil)
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return("", sql.ErrNoRows)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2240,8 +2240,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUser", mock.Anything).Return(&student, nil)
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return("", mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2258,8 +2258,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2276,8 +2276,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
 		userRepositoryMock.On("GetStudentNotificationSettings", mock.Anything).Return(&studentNotificationSettings, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2295,8 +2295,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2313,8 +2313,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything).Return(&teacherNotificationSettings, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2333,8 +2333,8 @@ func TestNotifyUser(t *testing.T) {
 		userRepositoryMock.On("GetUserPushToken", mock.Anything).Return(utils.TEST_PUSH_TOKEN, nil)
 		userRepositoryMock.On("GetTeacherNotificationSettings", mock.Anything).Return(&teacherNotificationSettings, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2359,8 +2359,8 @@ func TestBiometricLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(&user, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, studentUserType)
 		assert.NoError(t, err)
@@ -2376,8 +2376,8 @@ func TestBiometricLogin(t *testing.T) {
 
 	t.Run("Biometric login fails due to bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, studentUserType)
 		assert.NoError(t, err)
@@ -2390,8 +2390,8 @@ func TestBiometricLogin(t *testing.T) {
 
 	t.Run("Biometric login fails due to invalid refresh token", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, studentUserType)
 		assert.NoError(t, err)
@@ -2406,8 +2406,8 @@ func TestBiometricLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, studentUserType)
 		assert.NoError(t, err)
@@ -2425,8 +2425,8 @@ func TestBiometricLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(nil, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, studentUserType)
 		assert.NoError(t, err)
@@ -2445,8 +2445,8 @@ func TestBiometricLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(&user, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(blockedUntil, nil)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, studentUserType)
 		assert.NoError(t, err)
@@ -2466,8 +2466,8 @@ func TestBiometricLogin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUser", mock.Anything).Return(&user, nil)
 		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), mockError)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, studentUserType)
 		assert.NoError(t, err)
@@ -2496,8 +2496,8 @@ func TestVerifyUserEmail(t *testing.T) {
 		userRepositoryMock.On("SetPinAsConsumed", mock.Anything, mock.Anything).Return(nil)
 		userRepositoryMock.On("ActivateUserEmail", mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2511,8 +2511,8 @@ func TestVerifyUserEmail(t *testing.T) {
 	t.Run("Verify user email fails due to invalid request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2527,8 +2527,8 @@ func TestVerifyUserEmail(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(0, false, errors.New(repository.PinNotFoundError))
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2545,8 +2545,8 @@ func TestVerifyUserEmail(t *testing.T) {
 		consumed := true // Pin consumed
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2563,8 +2563,8 @@ func TestVerifyUserEmail(t *testing.T) {
 		consumed := false
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2581,8 +2581,8 @@ func TestVerifyUserEmail(t *testing.T) {
 		consumed := false
 		userRepositoryMock.On("GetPin", mock.Anything, mock.Anything).Return(expirationTimestamp, consumed, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2603,8 +2603,8 @@ func TestRequestNewPin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddVerificationPin", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2618,8 +2618,8 @@ func TestRequestNewPin(t *testing.T) {
 	t.Run("Request new pin fails due to invalid request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2633,8 +2633,8 @@ func TestRequestNewPin(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("AddVerificationPin", mock.Anything, mock.Anything, mock.Anything).Return(errors.New(service.InternalServerError))
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2655,8 +2655,8 @@ func TestResetPassword(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2670,8 +2670,8 @@ func TestResetPassword(t *testing.T) {
 	t.Run("Reset password fails due to bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2685,8 +2685,8 @@ func TestResetPassword(t *testing.T) {
 	t.Run("Reset password fails due to invalid JWT token", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		invalidToken := "invalid token"
 		assert.NoError(t, err)
@@ -2700,8 +2700,8 @@ func TestResetPassword(t *testing.T) {
 	t.Run("Reset password fails due to invalid id", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		invalidId := "abc"
 		token, err := userService.IssueToken(invalidId, "alumno")
@@ -2718,8 +2718,8 @@ func TestResetPassword(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2735,8 +2735,8 @@ func TestResetPassword(t *testing.T) {
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2751,8 +2751,8 @@ func TestResetPassword(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("UpdateUserPassword", mock.Anything, mock.Anything).Return(nil)
 		config.ResetPasswordTokenDuration = 0 // Set token duration to 0
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		token, err := userService.IssueToken(id, "alumno")
 		assert.NoError(t, err)
@@ -2771,8 +2771,8 @@ func TestForgotPassword(t *testing.T) {
 	t.Run("Forgot password succeeds", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
 		request := ForgotPasswordReq(string(requestBody))
@@ -2783,8 +2783,8 @@ func TestForgotPassword(t *testing.T) {
 
 	t.Run("Forgot password fails due to bad request", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		invalidBody := "{}"
 		request := ForgotPasswordReq(invalidBody)
@@ -2797,8 +2797,8 @@ func TestForgotPassword(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		mockError := fmt.Errorf("mock error")
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", mockError)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
 		request := ForgotPasswordReq(string(requestBody))
@@ -2810,8 +2810,8 @@ func TestForgotPassword(t *testing.T) {
 	t.Run("Forgot password returns error 404 when the given email is not registered", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return("", nil)
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.ForgotPasswordRequest{Email: utils.TEST_EMAIL})
 		request := ForgotPasswordReq(string(requestBody))
@@ -2837,8 +2837,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentType, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := GoogleAuthRequest(string(requestBody))
@@ -2853,8 +2853,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := GoogleAuthRequest(string(requestBody))
@@ -2868,8 +2868,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := GoogleAuthRequest(string(requestBody))
@@ -2883,8 +2883,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := GoogleAuthRequest(string(requestBody))
@@ -2898,8 +2898,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := GoogleAuthRequest(string(requestBody))
@@ -2914,8 +2914,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := GoogleAuthRequest(string(requestBody))
@@ -2931,8 +2931,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := GoogleAuthRequest(string(requestBody))
@@ -2947,8 +2947,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := LinkGoogleEmail(string(requestBody))
@@ -2961,8 +2961,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := LinkGoogleEmail(string(requestBody))
@@ -2977,8 +2977,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := LinkGoogleEmail(string(requestBody))
@@ -2993,8 +2993,8 @@ func TestGoogleAuth(t *testing.T) {
 		// userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, nil)
 		// userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := LinkGoogleEmail(string(requestBody))
@@ -3009,8 +3009,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, mockError)
 		// userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(nil)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := LinkGoogleEmail(string(requestBody))
@@ -3025,8 +3025,8 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(false, nil)
 		userRepositoryMock.On("LinkGoogleEmail", mock.Anything).Return(mockError)
 
-		mockFirebaseClient := auth.MockFirebaseClient{}
-		userService, err := service.NewService(userRepositoryMock, &config, &mockFirebaseClient)
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
 		assert.NoError(t, err)
 		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
 		request := LinkGoogleEmail(string(requestBody))
