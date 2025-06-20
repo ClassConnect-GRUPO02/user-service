@@ -776,9 +776,9 @@ func (h *UserHandler) HandleGoogleAuth(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
-	email, err := h.service.VerifyFirebaseIdTokenAndGetEmail(request.IdToken)
+	email, err := h.service.ValidateIdTokenAndGetEmail(request.IdToken)
 	if err != nil {
-		log.Printf("failed to verify Firebase id token. Error: %s", err)
+		log.Printf("failed to verify Google id token. Error: %s", err)
 		c.JSON(http.StatusBadRequest, models.FailedToVerifyFirebaseToken(c.Request.URL.Path, err.Error()))
 		return
 	}
@@ -845,7 +845,7 @@ func (h *UserHandler) LinkGoogleEmail(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.BadRequestMissingFields(c.Request.URL.Path))
 		return
 	}
-	email, err := h.service.VerifyFirebaseIdTokenAndGetEmail(request.IdToken)
+	email, err := h.service.ValidateIdTokenAndGetEmail(request.IdToken)
 	if err != nil {
 		log.Printf("failed to verify Firebase id token. Error: %s", err)
 		c.JSON(http.StatusBadRequest, models.FailedToVerifyFirebaseToken(c.Request.URL.Path, err.Error()))

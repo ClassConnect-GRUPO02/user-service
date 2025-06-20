@@ -31,10 +31,10 @@ type Service struct {
 	loginAttemptsLimit         int64
 	email                      string
 	emailPassword              string
-	firebaseClient             auth.FirebaseClient
+	idTokenValidator           auth.IdTokenValidator
 }
 
-func NewService(repository repository.Repository, config *config.Config, firebaseClient auth.FirebaseClient) (*Service, error) {
+func NewService(repository repository.Repository, config *config.Config, idTokenValidator auth.IdTokenValidator) (*Service, error) {
 	service := Service{
 		userRepository:             repository,
 		tokenDuration:              config.TokenDuration,
@@ -47,7 +47,7 @@ func NewService(repository repository.Repository, config *config.Config, firebas
 		emailPassword:              config.EmailPassword,
 		verificationPinDuration:    config.VerificationPinDuration,
 		resetPasswordTokenDuration: config.ResetPasswordTokenDuration,
-		firebaseClient:             firebaseClient,
+		idTokenValidator:           idTokenValidator,
 	}
 	return &service, nil
 }
@@ -534,16 +534,12 @@ func (s *Service) ResetPassword(id int64, password string) error {
 	return nil
 }
 
-func (s *Service) VerifyFirebaseIdTokenAndGetEmail(idToken string) (string, error) {
-	token, err := s.firebaseClient.VerifyIDToken(context.Background(), idToken)
+func (s *Service) ValidateIdTokenAndGetEmail(idToken string) (string, error) {
+	audience := "120382293299-ds3j4ogbipqrb553mj4qj8rqt5ihgjo2.apps.googleusercontent.com"
+	email, err := s.idTokenValidator.ValidateIdToken(context.Background(), idToken, audience)
 	if err != nil {
 		return "", err
 	}
-	tokenEmail, ok := token.Claims["email"]
-	if !ok {
-		return "", fmt.Errorf("missing email on idToken")
-	}
-	email := fmt.Sprint(tokenEmail)
 	return email, nil
 }
 
