@@ -632,3 +632,12 @@ func (r *UserRepository) IsEmailLinkedToGoogleAccount(email string) (bool, error
 	log.Printf("email linked to google account: %v", emailLinked)
 	return emailLinked, nil
 }
+
+func (r *UserRepository) AddModificationLog(affectedUserId int64, modification string, date string) error {
+	_, err := r.db.Exec(`INSERT INTO user_modifications VALUES (DEFAULT, $1, $2, $3)`, affectedUserId, modification, date)
+	if err != nil {
+		log.Printf("Failed to add user modification log. Error: %s", err)
+		return err
+	}
+	return nil
+}

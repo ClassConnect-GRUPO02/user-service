@@ -40,4 +40,5 @@ type Repository interface {
 	GetAdminIdByEmail(email string) (string, error)
 	AddAdmin(email, name, password string) error
 	SetUserType(id int64, userType string) error
+	AddModificationLog(affectedUserId int64, modification string, date string) error
 }

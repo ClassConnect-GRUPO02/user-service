@@ -49,6 +49,24 @@ func (_m *Repository) AddAdmin(email string, name string, password string) error
 	return r0
 }
 
+// AddModificationLog provides a mock function with given fields: affectedUserId, modification, date
+func (_m *Repository) AddModificationLog(affectedUserId int64, modification string, date string) error {
+	ret := _m.Called(affectedUserId, modification, date)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddModificationLog")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, string, string) error); ok {
+		r0 = rf(affectedUserId, modification, date)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddUser provides a mock function with given fields: user
 func (_m *Repository) AddUser(user models.User) error {
 	ret := _m.Called(user)
