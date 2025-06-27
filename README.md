@@ -30,3 +30,7 @@ docker compose -f docker-compose-test.yaml up
 ```
 
 Esto ejecuta tanto los test de integración (servicio + db) como los tests unitarios.
+
+## API
+
+La documentación de la API está disponible en el formato especificado según OpenAPI en el archivo [docs/swagger.yaml](./docs/swagger.yaml).
