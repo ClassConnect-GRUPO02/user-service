@@ -1,4 +1,51 @@
 definitions:
+  models.AddPushTokenRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  models.BiometricLoginRequest:
+    properties:
+      refreshToken:
+        type: string
+    required:
+    - refreshToken
+    type: object
+  models.CreateAdminRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  models.EditUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  models.EmailVerificationRequest:
+    properties:
+      email:
+        type: string
+      pin:
+        type: integer
+    required:
+    - email
+    - pin
+    type: object
   models.Error:
     properties:
       detail:
@@ -12,7 +59,57 @@ definitions:
       type:
         type: string
     type: object
-    
+  models.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  models.GoogleAuthRequest:
+    properties:
+      idToken:
+        type: string
+    required:
+    - idToken
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.NotifyUserRequest:
+    properties:
+      body:
+        type: string
+      notificationType:
+        type: string
+      title:
+        type: string
+    required:
+    - body
+    - notificationType
+    - title
+    type: object
+  models.RequestNewVerificationPin:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  models.ResetPasswordRequest:
+    properties:
+      newPassword:
+        type: string
+    required:
+    - newPassword
+    type: object
   models.User:
     properties:
       email:
@@ -35,10 +132,435 @@ definitions:
     - password
     - userType
     type: object
+  models.UserPublicInfo:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      userType:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /admin-login:
+    post:
+      consumes:
+      - application/json
+      description: Valida las credenciales del administrador y retorna un token de
+        acceso
+      parameters:
+      - description: Credenciales de login del administrador
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Login exitoso, devuelve token
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Campos faltantes o inválidos
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Credenciales inválidas
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Inicio de sesión para administradores
+      tags:
+      - admins
+  /admins:
+    post:
+      consumes:
+      - application/json
+      description: Permite a un administrador autenticado registrar otro administrador
+      parameters:
+      - description: Datos del nuevo administrador
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Administrador creado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Campos faltantes o inválidos
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o no autorizado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Crea un nuevo administrador
+      tags:
+      - admins
+  /auth/link-gmail:
+    post:
+      consumes:
+      - application/json
+      description: Valida el IdToken de Google, verifica que el email esté registrado
+        y no vinculado previamente, y luego vincula la cuenta
+      parameters:
+      - description: Token de identificación de Google
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.GoogleAuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email Google vinculado exitosamente
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Campos inválidos o fallo al verificar token Firebase
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Email no registrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "409":
+          description: Email Google ya vinculado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Vincula un email Google a una cuenta existente
+      tags:
+      - auth
+  /biometric-login:
+    post:
+      consumes:
+      - application/json
+      description: Valida el refresh token previamente emitido para permitir login
+        biométrico sin credenciales
+      parameters:
+      - description: Refresh token para login biométrico
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.BiometricLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Login exitoso, devuelve nuevo token
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Campos faltantes
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o expirado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "403":
+          description: Usuario bloqueado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Inicia sesión usando login biométrico
+      tags:
+      - auth
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Valida las credenciales del usuario y retorna un token de acceso
+        y refresh
+      parameters:
+      - description: Credenciales de login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Login exitoso, devuelve tokens
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Campos faltantes o ID inválido
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Credenciales inválidas
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Inicia sesión de usuario
+      tags:
+      - auth
+  /user/{id}:
+    get:
+      description: Devuelve la información de un usuario. Si el usuario autenticado
+        solicita su propia información, se incluyen campos privados. De lo contrario,
+        solo se devuelven los datos públicos.
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Información del usuario (completa o pública)
+          schema:
+            $ref: '#/definitions/models.UserPublicInfo'
+        "401":
+          description: Token inválido o faltante
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Obtiene un usuario por ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Permite a un usuario autenticado modificar su propia información
+        personal
+      parameters:
+      - description: ID del usuario a editar
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Datos del usuario a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.EditUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario actualizado exitosamente
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: ID inválido o datos faltantes
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o no coincide con el ID
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Edita la información de un usuario
+      tags:
+      - users
+  /user/{id}/block:
+    put:
+      description: Permite a un administrador bloquear a un usuario específico por
+        ID
+      parameters:
+      - description: ID del usuario a bloquear
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario bloqueado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o no autorizado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Bloquea a un usuario
+      tags:
+      - users
+  /user/{id}/type/{type}:
+    put:
+      description: Permite a un administrador actualizar el tipo (rol) de un usuario
+        específico
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Nuevo tipo de usuario
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tipo de usuario actualizado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o no autorizado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Cambia el tipo de usuario
+      tags:
+      - users
+  /user/{id}/unblock:
+    put:
+      description: Permite a un administrador desbloquear a un usuario específico
+        por ID
+      parameters:
+      - description: ID del usuario a desbloquear
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario desbloqueado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o no autorizado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Desbloquea a un usuario
+      tags:
+      - users
   /users:
+    get:
+      description: Devuelve una lista de usuarios. Si el requester es un administrador,
+        se incluye información adicional.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de usuarios (con info extendida si es admin)
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token inválido o faltante
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Obtiene todos los usuarios
+      tags:
+      - users
     post:
       consumes:
       - application/json
@@ -62,6 +584,275 @@ paths:
           schema:
             $ref: '#/definitions/models.Error'
       summary: Crea un nuevo usuario
+      tags:
+      - users
+  /users/{id}/notification-settings:
+    put:
+      consumes:
+      - application/json
+      description: Permite a un usuario autenticado modificar sus preferencias de
+        notificación según su tipo (Student o Teacher)
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Configuración de notificaciones específica para Student o Teacher
+        in: body
+        name: request
+        required: true
+        schema: {}
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuración de notificaciones actualizada exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID inválido o campos faltantes
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o no autorizado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Actualiza la configuración de notificaciones del usuario
+      tags:
+      - users
+  /users/{id}/notifications:
+    post:
+      consumes:
+      - application/json
+      description: Programa el envío de una notificación push y/o email según las
+        preferencias del usuario
+      parameters:
+      - description: ID del usuario receptor
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Datos de la notificación (título, cuerpo, tipo)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.NotifyUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Notificación programada correctamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID inválido o campos faltantes o tipo de notificación inválido
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Token push no encontrado para el usuario
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Envía una notificación a un usuario
+      tags:
+      - users
+  /users/{id}/push-token:
+    post:
+      consumes:
+      - application/json
+      description: Permite a un usuario autenticado registrar un token push para recibir
+        notificaciones
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Token push a registrar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddPushTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token push registrado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID inválido o campos faltantes
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token inválido o usuario no autorizado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Agrega un push token para notificaciones
+      tags:
+      - users
+  /users/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Envía un email con un enlace para restablecer la contraseña del
+        usuario
+      parameters:
+      - description: Email del usuario que solicita el reset
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email enviado exitosamente
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Campos faltantes o inválidos
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error al enviar el email
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Solicita recuperación de contraseña
+      tags:
+      - users
+  /users/request-new-pin:
+    post:
+      consumes:
+      - application/json
+      description: Envía un nuevo PIN de verificación al correo electrónico del usuario
+      parameters:
+      - description: Email del usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.RequestNewVerificationPin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: PIN enviado correctamente
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Solicita un nuevo PIN de verificación
+      tags:
+      - users
+  /users/reset-password:
+    put:
+      consumes:
+      - application/json
+      description: Permite al usuario autenticado cambiar su contraseña utilizando
+        un token válido
+      parameters:
+      - description: Nueva contraseña del usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contraseña actualizada exitosamente
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Datos inválidos o campos faltantes
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Token expirado o inválido
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Restablece la contraseña de un usuario
+      tags:
+      - users
+  /users/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifica que el usuario haya ingresado correctamente el PIN enviado
+        por correo
+      parameters:
+      - description: Email y PIN de verificación
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmailVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Campos faltantes
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: PIN inválido, consumido o expirado
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Verifica el email de un usuario
       tags:
       - users
 swagger: "2.0"

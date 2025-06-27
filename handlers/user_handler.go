@@ -65,6 +65,17 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	})
 }
 
+// VerifyUserEmail godoc
+// @Summary      Verifica el email de un usuario
+// @Description  Verifica que el usuario haya ingresado correctamente el PIN enviado por correo
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.EmailVerificationRequest  true  "Email y PIN de verificación"
+// @Success      200      {object}  map[string]interface{}
+// @Failure      400      {object}  models.Error  "Campos faltantes"
+// @Failure      401      {object}  models.Error  "PIN inválido, consumido o expirado"
+// @Router       /users/verify [post]
 func (h *UserHandler) VerifyUserEmail(c *gin.Context) {
 	request := models.EmailVerificationRequest{}
 	if err := c.ShouldBind(&request); err != nil {
@@ -92,6 +103,16 @@ func (h *UserHandler) VerifyUserEmail(c *gin.Context) {
 	})
 }
 
+// RequestNewPin godoc
+// @Summary      Solicita un nuevo PIN de verificación
+// @Description  Envía un nuevo PIN de verificación al correo electrónico del usuario
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.RequestNewVerificationPin  true  "Email del usuario"
+// @Success      200      {object}  map[string]interface{}  "PIN enviado correctamente"
+// @Failure      500      {object}  models.Error  "Error interno"
+// @Router       /users/request-new-pin [post]
 func (h *UserHandler) RequestNewPin(c *gin.Context) {
 	request := models.RequestNewVerificationPin{}
 	if err := c.ShouldBind(&request); err != nil {
@@ -115,6 +136,19 @@ func (h *UserHandler) RequestNewPin(c *gin.Context) {
 	})
 }
 
+// HandleLogin godoc
+// @Summary      Inicia sesión de usuario
+// @Description  Valida las credenciales del usuario y retorna un token de acceso y refresh
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.LoginRequest       true  "Credenciales de login"
+// @Success      202      {object}  map[string]interface{}    "Login exitoso, devuelve tokens"
+// @Failure      400      {object}  models.Error  "Campos faltantes o ID inválido"
+// @Failure      401      {object}  models.Error  "Credenciales inválidas"
+// @Failure      404      {object}  models.Error  "Usuario no encontrado"
+// @Failure      500      {object}  models.Error  "Error interno del servidor"
+// @Router       /login [post]
 func (h *UserHandler) HandleLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
@@ -165,6 +199,20 @@ func (h *UserHandler) HandleLogin(c *gin.Context) {
 	})
 }
 
+// HandleBiometricLogin godoc
+// @Summary      Inicia sesión usando login biométrico
+// @Description  Valida el refresh token previamente emitido para permitir login biométrico sin credenciales
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.BiometricLoginRequest  true  "Refresh token para login biométrico"
+// @Success      202      {object}  map[string]interface{}        "Login exitoso, devuelve nuevo token"
+// @Failure      400      {object}  models.Error      "Campos faltantes"
+// @Failure      401      {object}  models.Error      "Token inválido o expirado"
+// @Failure      403      {object}  models.Error      "Usuario bloqueado"
+// @Failure      404      {object}  models.Error      "Usuario no encontrado"
+// @Failure      500      {object}  models.Error      "Error interno del servidor"
+// @Router       /biometric-login [post]
 func (h *UserHandler) HandleBiometricLogin(c *gin.Context) {
 	loginRequest := models.BiometricLoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
@@ -206,6 +254,16 @@ func (h *UserHandler) HandleBiometricLogin(c *gin.Context) {
 	})
 }
 
+// GetUsers godoc
+// @Summary      Obtiene todos los usuarios
+// @Description  Devuelve una lista de usuarios. Si el requester es un administrador, se incluye información adicional.
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200  {object}  map[string]interface{}  "Lista de usuarios (con info extendida si es admin)"
+// @Failure      401  {object}  models.Error  "Token inválido o faltante"
+// @Failure      500  {object}  models.Error  "Error interno del servidor"
+// @Router       /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -236,6 +294,18 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 	})
 }
 
+// GetUser godoc
+// @Summary      Obtiene un usuario por ID
+// @Description  Devuelve la información de un usuario. Si el usuario autenticado solicita su propia información, se incluyen campos privados. De lo contrario, solo se devuelven los datos públicos.
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id   path      string  true  "ID del usuario"
+// @Success      200  {object}  models.UserPublicInfo  "Información del usuario (completa o pública)"
+// @Failure      401  {object}  models.Error  "Token inválido o faltante"
+// @Failure      404  {object}  models.Error  "Usuario no encontrado"
+// @Failure      500  {object}  models.Error  "Error interno del servidor"
+// @Router       /user/{id} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -272,6 +342,21 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	})
 }
 
+// EditUser godoc
+// @Summary      Edita la información de un usuario
+// @Description  Permite a un usuario autenticado modificar su propia información personal
+// @Tags         users
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                   true  "ID del usuario a editar"
+// @Param        request  body      models.EditUserRequest   true  "Datos del usuario a actualizar"
+// @Success      200      {object}  map[string]string        "Usuario actualizado exitosamente"
+// @Failure      400      {object}  models.Error "ID inválido o datos faltantes"
+// @Failure      401      {object}  models.Error "Token inválido o no coincide con el ID"
+// @Failure      404      {object}  models.Error "Usuario no encontrado"
+// @Failure      500      {object}  models.Error "Error interno del servidor"
+// @Router       /user/{id} [put]
 func (h *UserHandler) EditUser(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -304,6 +389,20 @@ func (h *UserHandler) EditUser(c *gin.Context) {
 	})
 }
 
+// ResetPassword godoc
+// @Summary      Restablece la contraseña de un usuario
+// @Description  Permite al usuario autenticado cambiar su contraseña utilizando un token válido
+// @Tags         users
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.ResetPasswordRequest  true  "Nueva contraseña del usuario"
+// @Success      200      {object}  map[string]string            "Contraseña actualizada exitosamente"
+// @Failure      400      {object}  models.Error                 "Datos inválidos o campos faltantes"
+// @Failure      401      {object}  models.Error                 "Token expirado o inválido"
+// @Failure      404      {object}  models.Error                 "Usuario no encontrado"
+// @Failure      500      {object}  models.Error                 "Error interno del servidor"
+// @Router       /users/reset-password [put]
 func (h *UserHandler) ResetPassword(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -336,6 +435,18 @@ func (h *UserHandler) ResetPassword(c *gin.Context) {
 	})
 }
 
+// ForgotPassword godoc
+// @Summary      Solicita recuperación de contraseña
+// @Description  Envía un email con un enlace para restablecer la contraseña del usuario
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.ForgotPasswordRequest  true  "Email del usuario que solicita el reset"
+// @Success      200      {object}  map[string]string             "Email enviado exitosamente"
+// @Failure      400      {object}  models.Error                  "Campos faltantes o inválidos"
+// @Failure      404      {object}  models.Error                  "Usuario no encontrado"
+// @Failure      500      {object}  models.Error                  "Error al enviar el email"
+// @Router       /users/forgot-password [post]
 func (h *UserHandler) ForgotPassword(c *gin.Context) {
 	forgotPasswordRequest := models.ForgotPasswordRequest{}
 	if err := c.ShouldBind(&forgotPasswordRequest); err != nil {
@@ -412,6 +523,18 @@ func (h *UserHandler) EmailExists(c *gin.Context) {
 	})
 }
 
+// HandleAdminLogin godoc
+// @Summary      Inicio de sesión para administradores
+// @Description  Valida las credenciales del administrador y retorna un token de acceso
+// @Tags         admins
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.LoginRequest  true  "Credenciales de login del administrador"
+// @Success      202      {object}  map[string]interface{}  "Login exitoso, devuelve token"
+// @Failure      400      {object}  models.Error        "Campos faltantes o inválidos"
+// @Failure      401      {object}  models.Error        "Credenciales inválidas"
+// @Failure      500      {object}  models.Error        "Error interno del servidor"
+// @Router       /admin-login [post]
 func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 	loginRequest := models.LoginRequest{}
 	if err := c.ShouldBind(&loginRequest); err != nil {
@@ -441,6 +564,19 @@ func (h *UserHandler) HandleAdminLogin(c *gin.Context) {
 	})
 }
 
+// CreateAdmin godoc
+// @Summary      Crea un nuevo administrador
+// @Description  Permite a un administrador autenticado registrar otro administrador
+// @Tags         admins
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.CreateAdminRequest  true  "Datos del nuevo administrador"
+// @Success      201      {object}  map[string]interface{}    "Administrador creado exitosamente"
+// @Failure      400      {object}  models.Error              "Campos faltantes o inválidos"
+// @Failure      401      {object}  models.Error              "Token inválido o no autorizado"
+// @Failure      500      {object}  models.Error              "Error interno del servidor"
+// @Router       /admins [post]
 func (h *UserHandler) CreateAdmin(c *gin.Context) {
 	admin := models.CreateAdminRequest{}
 	token, err := h.ValidateToken(c)
@@ -468,6 +604,18 @@ func (h *UserHandler) CreateAdmin(c *gin.Context) {
 	})
 }
 
+// BlockUser godoc
+// @Summary      Bloquea a un usuario
+// @Description  Permite a un administrador bloquear a un usuario específico por ID
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id    path      string         true  "ID del usuario a bloquear"
+// @Success      200   {object}  map[string]interface{}  "Usuario bloqueado exitosamente"
+// @Failure      400   {object}  models.Error           "ID inválido"
+// @Failure      401   {object}  models.Error           "Token inválido o no autorizado"
+// @Failure      500   {object}  models.Error           "Error interno del servidor"
+// @Router       /user/{id}/block [put]
 func (h *UserHandler) BlockUser(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -495,6 +643,18 @@ func (h *UserHandler) BlockUser(c *gin.Context) {
 	})
 }
 
+// UnblockUser godoc
+// @Summary      Desbloquea a un usuario
+// @Description  Permite a un administrador desbloquear a un usuario específico por ID
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id    path      string         true  "ID del usuario a desbloquear"
+// @Success      200   {object}  map[string]interface{}  "Usuario desbloqueado exitosamente"
+// @Failure      400   {object}  models.Error           "ID inválido"
+// @Failure      401   {object}  models.Error           "Token inválido o no autorizado"
+// @Failure      500   {object}  models.Error           "Error interno del servidor"
+// @Router       /user/{id}/unblock [put]
 func (h *UserHandler) UnblockUser(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -522,6 +682,19 @@ func (h *UserHandler) UnblockUser(c *gin.Context) {
 	})
 }
 
+// SetUserType godoc
+// @Summary      Cambia el tipo de usuario
+// @Description  Permite a un administrador actualizar el tipo (rol) de un usuario específico
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id       path      string         true  "ID del usuario"
+// @Param        type     path      string         true  "Nuevo tipo de usuario"
+// @Success      200      {object}  map[string]interface{}  "Tipo de usuario actualizado exitosamente"
+// @Failure      400      {object}  models.Error           "ID inválido"
+// @Failure      401      {object}  models.Error           "Token inválido o no autorizado"
+// @Failure      500      {object}  models.Error           "Error interno del servidor"
+// @Router       /user/{id}/type/{type} [put]
 func (h *UserHandler) SetUserType(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -550,6 +723,20 @@ func (h *UserHandler) SetUserType(c *gin.Context) {
 	})
 }
 
+// AddPushToken godoc
+// @Summary      Agrega un push token para notificaciones
+// @Description  Permite a un usuario autenticado registrar un token push para recibir notificaciones
+// @Tags         users
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                  true  "ID del usuario"
+// @Param        request  body      models.AddPushTokenRequest  true  "Token push a registrar"
+// @Success      200      {object}  map[string]interface{}   "Token push registrado exitosamente"
+// @Failure      400      {object}  models.Error             "ID inválido o campos faltantes"
+// @Failure      401      {object}  models.Error             "Token inválido o usuario no autorizado"
+// @Failure      500      {object}  models.Error             "Error interno del servidor"
+// @Router       /users/{id}/push-token [post]
 func (h *UserHandler) AddPushToken(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -594,6 +781,19 @@ func (h *UserHandler) AddPushToken(c *gin.Context) {
 	})
 }
 
+// NotifyUser godoc
+// @Summary      Envía una notificación a un usuario
+// @Description  Programa el envío de una notificación push y/o email según las preferencias del usuario
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                 true  "ID del usuario receptor"
+// @Param        request  body      models.NotifyUserRequest  true  "Datos de la notificación (título, cuerpo, tipo)"
+// @Success      200      {object}  map[string]interface{}  "Notificación programada correctamente"
+// @Failure      400      {object}  models.Error            "ID inválido o campos faltantes o tipo de notificación inválido"
+// @Failure      404      {object}  models.Error            "Token push no encontrado para el usuario"
+// @Failure      500      {object}  models.Error            "Error interno del servidor"
+// @Router       /users/{id}/notifications [post]
 func (h *UserHandler) NotifyUser(c *gin.Context) {
 	request := models.NotifyUserRequest{}
 	idString := c.Param("id")
@@ -674,6 +874,21 @@ func (h *UserHandler) NotifyUser(c *gin.Context) {
 	})
 }
 
+// SetUserNotificationSettings godoc
+// @Summary      Actualiza la configuración de notificaciones del usuario
+// @Description  Permite a un usuario autenticado modificar sus preferencias de notificación según su tipo (Student o Teacher)
+// @Tags         users
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string      true  "ID del usuario"
+// @Param        request  body      interface{} true  "Configuración de notificaciones específica para Student o Teacher"
+// @Success      200      {object}  map[string]interface{}  "Configuración de notificaciones actualizada exitosamente"
+// @Failure      400      {object}  models.Error           "ID inválido o campos faltantes"
+// @Failure      401      {object}  models.Error           "Token inválido o no autorizado"
+// @Failure      404      {object}  models.Error           "Usuario no encontrado"
+// @Failure      500      {object}  models.Error           "Error interno del servidor"
+// @Router       /users/{id}/notification-settings [put]
 func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -730,6 +945,20 @@ func (h *UserHandler) SetUserNotificationSettings(c *gin.Context) {
 	})
 }
 
+// GetUserNotificationSettings godoc
+// @Summary      Obtiene la configuración de notificaciones de un usuario
+// @Description  Devuelve las preferencias de notificación según el tipo de usuario (Student o Teacher)
+// @Tags         users
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id    path      string    true  "ID del usuario"
+// @Success      200   {object}  interface{}  "Configuración de notificaciones específica del usuario"
+// @Failure      400   {object}  models.Error "ID inválido"
+// @Failure      401   {object}  models.Error "Token inválido o no autorizado"
+// @Failure      404   {object}  models.Error "Usuario no encontrado"
+// @Failure      500   {object}  models.Error "Error interno del servidor"
+// @Router       /users/{id}/notification-settings [get]
+
 func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 	token, err := h.ValidateToken(c)
 	if err != nil {
@@ -778,6 +1007,20 @@ func (h *UserHandler) GetUserNotificationSettings(c *gin.Context) {
 		c.JSON(http.StatusOK, notificationSettings)
 	}
 }
+
+// HandleGoogleAuth godoc
+// @Summary      Autenticación con Google
+// @Description  Valida el IdToken de Google, verifica que el email esté registrado y vinculado, y emite tokens JWT
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.GoogleAuthRequest  true  "Token de identificación de Google"
+// @Success      202      {object}  map[string]interface{}    "Login exitoso, con token y refresh token"
+// @Failure      400      {object}  models.Error              "Campos inválidos o token Google no verificado"
+// @Failure      401      {object}  models.Error              "Email no vinculado a cuenta Google"
+// @Failure      404      {object}  models.Error              "Email no registrado o usuario no encontrado"
+// @Failure      500      {object}  models.Error              "Error interno del servidor"
+// @Router       /auth/google [post]
 
 func (h *UserHandler) HandleGoogleAuth(c *gin.Context) {
 	request := models.GoogleAuthRequest{}
@@ -848,6 +1091,19 @@ func (h *UserHandler) HandleGoogleAuth(c *gin.Context) {
 	})
 }
 
+// LinkGoogleEmail godoc
+// @Summary      Vincula un email Google a una cuenta existente
+// @Description  Valida el IdToken de Google, verifica que el email esté registrado y no vinculado previamente, y luego vincula la cuenta
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.GoogleAuthRequest  true  "Token de identificación de Google"
+// @Success      200      {object}  map[string]string         "Email Google vinculado exitosamente"
+// @Failure      400      {object}  models.Error              "Campos inválidos o fallo al verificar token Firebase"
+// @Failure      401      {object}  models.Error              "Email no registrado"
+// @Failure      409      {object}  models.Error              "Email Google ya vinculado"
+// @Failure      500      {object}  models.Error              "Error interno del servidor"
+// @Router       /auth/link-gmail [post]
 func (h *UserHandler) LinkGoogleEmail(c *gin.Context) {
 	request := models.GoogleAuthRequest{}
 	if err := c.ShouldBind(&request); err != nil {
