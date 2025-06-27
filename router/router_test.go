@@ -2888,6 +2888,7 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentType, nil)
 
@@ -2916,6 +2917,26 @@ func TestGoogleAuth(t *testing.T) {
 		expectedStatusCode := http.StatusUnauthorized
 		expectedBody := `{"type":"about:blank","title":"Google email not linked to existing account","status":401,"detail":"The Google email john@example.com is not linked to any existing account","instance":""}`
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("google authentication fails due to user blocked", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		blockedUntil := time.Now().Unix() + 30
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(blockedUntil), nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentType, nil)
+
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
+		request := GoogleAuthRequest(string(requestBody))
+		expectedStatusCode := http.StatusForbidden
+		statusCode, _, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatusCode, statusCode)
 	})
 
 	t.Run("google authentication fails due to email not registered", func(t *testing.T) {
@@ -2962,10 +2983,28 @@ func TestGoogleAuth(t *testing.T) {
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
 	})
 
+	t.Run("google authentication fails due to internal server error on repository.UserBlockedUntil", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(0, mockError)
+
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
+		request := GoogleAuthRequest(string(requestBody))
+		expectedStatusCode := http.StatusInternalServerError
+		statusCode, _, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatusCode, statusCode)
+	})
+
 	t.Run("google authentication fails due to internal server error on repostiory.GetUserIdByEmail", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, mockError)
 
 		idTokenValidator := auth.MockIdTokenValidator{}
@@ -2982,6 +3021,7 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
 
