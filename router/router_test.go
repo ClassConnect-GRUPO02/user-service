@@ -2919,6 +2919,26 @@ func TestGoogleAuth(t *testing.T) {
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
 	})
 
+	t.Run("google authentication fails due to user blocked", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		blockedUntil := time.Now().Unix() + 30
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(blockedUntil), nil)
+		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
+		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentType, nil)
+
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
+		request := GoogleAuthRequest(string(requestBody))
+		expectedStatusCode := http.StatusForbidden
+		statusCode, _, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatusCode, statusCode)
+	})
+
 	t.Run("google authentication fails due to email not registered", func(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(false, nil)
@@ -2961,6 +2981,23 @@ func TestGoogleAuth(t *testing.T) {
 		expectedStatusCode := http.StatusInternalServerError
 		expectedBody := `{"type":"about:blank","title":"Internal server error","status":500,"detail":"Internal server error","instance":"/users"}`
 		SetupRouterSendRequestAndCompareResults(t, userService, request, expectedStatusCode, expectedBody)
+	})
+
+	t.Run("google authentication fails due to internal server error on repository.UserBlockedUntil", func(t *testing.T) {
+		userRepositoryMock := new(mocks.Repository)
+		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(0, mockError)
+
+		idTokenValidator := auth.MockIdTokenValidator{}
+		userService, err := service.NewService(userRepositoryMock, &config, &idTokenValidator)
+		assert.NoError(t, err)
+		requestBody, _ := json.Marshal(models.GoogleAuthRequest{IdToken: idToken})
+		request := GoogleAuthRequest(string(requestBody))
+		expectedStatusCode := http.StatusInternalServerError
+		statusCode, _, err := SetupRouterAndSendRequest(userService, request)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatusCode, statusCode)
 	})
 
 	t.Run("google authentication fails due to internal server error on repostiory.GetUserIdByEmail", func(t *testing.T) {
