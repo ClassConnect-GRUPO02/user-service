@@ -25,6 +25,15 @@ func NewUserHandler(service *service.Service) *UserHandler {
 	return &handler
 }
 
+// @Summary      Crea un nuevo usuario
+// @Description  Crea un nuevo usuario con email y contraseña
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user  body      models.User  true  "Datos del usuario"
+// @Success      201   {object}  models.User
+// @Failure      400   {object}  models.Error
+// @Router       /users [post]
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	user := models.User{}
 	if err := c.ShouldBind(&user); err != nil {

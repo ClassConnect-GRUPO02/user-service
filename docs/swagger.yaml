@@ -1,0 +1,67 @@
+definitions:
+  models.Error:
+    properties:
+      detail:
+        type: string
+      instance:
+        type: string
+      status:
+        type: integer
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+    
+  models.User:
+    properties:
+      email:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      password:
+        type: string
+      userType:
+        type: string
+    required:
+    - email
+    - latitude
+    - longitude
+    - name
+    - password
+    - userType
+    type: object
+info:
+  contact: {}
+paths:
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo usuario con email y contraseña
+      parameters:
+      - description: Datos del usuario
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Crea un nuevo usuario
+      tags:
+      - users
+swagger: "2.0"
