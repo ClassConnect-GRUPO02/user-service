@@ -2888,6 +2888,7 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return(studentType, nil)
 
@@ -2966,6 +2967,7 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, mockError)
 
 		idTokenValidator := auth.MockIdTokenValidator{}
@@ -2982,6 +2984,7 @@ func TestGoogleAuth(t *testing.T) {
 		userRepositoryMock := new(mocks.Repository)
 		userRepositoryMock.On("IsEmailRegistered", mock.Anything).Return(true, nil)
 		userRepositoryMock.On("IsEmailLinkedToGoogleAccount", mock.Anything).Return(true, nil)
+		userRepositoryMock.On("UserBlockedUntil", mock.Anything).Return(int64(0), nil)
 		userRepositoryMock.On("GetUserIdByEmail", mock.Anything).Return(id, nil)
 		userRepositoryMock.On("GetUserType", mock.Anything).Return("", mockError)
 

@@ -801,7 +801,15 @@ func (h *UserHandler) HandleGoogleAuth(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, models.GoogleEmailNotLinked(email))
 		return
 	}
-
+	userIsBlocked, err := h.service.UserIsBlocked(email)
+	if err, ok := err.(*models.Error); ok {
+		c.JSON(err.Status, err)
+		return
+	}
+	if userIsBlocked {
+		c.JSON(http.StatusForbidden, models.UserBlockedError())
+		return
+	}
 	userId, err := h.service.GetUserIdByEmail(email)
 	if err, ok := err.(*models.Error); ok {
 		c.JSON(err.Status, err)
