@@ -1,0 +1,944 @@
+swagger: "2.0"
+info:
+  title: User Management API
+  description: API for managing users, authentication, and notifications
+  version: 1.0.0
+  contact:
+    email: support@example.com
+
+securityDefinitions:
+  BearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: Use `Bearer <JWT>` where `<JWT>` is your authentication token
+
+definitions:
+  AddPushTokenRequest:
+    type: object
+    required:
+      - token
+    properties:
+      token:
+        type: string
+        description: Push notification token to register
+
+  BiometricLoginRequest:
+    type: object
+    required:
+      - refreshToken
+    properties:
+      refreshToken:
+        type: string
+        description: Refresh token for biometric authentication
+
+  CreateAdminRequest:
+    type: object
+    required:
+      - email
+      - name
+      - password
+    properties:
+      email:
+        type: string
+        format: email
+      name:
+        type: string
+      password:
+        type: string
+        format: password
+        minLength: 8
+
+  EditUserRequest:
+    type: object
+    required:
+      - email
+      - name
+    properties:
+      email:
+        type: string
+        format: email
+      name:
+        type: string
+
+  EmailVerificationRequest:
+    type: object
+    required:
+      - email
+      - pin
+    properties:
+      email:
+        type: string
+        format: email
+      pin:
+        type: integer
+        format: int32
+        description: Verification PIN code
+
+  Error:
+    type: object
+    properties:
+      detail:
+        type: string
+        description: Detailed error message
+      instance:
+        type: string
+        description: URI that identifies the specific occurrence of the problem
+      status:
+        type: integer
+        format: int32
+        description: HTTP status code
+      title:
+        type: string
+        description: Short error message
+      type:
+        type: string
+        description: URI identifying the error type
+
+  ForgotPasswordRequest:
+    type: object
+    required:
+      - email
+    properties:
+      email:
+        type: string
+        format: email
+
+  GoogleAuthRequest:
+    type: object
+    required:
+      - idToken
+    properties:
+      idToken:
+        type: string
+        description: Google ID token
+
+  LoginRequest:
+    type: object
+    required:
+      - email
+      - password
+    properties:
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+        format: password
+
+  NotifyUserRequest:
+    type: object
+    required:
+      - body
+      - notificationType
+      - title
+    properties:
+      body:
+        type: string
+        description: Notification message content
+      notificationType:
+        type: string
+        enum: [info, warning, alert, reminder]
+        description: Type of notification
+      title:
+        type: string
+        description: Notification title
+
+  RequestNewVerificationPin:
+    type: object
+    required:
+      - email
+    properties:
+      email:
+        type: string
+        format: email
+
+  ResetPasswordRequest:
+    type: object
+    required:
+      - newPassword
+    properties:
+      newPassword:
+        type: string
+        format: password
+        minLength: 8
+
+  User:
+    type: object
+    required:
+      - email
+      - name
+      - password
+      - userType
+    properties:
+      email:
+        type: string
+        format: email
+      latitude:
+        type: number
+        format: double
+      longitude:
+        type: number
+        format: double
+      name:
+        type: string
+      password:
+        type: string
+        format: password
+        minLength: 8
+      userType:
+        type: string
+        enum: [admin, teacher, student]
+
+  UserPublicInfo:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+      userType:
+        type: string
+        enum: [admin, teacher, student]
+
+  TokenResponse:
+    type: object
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      token:
+        type: string
+      refreshToken:
+        type: string
+
+paths:
+  /admin-login:
+    post:
+      tags:
+        - Authentication
+      summary: Admin login
+      description: Validates admin credentials and returns an access token
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/LoginRequest'
+      responses:
+        202:
+          description: Successful login
+          schema:
+            $ref: '#/definitions/TokenResponse'
+        400:
+          description: Missing or invalid fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /admins:
+    post:
+      tags:
+        - Admin Management
+      summary: Create new admin
+      description: Allows an authenticated admin to register another admin
+      security:
+        - BearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/CreateAdminRequest'
+      responses:
+        201:
+          description: Admin created successfully
+          schema:
+            $ref: '#/definitions/UserPublicInfo'
+        400:
+          description: Missing or invalid fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid or unauthorized token
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /auth/link-gmail:
+    post:
+      tags:
+        - Authentication
+      summary: Link Gmail account
+      description: Validates Google ID token and links it to an existing account
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/GoogleAuthRequest'
+      responses:
+        200:
+          description: Gmail account linked successfully
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        400:
+          description: Invalid fields or failed to verify Firebase token
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Email not registered
+          schema:
+            $ref: '#/definitions/Error'
+        409:
+          description: Gmail already linked
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /biometric-login:
+    post:
+      tags:
+        - Authentication
+      summary: Biometric login
+      description: Validates refresh token for biometric authentication
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/BiometricLoginRequest'
+      responses:
+        202:
+          description: Successful biometric login
+          schema:
+            $ref: '#/definitions/TokenResponse'
+        400:
+          description: Missing fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid or expired token
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: User blocked
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Validates user credentials and returns access and refresh tokens
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/LoginRequest'
+      responses:
+        202:
+          description: Successful login
+          schema:
+            $ref: '#/definitions/TokenResponse'
+        400:
+          description: Missing fields or invalid ID
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /user/{id}:
+    get:
+      tags:
+        - User Management
+      summary: Get user by ID
+      description: Returns user information (private fields if requesting own profile)
+      security:
+        - BearerAuth: []
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: User information
+          schema:
+            $ref: '#/definitions/UserPublicInfo'
+        401:
+          description: Invalid or missing token
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+    put:
+      tags:
+        - User Management
+      summary: Update user
+      description: Allows authenticated user to update their own information
+      security:
+        - BearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/EditUserRequest'
+      responses:
+        200:
+          description: User updated successfully
+          schema:
+            $ref: '#/definitions/UserPublicInfo'
+        400:
+          description: Invalid ID or missing fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid token or ID mismatch
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /user/{id}/block:
+    put:
+      tags:
+        - User Management
+      summary: Block user
+      description: Allows admin to block a specific user by ID
+      security:
+        - BearerAuth: []
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: User blocked successfully
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        400:
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid or unauthorized token
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /user/{id}/type/{type}:
+    put:
+      tags:
+        - User Management
+      summary: Update user type
+      description: Allows admin to update a user's type (role)
+      security:
+        - BearerAuth: []
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: type
+          in: path
+          required: true
+          type: string
+          enum: [admin, teacher, student]
+      responses:
+        200:
+          description: User type updated successfully
+          schema:
+            $ref: '#/definitions/UserPublicInfo'
+        400:
+          description: Invalid ID or type
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid or unauthorized token
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /user/{id}/unblock:
+    put:
+      tags:
+        - User Management
+      summary: Unblock user
+      description: Allows admin to unblock a specific user by ID
+      security:
+        - BearerAuth: []
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: User unblocked successfully
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        400:
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid or unauthorized token
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users:
+    get:
+      tags:
+        - User Management
+      summary: Get all users
+      description: Returns list of users (extended info for admins)
+      security:
+        - BearerAuth: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of users
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/UserPublicInfo'
+        401:
+          description: Invalid or missing token
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+    post:
+      tags:
+        - User Management
+      summary: Create new user
+      description: Creates a new user with email and password
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        201:
+          description: User created successfully
+          schema:
+            properties:
+              description:
+      			  	type: string
+              email:
+      			  	type: string
+              name:
+      			  	type: string
+              duration:
+      			  	type: integer
+        400:
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users/{id}/notification-settings:
+    put:
+      tags:
+        - User Management
+      summary: Update notification settings
+      description: Allows user to update their notification preferences
+      security:
+        - BearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              emailNotifications:
+                type: boolean
+              pushNotifications:
+                type: boolean
+              preferences:
+                type: object
+      responses:
+        200:
+          description: Notification settings updated
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        400:
+          description: Invalid ID or missing fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid token or unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users/{id}/notifications:
+    post:
+      tags:
+        - Notifications
+      summary: Send notification
+      description: Sends push/email notification based on user preferences
+      security:
+        - BearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/NotifyUserRequest'
+      responses:
+        200:
+          description: Notification scheduled
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        400:
+          description: Invalid ID, missing fields, or invalid notification type
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Push token not found for user
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users/{id}/push-token:
+    post:
+      tags:
+        - Notifications
+      summary: Add push token
+      description: Registers a push notification token for a user
+      security:
+        - BearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/AddPushTokenRequest'
+      responses:
+        200:
+          description: Push token registered
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        400:
+          description: Invalid ID or missing fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid token or unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Forgot password
+      description: Sends password reset email to user
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ForgotPasswordRequest'
+      responses:
+        200:
+          description: Reset email sent
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        400:
+          description: Missing or invalid fields
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Failed to send email
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users/request-new-pin:
+    post:
+      tags:
+        - Authentication
+      summary: Request new verification PIN
+      description: Sends new verification PIN to user's email
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/RequestNewVerificationPin'
+      responses:
+        200:
+          description: PIN sent successfully
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+        500:
+          description: Internal error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users/reset-password:
+    put:
+      tags:
+        - Authentication
+      summary: Reset password
+      description: Allows user to reset password using valid token
+      security:
+        - BearerAuth: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ResetPasswordRequest'
+      responses:
+        200:
+          description: Password updated
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+
+        400:
+          description: Invalid data or missing fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Expired or invalid token
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /users/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify email
+      description: Verifies user's email using PIN
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/EmailVerificationRequest'
+      responses:
+        200:
+          description: Email verified
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+              email:
+                type: string
+        400:
+          description: Missing fields
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Invalid, consumed, or expired PIN
+          schema:
+            $ref: '#/definitions/Error'
